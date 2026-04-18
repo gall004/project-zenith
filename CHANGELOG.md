@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.3.2] - 2026-04-18
+
 ### Fixed
 - Bug Fix `fix/pipecat-transport-init`: Resolved backend `TypeError: LiveKitTransport.__init__() got an unexpected keyword argument` by conforming initialization to Pipecat 1.0.0 standards and enforcing isolated WebRTC access tokens between proxy agents and end users.
 - Bug Fix `fix/root-env-loading`: Resolved `ERR_CONNECTION_REFUSED` on `ws://localhost:7880` by integrating `dotenv-cli` into the root orchestrator, ensuring Next.js correctly inherits `NEXT_PUBLIC_LIVEKIT_URL` from the monorepo root `.env`.
