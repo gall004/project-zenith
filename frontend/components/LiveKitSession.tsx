@@ -102,7 +102,7 @@ export function LiveKitSession({
   }
 
   if (!token) {
-    return null; // fallback intermediate state
+    return <></>; // fallback intermediate state
   }
 
   // Active State

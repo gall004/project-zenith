@@ -83,6 +83,7 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                         session_id=room_name,
                         text=chat_payload.text,
                     )
+                    logger.info("ces_response_received", extra={"response": ces_response})
                     await manager.send_to_room_agent_message(
                         room_name, ces_response["text"]
                     )

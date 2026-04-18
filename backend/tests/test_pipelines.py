@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
 
 from app.pipelines.room_pipeline import create_and_run_pipeline, stop_pipeline, ACTIVE_PIPELINES
