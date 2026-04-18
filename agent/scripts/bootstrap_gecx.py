@@ -382,7 +382,7 @@ def provision_gecx_agent(
     region: str,
     project_root: Path,
     webhook_url: str,
-) -> str:
+) -> tuple[str, str]:
     """Create or update the GECX Orchestrator on CX Agent Studio.
 
     Uses ces.googleapis.com REST API with app → agent hierarchy.
@@ -395,7 +395,7 @@ def provision_gecx_agent(
         webhook_url: The deployed FastAPI backend URL.
 
     Returns:
-        The CES agent resource ID.
+        A tuple of (agent_id, app_id).
     """
     system_instruction = _read_system_instruction(project_root)
     tool_schema = _read_tool_schema(project_root, webhook_url)
@@ -450,7 +450,8 @@ def provision_gecx_agent(
             logger.warning("Agent update failed (non-fatal): %s", e)
 
         _set_root_agent(app_name, agent_name, headers)
-        return agent_id
+        app_id = app_name.split("/apps/")[-1]
+        return agent_id, app_id
 
     # Create new root agent
     logger.info("Creating CES root agent: %s", _AGENT_DISPLAY_NAME)
@@ -474,7 +475,8 @@ def provision_gecx_agent(
     agent_id = agent_name.split("/agents/")[-1]
     logger.info("CES agent created: %s (ID: %s)", agent_name, agent_id)
     _set_root_agent(app_name, agent_name, headers)
-    return agent_id
+    app_id = app_name.split("/apps/")[-1]
+    return agent_id, app_id
 
 
 # ===================================================================
@@ -482,13 +484,29 @@ def provision_gecx_agent(
 # ===================================================================
 
 
-def export_to_env(agent_id: str, project_root: Path) -> None:
-    """Write the GECX_AGENT_ID to the local .env file.
+def _upsert_env_var(lines: list[str], key: str, value: str) -> list[str]:
+    """Insert or update an env var in a list of .env lines."""
+    for i, line in enumerate(lines):
+        if line.startswith(f"{key}="):
+            lines[i] = f"{key}={value}"
+            return lines
+    lines.append(f"{key}={value}")
+    return lines
 
-    Idempotent: updates the value if it already exists, appends if not.
+
+def export_to_env(
+    agent_id: str, app_id: str, project_root: Path
+) -> None:
+    """Write CES_APP_ID and GECX_AGENT_ID to the local .env file.
+
+    CES_APP_ID is required for the RunSession API session path.
+    GECX_AGENT_ID is retained for reference and future use.
+
+    Idempotent: updates values if they already exist, appends if not.
 
     Args:
-        agent_id: The GECX Agent ID to export.
+        agent_id: The GECX Agent resource ID.
+        app_id: The CES App resource ID (used in RunSession path).
         project_root: Absolute path to the project root.
     """
     env_path = project_root / _ENV_FILE_PATH
@@ -497,17 +515,11 @@ def export_to_env(agent_id: str, project_root: Path) -> None:
     if env_path.exists():
         lines = env_path.read_text(encoding="utf-8").splitlines()
 
-    updated = False
-    for i, line in enumerate(lines):
-        if line.startswith("GECX_AGENT_ID="):
-            lines[i] = f"GECX_AGENT_ID={agent_id}"
-            updated = True
-            break
-
-    if not updated:
-        lines.append(f"GECX_AGENT_ID={agent_id}")
+    lines = _upsert_env_var(lines, "CES_APP_ID", app_id)
+    lines = _upsert_env_var(lines, "GECX_AGENT_ID", agent_id)
 
     env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    logger.info("Exported CES_APP_ID=%s to %s", app_id, env_path)
     logger.info("Exported GECX_AGENT_ID=%s to %s", agent_id, env_path)
 
 
@@ -566,14 +578,15 @@ def main() -> int:
     logger.info("Webhook URL: %s", webhook_url)
     logger.info("CES Region: %s", ces_region)
     try:
-        agent_id = provision_gecx_agent(
+        agent_id, app_id = provision_gecx_agent(
             project_id, ces_region, project_root, webhook_url
         )
     except Exception as e:
         logger.error("GECX agent provisioning failed: %s", e)
         return 1
 
-    export_to_env(agent_id, project_root)
+    export_to_env(agent_id, app_id, project_root)
+    logger.info("CES_APP_ID=%s", app_id)
     logger.info("GECX_AGENT_ID=%s", agent_id)
     logger.info("=== GECX Bootstrap Complete ===")
 

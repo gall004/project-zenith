@@ -138,7 +138,7 @@ GECX_TMPFILE=$(mktemp)
 PROJECT_ROOT="$(cd "${AGENT_DIR}/.." && pwd)"
 
 set +e
-cd "${PROJECT_ROOT}" && python3 -m uv run --directory agent python3 agent/scripts/bootstrap_gecx.py \
+cd "${PROJECT_ROOT}" && python3 -m uv run --directory agent python3 scripts/bootstrap_gecx.py \
     --webhook-url "${FASTAPI_BACKEND_URL}" 2>&1 | tee "${GECX_TMPFILE}"
 GECX_EXIT=${PIPESTATUS[0]}
 set -e
@@ -150,6 +150,7 @@ if [[ ${GECX_EXIT} -ne 0 ]]; then
 fi
 
 GECX_AGENT_ID=$(grep "GECX_AGENT_ID=" "${GECX_TMPFILE}" | tail -1 | cut -d= -f2)
+CES_APP_ID=$(grep "CES_APP_ID=" "${GECX_TMPFILE}" | tail -1 | cut -d= -f2)
 rm -f "${GECX_TMPFILE}"
 
 # ---------------------------------------------------------------------------
@@ -163,7 +164,8 @@ echo -e "${GREEN} GECX Agent Deployment Complete             ${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
 echo -e "${CYAN}Provisioned Resources:${NC}"
-echo "  GECX App:       zenith-gecx-orchestrator"
+echo "  CES App:        zenith-gecx-orchestrator"
+echo "  CES App ID:     ${CES_APP_ID:-<see .env>}"
 echo "  GECX Agent:     zenith-gecx-root-agent"
 echo "  GECX Agent ID:  ${GECX_AGENT_ID:-<see .env>}"
 echo "  Backend URL:    ${FASTAPI_BACKEND_URL}"

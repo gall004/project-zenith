@@ -3,9 +3,10 @@ name = "zenith-gecx-agent"
 version = "0.1.0"
 description = "GECX Frontend Orchestrator — Configuration-as-Code deployment for CX Agent Studio."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "google-auth>=2.49.2",
     "httpx>=0.28.1",
     "pyyaml>=6.0",
+    "requests>=2.32.0",
 ]
