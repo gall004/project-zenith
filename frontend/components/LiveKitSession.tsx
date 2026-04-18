@@ -25,7 +25,8 @@ export function LiveKitSession({
 }): React.JSX.Element {
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
 
   const loadToken = useCallback(async () => {
     setIsLoading(true);
@@ -45,9 +46,28 @@ export function LiveKitSession({
   }, [roomName, identity]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadToken();
-  }, [loadToken]);
+    if (hasStarted && !token && !isLoading && !error) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadToken();
+    }
+  }, [hasStarted, loadToken, token, isLoading, error]);
+
+  // Empty/Ready State
+  if (!hasStarted) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[300px] w-full border-dashed border-2 rounded-xl bg-card p-6 space-y-4 shadow-sm relative overflow-hidden">
+        <h3 className="text-xl font-bold text-foreground">
+          Ready to Connect
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-sm text-center">
+          Click below to establish the secure LiveKit WebRTC connection. This validates the browser media capability securely.
+        </p>
+        <Button onClick={() => setHasStarted(true)} size="lg" className="mt-2">
+          Initialize Audio Session
+        </Button>
+      </div>
+    );
+  }
 
   // Loading State (Skeleton)
   if (isLoading) {
@@ -81,18 +101,8 @@ export function LiveKitSession({
     );
   }
 
-  // Empty/Ready State
   if (!token) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[300px] w-full border-dashed border-2 rounded-xl text-center p-6 space-y-3">
-        <p className="text-lg font-medium text-foreground">
-          Token Acquired
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Click below to establish the LiveKit audio feed.
-        </p>
-      </div>
-    );
+    return null; // fallback intermediate state
   }
 
   // Active State
