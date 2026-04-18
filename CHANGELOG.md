@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.0.1] - 2026-04-18
+
 ### Fixed
 - Bug `fix/audio-context-autoplay`: Resolved Chrome/Safari WebAudio API `AudioContext` autoplay DOM exceptions. LiveKit connection initialization (requesting the secure token and setting `connect={true}`) is now strictly gated behind an explicit `hasStarted` user gesture in the Escalation UI, honoring the latest browser media play constraints natively.
 
