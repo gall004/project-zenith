@@ -44,18 +44,15 @@ async def request_visual_context_endpoint(request: VisualContextRequest) -> Visu
     
     room = request.session_id
     if not room:
-        logger.warning("No session_id provided in webhook")
-        return VisualContextResponse(
-            status="error",
-            message="No active LiveKit session found for participant.",
-            camera_enabled=False
-        )
+        active_rooms = list(manager._active_connections.keys())
+        room = active_rooms[0] if active_rooms else "gecx-demo-engine"
+        logger.info("No session_id passed by Orchestrator, defaulting to active room", extra={"room": room})
 
     import asyncio
     from app.pipelines.room_pipeline import create_and_run_pipeline
 
     # dynamically initialize the multimodal pipeline strictly on visual escalation
-    asyncio.create_task(create_and_run_pipeline(room, manager))
+    asyncio.create_task(create_and_run_pipeline(room, manager, reason=request.reason))
 
     await manager.trigger_multimodal_intercept(room)
     return VisualContextResponse(

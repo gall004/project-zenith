@@ -77,42 +77,73 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                     )
                     continue
 
-                # Route text to CES agent via RunSession API
-                try:
-                    ces_response = await ces_client.send_text(
-                        session_id=room_name,
-                        text=chat_payload.text,
-                    )
-                    logger.info("ces_response_received", extra={"response": ces_response})
-                    await manager.send_to_room_agent_message(
-                        room_name, ces_response["text"]
-                    )
+                # Route text based on whether we're in a Gemini Live session
+                from app.pipelines.room_pipeline import has_active_pipeline, inject_text_to_pipeline
 
-                    # Handle end_session signal from CES agent
-                    if ces_response.get("end_session"):
-                        logger.info(
-                            "ces_end_session",
+                if has_active_pipeline(room_name):
+                    # Escalated to Gemini Live — inject text into the pipeline
+                    # This generates a voice+text response from Gemini
+                    try:
+                        injected = await inject_text_to_pipeline(
+                            room_name, chat_payload.text
+                        )
+                        if not injected:
+                            logger.warning(
+                                "Pipeline disappeared between check and inject",
+                                extra={"room_name": room_name},
+                            )
+                    except Exception as pipeline_error:
+                        logger.exception(
+                            "pipeline_inject_failed",
                             extra={"room_name": room_name},
                         )
+                        error_event = WebSocketEvent(
+                            type=WebSocketEventType.ERROR,
+                            payload=ErrorPayload(
+                                code="PIPELINE_ERROR",
+                                message=f"Voice session error: {pipeline_error}",
+                            ).model_dump(),
+                        )
+                        await manager.send_to(
+                            connection_id, error_event.model_dump()
+                        )
+                else:
+                    # Not escalated — route to CES agent (GECX)
+                    try:
+                        ces_response = await ces_client.send_text(
+                            session_id=room_name,
+                            text=chat_payload.text,
+                        )
+                        logger.info("ces_response_received", extra={"response": ces_response})
+                        await manager.send_to_room_agent_message(
+                            room_name, ces_response["text"]
+                        )
 
-                except Exception as ces_error:
-                    logger.exception(
-                        "ces_request_failed",
-                        extra={
-                            "room_name": room_name,
-                            "connection_id": connection_id,
-                        },
-                    )
-                    error_event = WebSocketEvent(
-                        type=WebSocketEventType.ERROR,
-                        payload=ErrorPayload(
-                            code="CES_ERROR",
-                            message=f"Agent unavailable: {ces_error}",
-                        ).model_dump(),
-                    )
-                    await manager.send_to(
-                        connection_id, error_event.model_dump()
-                    )
+                        # Handle end_session signal from CES agent
+                        if ces_response.get("end_session"):
+                            logger.info(
+                                "ces_end_session",
+                                extra={"room_name": room_name},
+                            )
+
+                    except Exception as ces_error:
+                        logger.exception(
+                            "ces_request_failed",
+                            extra={
+                                "room_name": room_name,
+                                "connection_id": connection_id,
+                            },
+                        )
+                        error_event = WebSocketEvent(
+                            type=WebSocketEventType.ERROR,
+                            payload=ErrorPayload(
+                                code="CES_ERROR",
+                                message=f"Agent unavailable: {ces_error}",
+                            ).model_dump(),
+                        )
+                        await manager.send_to(
+                            connection_id, error_event.model_dump()
+                        )
 
     except WebSocketDisconnect:
         from app.pipelines.room_pipeline import stop_pipeline

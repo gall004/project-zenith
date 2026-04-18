@@ -11,6 +11,7 @@ class WebSocketEventType(str, Enum):
     """Strict enum of all valid WebSocket event types."""
     CHAT_MESSAGE = "chat_message"
     AGENT_RESPONSE = "agent_response"
+    USER_TRANSCRIPTION = "user_transcription"
     ENABLE_MULTIMODAL_INPUT = "enable_multimodal_input"
     SESSION_EVENT = "session_event"
     ERROR = "error"

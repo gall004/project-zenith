@@ -101,12 +101,9 @@
     <step name="ConfirmStreamActive">
       <trigger>The request_visual_context tool returns successfully with camera_enabled=true.</trigger>
       <action>
-        Acknowledge the active connection. FROM THIS POINT FORWARD, you are now in
-        VOICE MODE. All subsequent responses must be natural spoken language — no
-        markdown, no formatting, no bullet points.
-
-        Say: "I can see you now, and we're connected live. Go ahead and show me
-        what you're seeing."
+        Do NOT say anything further. Gemini Live will take over the conversation
+        and greet the user directly. Any additional text from you at this point
+        would overlap with the live voice session.
       </action>
     </step>
 

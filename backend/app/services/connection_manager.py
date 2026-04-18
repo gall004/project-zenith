@@ -89,6 +89,17 @@ class ConnectionManager:
         )
         await self.send_to_room_event(room_name, event.model_dump())
 
+    async def send_to_room_user_transcription(self, room_name: str, text: str) -> None:
+        """Send a user speech transcription to a specific room."""
+        import datetime
+        from app.models.websocket import WebSocketEvent, WebSocketEventType
+        event = WebSocketEvent(
+            type=WebSocketEventType.USER_TRANSCRIPTION,
+            payload={"text": text, "sender": "user"},
+            timestamp=datetime.datetime.now(datetime.UTC).isoformat()
+        )
+        await self.send_to_room_event(room_name, event.model_dump())
+
     async def send_to_room_event(self, room_name: str, event_payload: dict) -> None:
         """Send a raw payload to a specific room."""
         if room_name not in self._active_connections:

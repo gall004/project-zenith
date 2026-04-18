@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Feature `fix/multimodal-auto-escalation`: Implemented robust routing of typed chat messages during active Gemini Live escalated sessions. Text is now dynamically injected as `LLMMessagesAppendFrame` allowing Gemini Live to provide voice+text responses.
+- Feature `fix/multimodal-auto-escalation`: Overhauled multimodal WebRTC initialization pipeline, placing a `TranscriptionInterceptor` before the LLM to successfully isolate and relay upstream `TranscriptionFrame` speech components to the chat UI.
+- Feature `fix/multimodal-auto-escalation`: Introduced independent local preview loop utilizing `navigator.mediaDevices.getUserMedia()`, bypassing LiveKit `Track` consumption limitations to ensure consistent rendering of local video feed.
+
+### Fixed
+- Bug `fix/multimodal-auto-escalation`: Reordered Pipecat frame logic (abandoning `LLMMessagesAppendFrame` for `LLMContextFrame`) on WebRTC initialization to force `_ready_for_realtime_input = True`, resolving silent microphone issues by ensuring Server VAD actively listens to user audio payload streams.
+- Bug `fix/multimodal-auto-escalation`: Muted GECX system instruction explicitly upon activating the multimodal camera view to prevent duplicate simultaneous spoken overlap when Gemini Live transitions into the session.
+
 ## [v1.0.2] - 2026-04-18
 
 ### Fixed

@@ -192,6 +192,18 @@ export function ChatContainer({
       setIsAwaitingResponse(false);
     }
 
+    if (lastMessage.type === "user_transcription") {
+      const transcription = lastMessage as { type: string; payload: { text: string }; timestamp: string };
+      const userMessage: ChatMessage = {
+        id: generateMessageId(),
+        text: `🎙️ ${transcription.payload.text}`,
+        sender: "user",
+        timestamp: transcription.timestamp,
+      };
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMessages((prev) => [...prev, userMessage]);
+    }
+
     if (
       lastMessage.type === "enable_multimodal_input" &&
       onMultimodalIntercept

@@ -7,8 +7,8 @@
 
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { LiveKitRoom, useRoomContext } from "@livekit/components-react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { LiveKitRoom, useRoomContext, RoomAudioRenderer } from "@livekit/components-react";
 import { fetchLiveKitToken } from "@/lib/api/livekit";
 import { Button } from "@/components/ui/button";
 import type { EnableMultimodalInputEvent } from "@/types/websocket";
@@ -51,6 +51,13 @@ export function LiveKitSession({
       loadToken();
     }
   }, [hasStarted, loadToken, token, isLoading, error]);
+
+  // Auto-escalate: If the agent requests visual context over chat, bridge seamlessly into voice
+  useEffect(() => {
+    if (multimodalEvent && !hasStarted) {
+      setHasStarted(true);
+    }
+  }, [multimodalEvent, hasStarted]);
 
   // Empty/Ready State
   if (!hasStarted) {
@@ -108,16 +115,15 @@ export function LiveKitSession({
   // Active State
   return (
     <LiveKitRoom
-      video={false}
       audio={true}
       token={token}
-      options={{ videoCaptureDefaults: { facingMode: "environment" } }}
       serverUrl={
         process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880"
       }
       connect={true}
       className="flex flex-col items-center justify-center p-6 border rounded-xl bg-card min-h-[200px] w-full shadow-sm relative overflow-hidden"
     >
+      <RoomAudioRenderer />
       <MultimodalInterceptHandler
         multimodalEvent={multimodalEvent}
       />
@@ -140,37 +146,84 @@ export function LiveKitSession({
 /**
  * MultimodalInterceptHandler (US-10 Refactor)
  *
- * Reacts to `enable_multimodal_input` WebSocket events passed via props
- * to programmatically enable the camera track. Replaces the legacy
- * window.addEventListener approach.
+ * Merged component that:
+ * 1. Enables the LiveKit camera track when a multimodal event arrives
+ * 2. Renders a local camera viewfinder using a separate getUserMedia()
+ *    stream — completely independent of LiveKit's internal WebRTC track
+ *
+ * Why separate streams: LiveKit's setCameraEnabled() acquires a camera track
+ * and hands it to the RTCPeerConnection sender. After that handoff, the
+ * original MediaStreamTrack may not produce frames for local playback
+ * (browser implementation detail). A second getUserMedia() call shares the
+ * same physical camera hardware but returns an independent MediaStream
+ * that reliably renders in a local <video> element.
  */
 function MultimodalInterceptHandler({
   multimodalEvent,
 }: {
   multimodalEvent: EnableMultimodalInputEvent | null;
-}): React.JSX.Element {
+}): React.JSX.Element | null {
   const room = useRoomContext();
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Enable LiveKit camera + acquire separate preview stream
   useEffect(() => {
     if (multimodalEvent === null) return;
     if (!room?.localParticipant) return;
 
+    let localPreviewStream: MediaStream | null = null;
+
     const enableCamera = async (): Promise<void> => {
       try {
         setCameraError(null);
+
+        // 1. Enable camera for LiveKit (sends video to the server/Gemini)
         await room.localParticipant.setCameraEnabled(true);
+        console.log("[Viewfinder] LiveKit camera enabled");
+
+        // 2. Get a separate camera stream for local preview
+        // This reuses the same physical camera (no extra permission prompt)
+        // but gives us an independent stream that renders locally
+        localPreviewStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: 320, height: 240 },
+          audio: false,
+        });
+        setPreviewStream(localPreviewStream);
+        console.log("[Viewfinder] ✅ Local preview stream acquired");
       } catch (err: unknown) {
         const errorMessage =
           err instanceof Error
             ? err.message
             : "Camera could not be activated.";
         setCameraError(errorMessage);
+        console.error("[Viewfinder] ❌ Error:", errorMessage);
       }
     };
 
     enableCamera();
-  }, [multimodalEvent, room]);
+
+    return () => {
+      // Stop all tracks on the preview stream
+      if (localPreviewStream) {
+        localPreviewStream.getTracks().forEach((t) => t.stop());
+      }
+      setPreviewStream(null);
+    };
+  }, [multimodalEvent, room?.localParticipant]);
+
+  // Attach preview stream to video element
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.srcObject = previewStream;
+    }
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    };
+  }, [previewStream]);
 
   if (cameraError) {
     return (
@@ -180,9 +233,27 @@ function MultimodalInterceptHandler({
     );
   }
 
+  if (multimodalEvent === null) return null;
+
   return (
-    <div className="absolute top-4 right-4 text-xs font-mono px-2 py-1 bg-muted/50 rounded-md text-muted-foreground border border-border/50">
-      Intercept Node Active
-    </div>
+    <>
+      {/* Local camera viewfinder — independent preview stream */}
+      <div className="absolute top-4 left-4 w-32 h-44 rounded-lg overflow-hidden border-2 border-primary/50 shadow-xl bg-black z-20 transition-all duration-300 animate-in fade-in zoom-in">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="object-cover w-full h-full transform -scale-x-100"
+        />
+        <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-sm bg-black/50 text-[10px] text-white/90 z-10">
+          {previewStream ? "Local Feed" : "Acquiring..."}
+        </div>
+      </div>
+      {/* Intercept node indicator */}
+      <div className="absolute top-4 right-4 text-xs font-mono px-2 py-1 bg-muted/50 rounded-md text-muted-foreground border border-border/50">
+        Intercept Node Active
+      </div>
+    </>
   );
 }

@@ -9,6 +9,7 @@
 export type WebSocketEventType =
   | "chat_message"
   | "agent_response"
+  | "user_transcription"
   | "enable_multimodal_input"
   | "session_event"
   | "error";
@@ -60,6 +61,13 @@ export interface AgentResponseEvent {
   timestamp: string;
 }
 
+/** Discriminated union: user_transcription event (voice-to-text). */
+export interface UserTranscriptionEvent {
+  type: "user_transcription";
+  payload: { text: string; sender: "user" };
+  timestamp: string;
+}
+
 /** Discriminated union: enable_multimodal_input event. */
 export interface EnableMultimodalInputEvent {
   type: "enable_multimodal_input";
@@ -88,6 +96,7 @@ export interface ErrorEvent {
 export type WebSocketEvent =
   | ChatMessageEvent
   | AgentResponseEvent
+  | UserTranscriptionEvent
   | EnableMultimodalInputEvent
   | SessionEvent
   | ErrorEvent;

@@ -17,6 +17,9 @@ export function VoiceSessionClient(): React.JSX.Element {
   const [identity] = useState(
     () => `user-${Math.floor(Math.random() * 100000)}`
   );
+  const [roomName] = useState(
+    () => `session-${Math.floor(Math.random() * 100000)}`
+  );
   const [multimodalEvent, setMultimodalEvent] =
     useState<EnableMultimodalInputEvent | null>(null);
   const [escalationData, setEscalationData] = useState<SessionEventPayload | null>(null);
@@ -56,7 +59,7 @@ export function VoiceSessionClient(): React.JSX.Element {
           </div>
         ) : (
           <LiveKitSession
-            roomName="gecx-demo-engine"
+            roomName={roomName}
             identity={identity}
             multimodalEvent={multimodalEvent}
           />
@@ -66,7 +69,7 @@ export function VoiceSessionClient(): React.JSX.Element {
       {/* Chat Container — fills remaining space */}
       <div className="flex-1 min-h-0">
         <ChatContainer
-          roomName="gecx-demo-engine"
+          roomName={roomName}
           onMultimodalIntercept={handleMultimodalIntercept}
           onSessionEvent={handleSessionEvent}
         />

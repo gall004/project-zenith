@@ -11,13 +11,13 @@ info:
     name: Project Zenith — Enterprise Voice AI
 
 servers:
-  - url: "${FASTAPI_BACKEND_URL}/api/v1/agent/webhook"
+  - url: "${FASTAPI_BACKEND_URL}"
     description: >
       FastAPI backend webhook endpoint. Injected dynamically at
       deployment time by scripts/bootstrap_gecx.py. Do not hardcode.
 
 paths:
-  /:
+  /api/v1/agent/webhook:
     post:
       operationId: request_visual_context
       summary: Request camera access from the user
