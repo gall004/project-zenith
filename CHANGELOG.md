@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Feature `feature/chat-ui-websocket-bus`: Implemented FastAPI WebSocket endpoint (`/api/v1/ws`) with async `ConnectionManager` and strict Pydantic JSON protocol.
+- Feature `feature/chat-ui-websocket-bus`: Built production-ready `ChatContainer` React component featuring auto-scroll, optimistic UI, and Three-State architecture.
+- Feature `feature/chat-ui-websocket-bus`: Developed `useZenithSocket` custom hook enforcing exponential backoff reconnection with jitter.
+
+### Changed
+- Refactor `feature/chat-ui-websocket-bus`: Migrated `MultimodalInterceptHandler` in `LiveKitSession` to trigger natively off `enable_multimodal_input` live WebSocket events instead of detached window listeners.
 ## [v0.2.0] - 2026-04-18
 
 ### Added
