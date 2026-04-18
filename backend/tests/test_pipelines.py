@@ -31,10 +31,10 @@ async def test_event_bus_processor_intercepts_text():
     from app.pipelines.room_pipeline import EventBusProcessor
     
     mock_bus = AsyncMock()
-    processor = EventBusProcessor(mock_bus)
+    processor = EventBusProcessor(mock_bus, "test-room")
     
     frame = TextFrame("Hello Zenith")
     await processor.process_frame(frame)
     
     # Needs to process but also push frame down
-    mock_bus.broadcast_agent_message.assert_called_once_with("Hello Zenith")
+    mock_bus.send_to_room_agent_message.assert_called_once_with("test-room", "Hello Zenith")

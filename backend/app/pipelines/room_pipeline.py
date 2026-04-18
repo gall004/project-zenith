@@ -9,6 +9,7 @@ from pipecat.services.google.gemini_live.llm import GeminiLiveLLMService
 from pipecat.processors.frame_processor import FrameProcessor, FrameDirection
 from pipecat.frames.frames import TextFrame, Frame
 from livekit import api
+import pathlib
 
 from app.core.config import settings
 
@@ -18,14 +19,15 @@ logger = logging.getLogger(__name__)
 ACTIVE_PIPELINES: Dict[str, PipelineTask] = {}
 
 class EventBusProcessor(FrameProcessor):
-    def __init__(self, connection_manager):
+    def __init__(self, connection_manager, room_name):
         super().__init__()
         self.connection_manager = connection_manager
+        self.room_name = room_name
 
     async def process_frame(self, frame: Frame, direction: FrameDirection = FrameDirection.DOWNSTREAM):
         if isinstance(frame, TextFrame):
             logger.info(f"Intercepted LLM text: {frame.text}")
-            await self.connection_manager.broadcast_agent_message(frame.text)
+            await self.connection_manager.send_to_room_agent_message(self.room_name, frame.text)
         await self.push_frame(frame, direction)
 
 async def create_and_run_pipeline(room_name: str, connection_manager: Any):
@@ -51,31 +53,25 @@ async def create_and_run_pipeline(room_name: str, connection_manager: Any):
         )
     )
 
+    # US-12: GECX Brain Injection. Load the canonical instruction to configure the persona.
+    prompt_path = pathlib.Path(__file__).parents[3] / "agent" / "gecx_agent" / "prompts" / "system_instruction.xml"
+    if prompt_path.exists():
+        system_instruction = prompt_path.read_text()
+    else:
+        logger.warning("GECX system_instruction.xml not found!")
+        system_instruction = "You are Zenith, a helpful virtual assistant."
+
     llm = GeminiLiveLLMService(
         api_key=settings.GEMINI_API_KEY,
+        system_instruction=system_instruction,
     )
     
-    # US-07: Tool Call Intercept (Visual Context)
-    @llm.register_function("request_visual_context")
-    async def request_visual_context_handler(function_name, tool_call_id, args, llm, context, result_callback):
-        logger.info(f"Intercepted tool call: {function_name}")
-        await connection_manager.broadcast_event("enable_multimodal_input", {})
-        # Fire result back to Gemini implicitly via result_callback or return
-        if result_callback:
-            await result_callback({"status": "success", "message": "Camera activated."})
-        return {"status": "success", "message": "Camera activated."}
-
-    # US-10: Human Escalation
-    @llm.register_function("end_session")
-    async def end_session_handler(function_name, tool_call_id, args, llm, context, result_callback):
-        logger.info(f"Intercepted tool call: {function_name}")
-        await connection_manager.broadcast_event("session_event", {"status": "escalated"})
-        if result_callback:
-            await result_callback({"status": "ended"})
-        asyncio.create_task(stop_pipeline(room_name))
-        return {"status": "ended"}
+    # We removed the local `@llm.register_function` intercepts for end_session and
+    # request_visual_context here because ADR-0002 shifted tool orchestration back 
+    # to the Google Cloud CES REST Webhook. The webhook natively receives the tool 
+    # executes via POST and dispatches WebSocket events downward.
     
-    event_bus_processor = EventBusProcessor(connection_manager)
+    event_bus_processor = EventBusProcessor(connection_manager, room_name)
 
     pipeline = Pipeline([
         transport.input(),

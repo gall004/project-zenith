@@ -11,6 +11,7 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 )
 
+from unittest.mock import patch, AsyncMock
 from app.main import app
 
 
@@ -23,17 +24,23 @@ class TestWebSocketConnection:
         client = TestClient(app)
 
         # Act & Assert
-        with client.websocket_connect("/api/v1/ws") as websocket:
+        with client.websocket_connect("/api/v1/ws?room_name=test-room") as websocket:
             assert websocket is not None
 
 
 class TestWebSocketMessageProtocol:
     """US-03: Strict JSON schema validation for WebSocket messages."""
 
-    def test_valid_chat_message_returns_agent_response(self):
-        """Given a valid chat_message, When sent over WS, Then an agent_response returns."""
+    @patch("app.api.v1.ws.ACTIVE_PIPELINES")
+    def test_valid_chat_message_returns_agent_response(self, mock_pipelines):
+        """Given a valid chat_message, When sent over WS, Then it queues to Pipecat."""
         # Arrange
         client = TestClient(app)
+        
+        mock_task = AsyncMock()
+        mock_pipelines.__contains__.return_value = True
+        mock_pipelines.__getitem__.return_value = mock_task
+
         message = {
             "type": "chat_message",
             "payload": {"text": "Hello Zenith", "sender": "user"},
@@ -41,14 +48,13 @@ class TestWebSocketMessageProtocol:
         }
 
         # Act
-        with client.websocket_connect("/api/v1/ws") as websocket:
+        with client.websocket_connect("/api/v1/ws?room_name=test-room") as websocket:
             websocket.send_json(message)
-            response = websocket.receive_json()
-
-        # Assert
-        assert response["type"] == "agent_response"
-        assert "payload" in response
-        assert "timestamp" in response
+            
+        # We cannot assert `receive_json` because pipecat processing is mocked 
+        # and doesn't bounce back an immediate echo.
+        # But we ensure it didn't throw an error and Pipecat injection was triggered.
+        mock_task.queue_frame.assert_called_once()
 
     def test_malformed_message_returns_error_frame(self):
         """Given a malformed message, When sent over WS, Then an error frame returns."""
@@ -57,7 +63,7 @@ class TestWebSocketMessageProtocol:
         malformed = {"invalid": "structure"}
 
         # Act
-        with client.websocket_connect("/api/v1/ws") as websocket:
+        with client.websocket_connect("/api/v1/ws?room_name=test-room") as websocket:
             websocket.send_json(malformed)
             response = websocket.receive_json()
 
@@ -76,77 +82,13 @@ class TestWebSocketMessageProtocol:
         }
 
         # Act
-        with client.websocket_connect("/api/v1/ws") as websocket:
+        with client.websocket_connect("/api/v1/ws?room_name=test-room") as websocket:
             websocket.send_json(bad_payload)
             response = websocket.receive_json()
 
         # Assert
         assert response["type"] == "error"
         assert response["payload"]["code"] == "INVALID_PAYLOAD"
-
-    def test_message_contains_required_fields(self):
-        """Given a response, When received, Then it contains type, payload, timestamp."""
-        # Arrange
-        client = TestClient(app)
-        message = {
-            "type": "chat_message",
-            "payload": {"text": "test", "sender": "user"},
-            "timestamp": "2026-04-18T12:00:00Z",
-        }
-
-        # Act
-        with client.websocket_connect("/api/v1/ws") as websocket:
-            websocket.send_json(message)
-            response = websocket.receive_json()
-
-        # Assert
-        assert "type" in response
-        assert "payload" in response
-        assert "timestamp" in response
-
-
-class TestChatMessageEchoHandler:
-    """US-04: Deterministic echo handler for PoC phase."""
-
-    def test_echo_response_contains_original_text(self):
-        """Given a chat_message, When processed, Then echo contains original text."""
-        # Arrange
-        client = TestClient(app)
-        original_text = "What is the status of my order?"
-        message = {
-            "type": "chat_message",
-            "payload": {"text": original_text, "sender": "user"},
-            "timestamp": "2026-04-18T12:00:00Z",
-        }
-
-        # Act
-        with client.websocket_connect("/api/v1/ws") as websocket:
-            websocket.send_json(message)
-            response = websocket.receive_json()
-
-        # Assert
-        assert response["type"] == "agent_response"
-        assert response["payload"]["text"] == f"Echo: {original_text}"
-        assert response["payload"]["sender"] == "agent"
-
-    def test_echo_response_preserves_sender_as_agent(self):
-        """Given an echo response, When received, Then sender is always 'agent'."""
-        # Arrange
-        client = TestClient(app)
-        message = {
-            "type": "chat_message",
-            "payload": {"text": "Help me", "sender": "user"},
-            "timestamp": "2026-04-18T12:00:00Z",
-        }
-
-        # Act
-        with client.websocket_connect("/api/v1/ws") as websocket:
-            websocket.send_json(message)
-            response = websocket.receive_json()
-
-        # Assert
-        assert response["payload"]["sender"] == "agent"
-
 
 class TestConnectionManager:
     """US-02: Connection lifecycle management."""
@@ -157,14 +99,12 @@ class TestConnectionManager:
         client = TestClient(app)
 
         # Act & Assert — no exception on normal close
-        with client.websocket_connect("/api/v1/ws") as websocket:
+        with client.websocket_connect("/api/v1/ws?room_name=test-room") as websocket:
             websocket.send_json({
                 "type": "chat_message",
                 "payload": {"text": "ping", "sender": "user"},
                 "timestamp": "2026-04-18T12:00:00Z",
             })
-            response = websocket.receive_json()
-            assert response["type"] == "agent_response"
 
     def test_multiple_messages_on_same_connection(self):
         """Given an active WS, When multiple messages sent, Then all get responses."""
@@ -172,15 +112,10 @@ class TestConnectionManager:
         client = TestClient(app)
 
         # Act
-        with client.websocket_connect("/api/v1/ws") as websocket:
+        with client.websocket_connect("/api/v1/ws?room_name=test-room") as websocket:
             for i in range(3):
                 websocket.send_json({
                     "type": "chat_message",
                     "payload": {"text": f"Message {i}", "sender": "user"},
                     "timestamp": "2026-04-18T12:00:00Z",
                 })
-                response = websocket.receive_json()
-
-                # Assert
-                assert response["type"] == "agent_response"
-                assert f"Echo: Message {i}" == response["payload"]["text"]

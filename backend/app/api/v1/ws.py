@@ -17,7 +17,8 @@ from app.models.websocket import (
     WebSocketEventType,
 )
 from app.services.connection_manager import ConnectionManager
-from app.services.chat_handler import handle_chat_message
+from app.pipelines.room_pipeline import ACTIVE_PIPELINES
+from pipecat.frames.frames import TextFrame
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ manager = ConnectionManager()
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket) -> None:
+async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
     """Accept a WebSocket connection and process messages.
 
     Assigns a unique connection_id, registers the client, and enters
@@ -34,7 +35,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     without crashing the connection (error-handling.md §1).
     """
     connection_id = str(uuid.uuid4())
-    await manager.connect(websocket, connection_id)
+    await manager.connect(websocket, connection_id, room_name)
 
     try:
         while True:
@@ -73,8 +74,16 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     )
                     continue
 
-                response = await handle_chat_message(chat_payload.text)
-                await manager.send_to(connection_id, response)
+                if room_name in ACTIVE_PIPELINES:
+                    pipeline_task = ACTIVE_PIPELINES[room_name]
+                    # We create an async task so it doesn't block the receive loop
+                    import asyncio
+                    asyncio.create_task(pipeline_task.queue_frame(TextFrame(chat_payload.text)))
+                else:
+                    logger.warning(
+                        "pipeline_not_found",
+                        extra={"room_name": room_name, "connection_id": connection_id}
+                    )
 
     except WebSocketDisconnect:
         await manager.disconnect(connection_id)

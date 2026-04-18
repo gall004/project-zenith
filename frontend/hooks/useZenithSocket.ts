@@ -24,12 +24,12 @@ interface UseZenithSocketReturn {
   sendMessage: (event: WebSocketEvent) => void;
 }
 
-function getWebSocketUrl(): string {
+function getWebSocketUrl(roomName: string): string {
   const baseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
   const wsProtocol = baseUrl.startsWith("https") ? "wss" : "ws";
   const host = baseUrl.replace(/^https?:\/\//, "");
-  return `${wsProtocol}://${host}/api/v1/ws`;
+  return `${wsProtocol}://${host}/api/v1/ws?room_name=${encodeURIComponent(roomName)}`;
 }
 
 /**
@@ -43,7 +43,7 @@ function calculateReconnectDelay(attempt: number): number {
   return exponentialDelay + jitter;
 }
 
-export function useZenithSocket(): UseZenithSocketReturn {
+export function useZenithSocket(roomName: string): UseZenithSocketReturn {
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
@@ -68,7 +68,7 @@ export function useZenithSocket(): UseZenithSocketReturn {
   const connect = useCallback(function connectImpl() {
     if (!isMountedRef.current) return;
 
-    const url = getWebSocketUrl();
+    const url = getWebSocketUrl(roomName);
     const socket = new WebSocket(url);
 
     socket.onopen = () => {
@@ -117,7 +117,7 @@ export function useZenithSocket(): UseZenithSocketReturn {
     };
 
     socketRef.current = socket;
-  }, []);
+  }, [roomName]);
 
   const sendMessage = useCallback(
     (event: WebSocketEvent): void => {

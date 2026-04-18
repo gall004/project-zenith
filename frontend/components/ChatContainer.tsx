@@ -115,10 +115,12 @@ function TypingIndicator(): React.JSX.Element {
 }
 
 export interface ChatContainerProps {
+  roomName: string;
   onMultimodalIntercept?: (event: EnableMultimodalInputEvent) => void;
 }
 
 export function ChatContainer({
+  roomName,
   onMultimodalIntercept,
 }: ChatContainerProps): React.JSX.Element {
   const {
@@ -127,7 +129,7 @@ export function ChatContainer({
     reconnectAttempt,
     lastMessage,
     sendMessage,
-  } = useZenithSocket();
+  } = useZenithSocket(roomName);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");

@@ -42,6 +42,7 @@ export function VoiceSessionClient(): React.JSX.Element {
       {/* Chat Container — fills remaining space */}
       <div className="flex-1 min-h-0">
         <ChatContainer
+          roomName="gecx-demo-engine"
           onMultimodalIntercept={handleMultimodalIntercept}
         />
       </div>

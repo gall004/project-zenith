@@ -15,14 +15,17 @@ class ConnectionManager:
     """Manages active WebSocket client connections."""
 
     def __init__(self) -> None:
-        self._active_connections: dict[str, WebSocket] = {}
+        # Map: room_name -> { connection_id -> WebSocket }
+        self._active_connections: dict[str, dict[str, WebSocket]] = {}
 
     async def connect(
-        self, websocket: WebSocket, connection_id: str
+        self, websocket: WebSocket, connection_id: str, room_name: str
     ) -> None:
-        """Accept and register a new WebSocket connection."""
+        """Accept and register a new WebSocket connection under a specific room."""
         await websocket.accept()
-        self._active_connections[connection_id] = websocket
+        if room_name not in self._active_connections:
+            self._active_connections[room_name] = {}
+        self._active_connections[room_name][connection_id] = websocket
         logger.info(
             "ws_connected",
             extra={"connection_id": connection_id},
@@ -30,12 +33,16 @@ class ConnectionManager:
 
     async def disconnect(self, connection_id: str) -> None:
         """Remove a connection from the active pool."""
-        removed = self._active_connections.pop(connection_id, None)
-        if removed is not None:
-            logger.info(
-                "ws_disconnected",
-                extra={"connection_id": connection_id},
-            )
+        for room_name, connections in list(self._active_connections.items()):
+            if connection_id in connections:
+                del connections[connection_id]
+                if not connections:
+                    del self._active_connections[room_name]
+                logger.info(
+                    "ws_disconnected",
+                    extra={"connection_id": connection_id, "room": room_name},
+                )
+                return
 
     async def send_to(
         self, connection_id: str, message: dict
@@ -44,7 +51,12 @@ class ConnectionManager:
 
         Returns True if message was sent, False if connection not found.
         """
-        websocket = self._active_connections.get(connection_id)
+        websocket = None
+        for room_name, connections in self._active_connections.items():
+            if connection_id in connections:
+                websocket = connections[connection_id]
+                break
+
         if websocket is None:
             logger.warning(
                 "ws_send_target_missing",
@@ -55,18 +67,19 @@ class ConnectionManager:
         return True
 
     async def broadcast(self, message: dict) -> None:
-        """Send a JSON message to all active connections."""
+        """Send a JSON message to all active connections globally."""
         stale_ids: list[str] = []
-        for connection_id, websocket in self._active_connections.items():
-            try:
-                await websocket.send_json(message)
-            except Exception:
-                stale_ids.append(connection_id)
+        for room_name, connections in self._active_connections.items():
+            for connection_id, websocket in connections.items():
+                try:
+                    await websocket.send_json(message)
+                except Exception:
+                    stale_ids.append(connection_id)
         for stale_id in stale_ids:
             await self.disconnect(stale_id)
 
-    async def broadcast_agent_message(self, text: str) -> None:
-        """Send an agent response to all active connections."""
+    async def send_to_room_agent_message(self, room_name: str, text: str) -> None:
+        """Send an agent response to a specific room."""
         import datetime
         from app.models.websocket import WebSocketEvent, WebSocketEventType
         event = WebSocketEvent(
@@ -74,20 +87,35 @@ class ConnectionManager:
             payload={"text": text, "sender": "agent"},
             timestamp=datetime.datetime.now(datetime.UTC).isoformat()
         )
-        await self.broadcast(event.model_dump())
+        await self.send_to_room_event(room_name, event.model_dump())
 
-    async def broadcast_event(self, event_type: str, payload: dict) -> None:
-        """Send a generic event to all connections (e.g. multimodal intercept)."""
+    async def send_to_room_event(self, room_name: str, event_payload: dict) -> None:
+        """Send a raw payload to a specific room."""
+        if room_name not in self._active_connections:
+            # no-op if no one is in the room
+            return
+            
+        stale_ids: list[str] = []
+        for connection_id, websocket in self._active_connections[room_name].items():
+            try:
+                await websocket.send_json(event_payload)
+            except Exception:
+                stale_ids.append(connection_id)
+        for stale_id in stale_ids:
+            await self.disconnect(stale_id)
+            
+    async def trigger_multimodal_intercept(self, room_name: str) -> None:
+        """Helper to fire the explicit UI intercept"""
         import datetime
         from app.models.websocket import WebSocketEvent, WebSocketEventType
         event = WebSocketEvent(
-            type=WebSocketEventType(event_type),
-            payload=payload,
+            type=WebSocketEventType.ENABLE_MULTIMODAL_INPUT,
+            payload={"reason": "visual_requested"},
             timestamp=datetime.datetime.now(datetime.UTC).isoformat()
         )
-        await self.broadcast(event.model_dump())
+        await self.send_to_room_event(room_name, event.model_dump())
 
     @property
     def active_count(self) -> int:
-        """Return the number of active connections."""
-        return len(self._active_connections)
+        """Return the number of active connections globally."""
+        return sum(len(conns) for conns in self._active_connections.values())
