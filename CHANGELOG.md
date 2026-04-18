@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.0.2] - 2026-04-18
+
 ### Fixed
 - Bug `fix/duplicate-chat-and-webhook-fail`: Resolved duplicate text history rendering in `ChatContainer` by eliminating redundant `onKeyDown` listeners that caused form submission races on mobile/desktop clients when dispatching WebSocket payloads.
 - Bug `fix/duplicate-chat-and-webhook-fail`: Fixed GECX Agent failing to execute `request_visual_context` tool by making NGA escalation variables optional in the Pydantic `WebhookRequest` schema, preventing `422 Unprocessable Entity` HTTP crashes when CES omits them during standard escalations.
