@@ -23,17 +23,17 @@ This skill is **never** triggered automatically during normal `build-feature` or
 
 For each rule file in `.agents/rules/`, scan the relevant source directories for violations. The scan is organized by rule file for traceability.
 
-### Frontend Compliance (`frontend/src/`)
+### Frontend Compliance (`frontend/`)
 
 | Rule | What to Scan | Command / Check |
 |------|-------------|-----------------|
-| `frontend-engineering.md` §9 | `any` type usage | `grep -rn ": any\|as any\|<any>" frontend/src/ --include="*.ts" --include="*.tsx"` |
-| `frontend-engineering.md` §3 | Barrel files in forbidden dirs | `find frontend/src/components frontend/src/hooks -name "index.ts" -o -name "index.tsx"` |
-| `frontend-engineering.md` §8 | Hardcoded localhost URLs | `grep -rn "localhost\|127\.0\.0\.1" frontend/src/ --include="*.ts" --include="*.tsx"` |
+| `frontend-engineering.md` §9 | `any` type usage | `grep -rn ": any\|as any\|<any>" frontend/app/ frontend/components/ frontend/hooks/ frontend/lib/ --include="*.ts" --include="*.tsx"` |
+| `frontend-engineering.md` §3 | Barrel files in forbidden dirs | `find frontend/components frontend/hooks -name "index.ts" -o -name "index.tsx"` |
+| `frontend-engineering.md` §8 | Hardcoded localhost URLs | `grep -rn "localhost\|127\.0\.0\.1" frontend/app/ frontend/components/ frontend/hooks/ frontend/lib/ --include="*.ts" --include="*.tsx"` |
 | `clean-code.md` §4 | Functions exceeding 50 lines | Static analysis — count lines between function declarations |
-| `clean-code.md` §3 | Magic numbers | `grep -rn "[^0-9][2-9][0-9]\{2,\}\|[^0-9][1-9][0-9]\{3,\}" frontend/src/` (heuristic — flag large inline numbers) |
-| `performance-budgets.md` §1 | Wildcard icon imports | `grep -rn "import \* as.*from.*lucide\|import \* as.*from.*icons" frontend/src/` |
-| `accessibility.md` §1 | div with onClick (non-semantic) | `grep -rn "<div.*onClick\|<span.*onClick" frontend/src/ --include="*.tsx"` |
+| `clean-code.md` §3 | Magic numbers | `grep -rn "[^0-9][2-9][0-9]\{2,\}\|[^0-9][1-9][0-9]\{3,\}" frontend/app/ frontend/components/ frontend/hooks/ frontend/lib/` (heuristic — flag large inline numbers) |
+| `performance-budgets.md` §1 | Wildcard icon imports | `grep -rn "import \* as.*from.*lucide\|import \* as.*from.*icons" frontend/app/ frontend/components/ frontend/hooks/ frontend/lib/` |
+| `accessibility.md` §1 | div with onClick (non-semantic) | `grep -rn "<div.*onClick\|<span.*onClick" frontend/app/ frontend/components/ frontend/hooks/ frontend/lib/ --include="*.tsx"` |
 | `error-handling.md` §2 | Missing Error Boundaries | Check if top-level route layouts have Error Boundary wrappers |
 
 ### Backend Compliance (`backend/app/`)
@@ -50,9 +50,9 @@ For each rule file in `.agents/rules/`, scan the relevant source directories for
 
 | Rule | What to Scan | Command / Check |
 |------|-------------|-----------------|
-| `technical-writing.md` §4 | Unattributed TODO/FIXME | `grep -rn "TODO\|FIXME" frontend/src/ backend/app/` — verify attribution |
-| `clean-code.md` §3 | Forbidden variable names | `grep -rn "let data =\|let temp =\|let result =\|let value =" frontend/src/` |
-| Dead code (DoD §4) | Console.log / print statements | `grep -rn "console\.log" frontend/src/` and `grep -rn "print(" backend/app/` |
+| `technical-writing.md` §4 | Unattributed TODO/FIXME | `grep -rn "TODO\|FIXME" frontend/ backend/app/ --exclude-dir={node_modules,.next}` — verify attribution |
+| `clean-code.md` §3 | Forbidden variable names | `grep -rn "let data =\|let temp =\|let result =\|let value =" frontend/app/ frontend/components/ frontend/hooks/ frontend/lib/` |
+| Dead code (DoD §4) | Console.log / print statements | `grep -rn "console\.log" frontend/ --exclude-dir={node_modules,.next}` and `grep -rn "print(" backend/app/` |
 
 ## Output: Compliance Report
 

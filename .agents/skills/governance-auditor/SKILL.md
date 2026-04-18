@@ -40,7 +40,7 @@ For every rule file in `.agents/rules/`:
 Read `.agents/skills/dod-check/SKILL.md` and verify:
 - All CLI verification commands (e.g., `npx tsc --noEmit`, `ruff check .`, `pytest --tb=short`) are still correct and reference the currently installed toolchain.
 - Scan commands (e.g., `grep` targets for `console.log`, `print(`) still target the correct directory paths.
-- Conditional skip paths (e.g., `frontend/src/components/`, `backend/app/api/`) still match the actual project structure.
+- Conditional skip paths (e.g., `frontend/components/`, `backend/app/api/`) still match the actual project structure.
 
 ### Phase 4: Workflow Coherence Check
 Read every file in `.agents/workflows/` and verify:
