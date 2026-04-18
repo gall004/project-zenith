@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.0] - 2026-04-18
+
 ### Added
 - Feature `fix/multimodal-auto-escalation`: Implemented robust routing of typed chat messages during active Gemini Live escalated sessions. Text is now dynamically injected as `LLMMessagesAppendFrame` allowing Gemini Live to provide voice+text responses.
 - Feature `fix/multimodal-auto-escalation`: Overhauled multimodal WebRTC initialization pipeline, placing a `TranscriptionInterceptor` before the LLM to successfully isolate and relay upstream `TranscriptionFrame` speech components to the chat UI.
