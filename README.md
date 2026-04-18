@@ -56,13 +56,11 @@ All configuration lives in a single root `.env` file — no per-stack env files.
 ### Development
 
 ```bash
-# Install dependencies
-cd frontend && npm install
-cd ../backend && pip install -r requirements.txt
+# Install dependencies across all stacks
+npm run install:all
 
-# Run both stacks
-# (from root — once centralized orchestration is configured)
-make dev
+# Boot the frontend and backend servers simultaneously
+npm run dev
 ```
 
 ## Governance
