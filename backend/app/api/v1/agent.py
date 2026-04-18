@@ -19,98 +19,47 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-class WebhookRequest(BaseModel):
-    """Schema for incoming CES tool webhook payloads."""
+class VisualContextRequest(BaseModel):
+    """Schema for incoming CES tool webhook payloads (request_visual_context)."""
+    reason: str = Field(..., description="Reason the agent requested camera access")
+    session_id: str | None = Field(default=None, description="Target room name")
 
-    action: str = Field(
-        ..., description="The tool action identifier (e.g., 'request_visual_context')"
-    )
-    room_name: str = Field(
-        ..., description="The room/session to target for the event dispatch"
-    )
-    reason: str = Field(
-        default="", description="Optional reason for the action (logged for audit)"
-    )
-    session_escalated: bool = Field(
-        default=False, description="Flag indicating if this is a human escalation"
-    )
-    ESCALATION_MESSAGE: str = Field(
-        default="", description="The specific dynamic message the agent constructed for the handoff"
-    )
-    PHONE_GATEWAY_TRANSFER: str = Field(
-        default="", description="The tel: link or routing action for the phone network"
-    )
-
-
-class WebhookResponse(BaseModel):
-    """Standard webhook response."""
-
+class VisualContextResponse(BaseModel):
     status: str
     message: str
-
+    camera_enabled: bool
 
 @router.post(
     "/webhook",
-    response_model=WebhookResponse,
+    response_model=VisualContextResponse,
     summary="CES Tool Webhook",
 )
-async def ces_webhook(request: WebhookRequest) -> WebhookResponse:
-    """Handle tool execution callbacks from the CES agent.
+async def request_visual_context_endpoint(request: VisualContextRequest) -> VisualContextResponse:
+    """Handle the request_visual_context OpenAPI tool execution.
 
     The GECX agent in CX Agent Studio triggers this endpoint when
-    it decides to execute an OpenAPI tool. Currently supported actions:
-
-    - request_visual_context: Activates the frontend camera via WebSocket.
-    - end_session: Signals session termination to the frontend.
+    it decides to execute the request_visual_context OpenAPI tool.
     """
-    logger.info(
-        "ces_webhook_received",
-        extra={"action": request.action, "room_name": request.room_name},
-    )
-
-    if "request_visual_context" in request.action:
-        import asyncio
-        from app.pipelines.room_pipeline import create_and_run_pipeline
-
-        # dynamically initialize the multimodal pipeline strictly on visual escalation
-        asyncio.create_task(create_and_run_pipeline(request.room_name, manager))
-
-        await manager.trigger_multimodal_intercept(request.room_name)
-        return WebhookResponse(
-            status="success",
-            message="Camera activation signal dispatched to frontend.",
+    logger.info("ces_webhook_received", extra={"request": request.model_dump()})
+    
+    room = request.session_id
+    if not room:
+        logger.warning("No session_id provided in webhook")
+        return VisualContextResponse(
+            status="error",
+            message="No active LiveKit session found for participant.",
+            camera_enabled=False
         )
 
-    elif "end_session" in request.action:
-        import datetime
+    import asyncio
+    from app.pipelines.room_pipeline import create_and_run_pipeline
 
-        from app.models.websocket import WebSocketEvent, WebSocketEventType
+    # dynamically initialize the multimodal pipeline strictly on visual escalation
+    asyncio.create_task(create_and_run_pipeline(room, manager))
 
-        payload = {
-            "event": "end_session",
-            "detail": "escalated" if request.session_escalated else "ended"
-        }
-        
-        if request.session_escalated:
-            payload["escalation_message"] = request.ESCALATION_MESSAGE
-            payload["phone_transfer"] = request.PHONE_GATEWAY_TRANSFER
-
-        event = WebSocketEvent(
-            type=WebSocketEventType.SESSION_EVENT,
-            payload=payload,
-            timestamp=datetime.datetime.now(datetime.UTC).isoformat(),
-        )
-        await manager.send_to_room_event(request.room_name, event.model_dump())
-        return WebhookResponse(
-            status="ended",
-            message="Session termination signal dispatched.",
-        )
-
-    logger.warning(
-        "ces_webhook_unknown_action",
-        extra={"action": request.action},
-    )
-    return WebhookResponse(
-        status="error",
-        message=f"Unknown action: {request.action}",
+    await manager.trigger_multimodal_intercept(room)
+    return VisualContextResponse(
+        status="success",
+        message="Camera track enable signal dispatched to frontend.",
+        camera_enabled=True
     )

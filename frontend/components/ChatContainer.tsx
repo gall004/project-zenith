@@ -238,16 +238,6 @@ export function ChatContainer({
     inputRef.current?.focus();
   }, [inputValue, isConnected, sendMessage, generateMessageId]);
 
-  const handleKeyDown = useCallback(
-    (keyEvent: React.KeyboardEvent<HTMLInputElement>) => {
-      if (keyEvent.key === "Enter" && !keyEvent.shiftKey) {
-        keyEvent.preventDefault();
-        handleSubmit();
-      }
-    },
-    [handleSubmit]
-  );
-
   // Empty state (US-07 Three-State Rule)
   if (
     connectionStatus === "connected" &&
@@ -311,7 +301,6 @@ export function ChatContainer({
               onChange={(changeEvent) =>
                 setInputValue(changeEvent.target.value)
               }
-              onKeyDown={handleKeyDown}
               className="flex-1 text-[16px]"
               aria-label="Chat message input"
               autoComplete="off"
@@ -417,7 +406,6 @@ export function ChatContainer({
             onChange={(changeEvent) =>
               setInputValue(changeEvent.target.value)
             }
-            onKeyDown={handleKeyDown}
             className="flex-1 text-[16px]"
             aria-label="Chat message input"
             autoComplete="off"
