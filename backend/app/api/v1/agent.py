@@ -31,6 +31,15 @@ class WebhookRequest(BaseModel):
     reason: str = Field(
         default="", description="Optional reason for the action (logged for audit)"
     )
+    session_escalated: bool = Field(
+        default=False, description="Flag indicating if this is a human escalation"
+    )
+    ESCALATION_MESSAGE: str = Field(
+        default="", description="The specific dynamic message the agent constructed for the handoff"
+    )
+    PHONE_GATEWAY_TRANSFER: str = Field(
+        default="", description="The tel: link or routing action for the phone network"
+    )
 
 
 class WebhookResponse(BaseModel):
@@ -77,9 +86,18 @@ async def ces_webhook(request: WebhookRequest) -> WebhookResponse:
 
         from app.models.websocket import WebSocketEvent, WebSocketEventType
 
+        payload = {
+            "event": "end_session",
+            "detail": "escalated" if request.session_escalated else "ended"
+        }
+        
+        if request.session_escalated:
+            payload["escalation_message"] = request.ESCALATION_MESSAGE
+            payload["phone_transfer"] = request.PHONE_GATEWAY_TRANSFER
+
         event = WebSocketEvent(
             type=WebSocketEventType.SESSION_EVENT,
-            payload={"status": "escalated"},
+            payload=payload,
             timestamp=datetime.datetime.now(datetime.UTC).isoformat(),
         )
         await manager.send_to_room_event(request.room_name, event.model_dump())

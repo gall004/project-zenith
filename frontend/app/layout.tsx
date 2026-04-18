@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -17,6 +17,14 @@ export const metadata: Metadata = {
   title: "Project Zenith — Real-Time Voice AI Platform",
   description:
     "A real-time voice AI platform powered by LiveKit WebRTC and Pipecat media pipelines. Ultra-low-latency conversational AI for enterprise.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

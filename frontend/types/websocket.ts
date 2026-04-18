@@ -36,6 +36,8 @@ export interface EnableMultimodalInputPayload {
 export interface SessionEventPayload {
   event: string;
   detail: string | null;
+  escalation_message?: string;
+  phone_transfer?: string;
 }
 
 /** Payload for structured error frames. */

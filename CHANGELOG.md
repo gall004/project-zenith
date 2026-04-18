@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Feature `feature/mobile-polish-and-escalation`: Handled the `end_session` human escalation trigger natively. Evaluates NGA variables (`session_escalated`, `ESCALATION_MESSAGE`, `PHONE_GATEWAY_TRANSFER`) extracted from the CES tool payload, passing them via WebSocket to gracefully transition the dual-channel UI into an actionable Escalation component containing `tel:` links, tearing down LiveKit securely.
+
+### Changed
+- Feature `feature/mobile-polish-and-escalation`: Migrated LiveKit Room configuration to explicitly pass `options={{ videoCaptureDefaults: { facingMode: "environment" } }}` natively ensuring rear-facing camera defaults for mobile CX context.
+- Feature `feature/mobile-polish-and-escalation`: Locked App viewport scale to prevent mobile input zoom and mapped `viewport-fit: cover` to gracefully handle iOS safe-area-insets.
+- Feature `feature/mobile-polish-and-escalation`: Rewired backend `health.py` probe to synchronously verify LiveKit HTTP endpoints.
+
 ## [v0.4.0] - 2026-04-18
 
 ### Changed

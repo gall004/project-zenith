@@ -11,7 +11,7 @@
 import { useState, useCallback } from "react";
 import { ChatContainer } from "@/components/ChatContainer";
 import { LiveKitSession } from "@/components/LiveKitSession";
-import type { EnableMultimodalInputEvent } from "@/types/websocket";
+import type { EnableMultimodalInputEvent, SessionEvent, SessionEventPayload } from "@/types/websocket";
 
 export function VoiceSessionClient(): React.JSX.Element {
   const [identity] = useState(
@@ -19,6 +19,7 @@ export function VoiceSessionClient(): React.JSX.Element {
   );
   const [multimodalEvent, setMultimodalEvent] =
     useState<EnableMultimodalInputEvent | null>(null);
+  const [escalationData, setEscalationData] = useState<SessionEventPayload | null>(null);
 
 
   const handleMultimodalIntercept = useCallback(
@@ -28,22 +29,46 @@ export function VoiceSessionClient(): React.JSX.Element {
     []
   );
 
+  const handleSessionEvent = useCallback((event: SessionEvent) => {
+    if (event.payload.detail === "escalated") {
+      setEscalationData(event.payload);
+    }
+  }, []);
+
   return (
     <div className="flex flex-1 flex-col h-full overflow-hidden">
-      {/* LiveKit Session — compact when chat is active */}
-        <div className="shrink-0 p-4 pb-0">
+      {/* LiveKit Session or Escalation State */}
+      <div className="shrink-0 p-4 pb-0">
+        {escalationData ? (
+          <div className="flex flex-col items-center justify-center p-6 border rounded-xl bg-destructive/10 border-destructive/20 min-h-[200px] w-full shadow-sm text-center space-y-3">
+            <h2 className="text-xl font-bold text-destructive">Session Escalated</h2>
+            <p className="text-foreground/90 max-w-sm font-medium">
+              {escalationData.escalation_message || "Live communication has been paused. A human agent will contact you shortly."}
+            </p>
+            {escalationData.phone_transfer && (
+              <a 
+                href={`tel:${escalationData.phone_transfer}`}
+                className="mt-2 inline-flex items-center justify-center rounded-md bg-destructive text-destructive-foreground h-10 px-6 py-2 text-sm font-medium transition-colors hover:bg-destructive/90"
+              >
+                Call Support: {escalationData.phone_transfer}
+              </a>
+            )}
+          </div>
+        ) : (
           <LiveKitSession
             roomName="gecx-demo-engine"
             identity={identity}
             multimodalEvent={multimodalEvent}
           />
-        </div>
+        )}
+      </div>
 
       {/* Chat Container — fills remaining space */}
       <div className="flex-1 min-h-0">
         <ChatContainer
           roomName="gecx-demo-engine"
           onMultimodalIntercept={handleMultimodalIntercept}
+          onSessionEvent={handleSessionEvent}
         />
       </div>
     </div>

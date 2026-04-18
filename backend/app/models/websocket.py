@@ -39,6 +39,8 @@ class SessionEventPayload(BaseModel):
     """Payload for session lifecycle events."""
     event: str
     detail: Optional[str] = None
+    escalation_message: Optional[str] = None
+    phone_transfer: Optional[str] = None
 
 
 class ErrorPayload(BaseModel):

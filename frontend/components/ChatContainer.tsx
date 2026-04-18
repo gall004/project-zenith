@@ -15,6 +15,7 @@ import type {
   WebSocketEvent,
   AgentResponseEvent,
   EnableMultimodalInputEvent,
+  SessionEvent,
   ConnectionStatus,
 } from "@/types/websocket";
 
@@ -117,11 +118,13 @@ function TypingIndicator(): React.JSX.Element {
 export interface ChatContainerProps {
   roomName: string;
   onMultimodalIntercept?: (event: EnableMultimodalInputEvent) => void;
+  onSessionEvent?: (event: SessionEvent) => void;
 }
 
 export function ChatContainer({
   roomName,
   onMultimodalIntercept,
+  onSessionEvent,
 }: ChatContainerProps): React.JSX.Element {
   const {
     isConnected,
@@ -197,7 +200,11 @@ export function ChatContainer({
         lastMessage as EnableMultimodalInputEvent
       );
     }
-  }, [lastMessage, generateMessageId, onMultimodalIntercept]);
+
+    if (lastMessage.type === "session_event" && onSessionEvent) {
+      onSessionEvent(lastMessage as SessionEvent);
+    }
+  }, [lastMessage, generateMessageId, onMultimodalIntercept, onSessionEvent]);
 
   // Scroll when messages change
   useEffect(() => {

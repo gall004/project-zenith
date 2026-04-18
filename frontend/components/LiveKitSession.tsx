@@ -101,6 +101,7 @@ export function LiveKitSession({
       video={false}
       audio={true}
       token={token}
+      options={{ videoCaptureDefaults: { facingMode: "environment" } }}
       serverUrl={
         process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880"
       }
