@@ -26,6 +26,48 @@
           }
         }
       }
+    },
+    "/api/v1/rooms/tokens": {
+      "post": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Generate LiveKit Token",
+        "description": "Generate a secure AccessToken for the LiveKit server.",
+        "operationId": "create_token_api_v1_rooms_tokens_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_TokenResponseData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -48,6 +90,19 @@
         ],
         "title": "ErrorDetail"
       },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
       "ResponseMeta": {
         "properties": {
           "timestamp": {
@@ -61,6 +116,35 @@
         },
         "type": "object",
         "title": "ResponseMeta"
+      },
+      "StandardResponse_TokenResponseData_": {
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TokenResponseData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "type": "object",
+        "title": "StandardResponse[TokenResponseData]"
       },
       "StandardResponse_dict_": {
         "properties": {
@@ -92,6 +176,82 @@
         },
         "type": "object",
         "title": "StandardResponse[dict]"
+      },
+      "TokenRequest": {
+        "properties": {
+          "room_name": {
+            "type": "string",
+            "title": "Room Name"
+          },
+          "participant_identity": {
+            "type": "string",
+            "title": "Participant Identity"
+          },
+          "participant_name": {
+            "type": "string",
+            "title": "Participant Name",
+            "default": "Participant"
+          }
+        },
+        "type": "object",
+        "required": [
+          "room_name",
+          "participant_identity"
+        ],
+        "title": "TokenRequest"
+      },
+      "TokenResponseData": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "TokenResponseData"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
       }
     }
   }

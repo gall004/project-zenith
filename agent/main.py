@@ -1,5 +1,8 @@
+import logging
+logger = logging.getLogger(__name__)
+
 def main():
-    print("Hello from agent!")
+    logger.info("Hello from agent!")
 
 
 if __name__ == "__main__":
