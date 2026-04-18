@@ -12,9 +12,11 @@ When operating within this repository, you immediately inherit the responsibilit
 - **STRICT MOCKING:** If providing examples or staging Arrange blocks in tests, strictly use recognizable dummy signatures (e.g., `sk_livekit_mock_test_key_xxxx`).
 
 ## 2. Environment Variable Contracts
-Code and Configuration must remain completely isolated. You must strictly obey ecosystem-specific configuration patterns:
-- **Frontend Environment (`/frontend`):** Next.js services must access variables strictly via `process.env`. Any variable required on the client side must be deliberately explicitly prefixed with `NEXT_PUBLIC_`.
-- **Backend Environment (`/backend`):** FastAPI/Python logic must strictly bind configurations through **Pydantic `BaseSettings`**. You are explicitly forbidden from using ad-hoc `os.environ.get()` or `os.getenv()` statements scattered across the codebase. All credentials must be type-checked and validated exactly at startup within the centralized Settings class.
+All configuration must be externalized — not just secrets, but **every value that varies between environments**. A single root `.env` file governs the entire monorepo per `monorepo-governance.md` §4.
+- **Mandatory Extraction:** API URLs, WebSocket endpoints, database connection strings, API keys, feature flags, port numbers, log levels, CORS origins, rate limit thresholds, timeout durations, and any other value that could conceivably differ between local, staging, and production **must** be an environment variable. If you find yourself writing a value that would need to change during deployment, it belongs in `.env`.
+- **Frontend Environment (`/frontend`):** Next.js services must access variables strictly via `process.env`. Any variable required on the client side must be deliberately prefixed with `NEXT_PUBLIC_`. Variables are loaded from the single root `.env` via the orchestration layer.
+- **Backend Environment (`/backend`):** FastAPI/Python logic must strictly bind configurations through **Pydantic `BaseSettings`**. You are explicitly forbidden from using ad-hoc `os.environ.get()` or `os.getenv()` statements scattered across the codebase. All configuration must be type-checked and validated at startup within a centralized `Settings` class that reads from the root `.env`.
+- **FORBIDDEN:** Hardcoded port numbers (`:3000`, `:8000`), hardcoded log levels (`"DEBUG"`), inline timeout values (`timeout=30`), and any other environment-dependent literal embedded in source code. Extract to `.env` and reference via the configuration system.
 
 ## 3. Git Staging Guardrails
 - **PROHIBITION:** You must never explicitly add, track, or `git commit` any `.env`, `.env.local`, `.env.test`, or `.env.staging` files. 

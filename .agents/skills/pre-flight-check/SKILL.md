@@ -34,10 +34,10 @@ Confirm both stacks compile without errors.
 - **Fail-Fast:** If either stack fails to build, immediately report the specific errors to the user. Do not attempt to fix pre-existing build failures as part of the current workflow — redirect to a `bug-fix` workflow instead.
 
 ### 4. Environment Configuration
-Verify that environment files are present and minimally configured.
-- **Frontend `.env`:** Confirm a `.env.local` or `.env` file exists in `/frontend`. Cross-reference against `frontend/.env.example` — every variable listed in the example must have a corresponding entry in the active env file.
-- **Backend `.env`:** Confirm a `.env` file exists in `/backend`. Cross-reference against `backend/.env.example` — every variable listed in the example must have a corresponding entry.
-- **Missing Variables:** If any required variable from `.env.example` is missing in the active env file, warn the user but do not block the workflow (the variable may have a default value in code).
+Verify that the root environment file is present and complete per `monorepo-governance.md` §4.
+- **Root `.env`:** Confirm a `.env` file exists at the repository root. Cross-reference against `.env.example` — every variable listed in the example must have a corresponding entry in the active `.env` file.
+- **Missing Variables:** If any required variable from `.env.example` is missing in the active `.env`, warn the user but do not block the workflow (the variable may have a default value in code).
+- **No Per-Stack Files:** Confirm no stale per-stack env files exist (`frontend/.env.local`, `backend/.env`). If found, warn the user that these violate the single-root-env architecture and may cause configuration drift.
 
 ### 5. Test Suite Baseline
 Confirm the existing test suite passes before writing new code.

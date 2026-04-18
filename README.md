@@ -45,12 +45,13 @@ The frontend and backend are **strictly isolated** — no shared code, no shared
 
 ### Environment Setup
 
-Copy the environment templates and fill in your values:
+Copy the environment template and fill in your values:
 
 ```bash
-cp frontend/.env.example frontend/.env.local
-cp backend/.env.example backend/.env
+cp .env.example .env
 ```
+
+All configuration lives in a single root `.env` file — no per-stack env files. See `monorepo-governance.md` §4 for details.
 
 ### Development
 

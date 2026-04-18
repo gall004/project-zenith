@@ -67,9 +67,9 @@ Consistent state patterns prevent spaghetti data flow in a high-frequency WebRTC
 - **FORBIDDEN:** Do not install additional state management libraries (Redux, MobX, Jotai) without triggering the `dependency-governance.md` justification process. The combination of React Context + LiveKit hooks should be sufficient for this stack.
 
 ## 8. Environment-Specific Configuration
-All environment-specific values must be externalized — never embedded as string literals in source.
-- **MANDATORY:** API base URLs, WebSocket endpoints, feature flags, and any value that differs between local/staging/production must be accessed via `process.env.NEXT_PUBLIC_*` variables.
-- **FORBIDDEN:** Never hardcode `http://localhost:*`, `ws://localhost:*`, or any development-only URL directly in application source code. Always reference environment variables.
+All environment-specific values must be externalized — never embedded as string literals in source. A single root `.env` governs the entire monorepo per `monorepo-governance.md` §4.
+- **MANDATORY:** API base URLs, WebSocket endpoints, feature flags, port numbers, log levels, and any value that differs between local/staging/production must be accessed via `process.env.NEXT_PUBLIC_*` variables. Variables are loaded from the single root `.env` via the orchestration layer.
+- **FORBIDDEN:** Never hardcode `http://localhost:*`, `ws://localhost:*`, port numbers (`:3000`), or any development-only URL directly in application source code. Always reference environment variables.
 
 ## 9. TypeScript Discipline
 TypeScript is only as strong as its configuration. Lenient settings create a false sense of safety.

@@ -21,12 +21,17 @@ venv/
 env/
 
 # --- Environment ---
+# Root .env is the single source of truth (gitignored — contains secrets)
 .env
+# Per-stack env files are FORBIDDEN per monorepo-governance.md §4
+# but gitignored as a safety net in case they are accidentally created
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-# .env.example files ARE committed (they contain no secrets)
+frontend/.env*
+backend/.env*
+# .env.example IS committed (contains no secrets)
 
 # --- Next.js ---
 .next/
