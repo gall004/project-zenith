@@ -25,6 +25,6 @@ async def create_token(request: TokenRequest):
     
     # Terminate existing pipeline for this room if any, then start a new one to prevent dupes
     await stop_pipeline(request.room_name)
-    asyncio.create_task(create_and_run_pipeline(request.room_name, jwt_token, manager))
+    asyncio.create_task(create_and_run_pipeline(request.room_name, manager))
     
     return StandardResponse(data=TokenResponseData(token=jwt_token))

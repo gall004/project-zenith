@@ -8,6 +8,7 @@ from pipecat.transports.livekit.transport import LiveKitTransport, LiveKitParams
 from pipecat.services.google.gemini_live.llm import GeminiLiveLLMService
 from pipecat.processors.frame_processor import FrameProcessor, FrameDirection
 from pipecat.frames.frames import TextFrame, Frame
+from livekit import api
 
 from app.core.config import settings
 
@@ -27,16 +28,21 @@ class EventBusProcessor(FrameProcessor):
             await self.connection_manager.broadcast_agent_message(frame.text)
         await self.push_frame(frame, direction)
 
-async def create_and_run_pipeline(room_name: str, token: str, connection_manager: Any):
+async def create_and_run_pipeline(room_name: str, connection_manager: Any):
     """
     US-01, US-02: Creates a Pipecat pipeline using LiveKitTransport and GeminiLiveLLMService.
     """
     logger.info(f"Creating Pipecat pipeline for room: {room_name}")
     
+    agent_token = api.AccessToken(settings.LIVEKIT_API_KEY, settings.LIVEKIT_API_SECRET)
+    agent_token.with_identity(f"agent-{room_name}").with_name("Zenith Assistant")
+    agent_token.with_grants(api.VideoGrants(room_join=True, room=room_name))
+    jwt_token = agent_token.to_jwt()
+    
     transport = LiveKitTransport(
-        api_key=settings.LIVEKIT_API_KEY,
-        api_secret=settings.LIVEKIT_API_SECRET,
         url=settings.LIVEKIT_URL,
+        token=jwt_token,
+        room_name=room_name,
         params=LiveKitParams(
             audio_in_enabled=True,
             audio_out_enabled=True,

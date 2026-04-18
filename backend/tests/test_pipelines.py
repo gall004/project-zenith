@@ -21,7 +21,7 @@ async def test_room_pipeline_creation_and_run(mock_pipecat):
     
     mock_manager = AsyncMock()
     with patch("app.pipelines.room_pipeline.LiveKitTransport"), patch("app.pipelines.room_pipeline.GeminiLiveLLMService"):
-        await create_and_run_pipeline("test-room", "test-token", mock_manager)
+        await create_and_run_pipeline("test-room", mock_manager)
     
     mock_task.run.assert_called_once()
 
