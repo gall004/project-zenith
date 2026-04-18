@@ -60,6 +60,12 @@ async def ces_webhook(request: WebhookRequest) -> WebhookResponse:
     )
 
     if "request_visual_context" in request.action:
+        import asyncio
+        from app.pipelines.room_pipeline import create_and_run_pipeline
+
+        # dynamically initialize the multimodal pipeline strictly on visual escalation
+        asyncio.create_task(create_and_run_pipeline(request.room_name, manager))
+
         await manager.trigger_multimodal_intercept(request.room_name)
         return WebhookResponse(
             status="success",

@@ -114,6 +114,9 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                     )
 
     except WebSocketDisconnect:
+        from app.pipelines.room_pipeline import stop_pipeline
+        import asyncio
+        asyncio.create_task(stop_pipeline(room_name))
         await manager.disconnect(connection_id)
     except Exception:
         logger.exception(

@@ -36,7 +36,7 @@ describe("US-07: ChatContainer Component", () => {
 
   it("should render the chat container with aria label", () => {
     // Arrange & Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     const container = screen.getByLabelText("Chat");
@@ -45,7 +45,7 @@ describe("US-07: ChatContainer Component", () => {
 
   it("should render the empty state guidance when no messages exist", () => {
     // Arrange & Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     expect(
@@ -55,7 +55,7 @@ describe("US-07: ChatContainer Component", () => {
 
   it("should render a text input field with accessible label", () => {
     // Arrange & Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     const input = screen.getByLabelText("Chat message input");
@@ -65,7 +65,7 @@ describe("US-07: ChatContainer Component", () => {
 
   it("should render a submit button", () => {
     // Arrange & Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     const button = screen.getByLabelText("Send message");
@@ -74,7 +74,7 @@ describe("US-07: ChatContainer Component", () => {
 
   it("should disable submit button when input is empty", () => {
     // Arrange & Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     const button = screen.getByLabelText("Send message");
@@ -83,7 +83,7 @@ describe("US-07: ChatContainer Component", () => {
 
   it("should have a unique id on the input field", () => {
     // Arrange & Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     const input = screen.getByLabelText("Chat message input");
@@ -92,7 +92,7 @@ describe("US-07: ChatContainer Component", () => {
 
   it("should have a unique id on the submit button", () => {
     // Arrange & Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     const button = screen.getByLabelText("Send message");
@@ -111,7 +111,7 @@ describe("US-09: Chat Message Wiring", () => {
   it("should enable submit button when input has text", async () => {
     // Arrange
     const user = userEvent.setup();
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
     const input = screen.getByLabelText("Chat message input");
 
     // Act
@@ -125,7 +125,7 @@ describe("US-09: Chat Message Wiring", () => {
   it("should call sendMessage and clear input on submit", async () => {
     // Arrange
     const user = userEvent.setup();
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
     const input = screen.getByLabelText("Chat message input");
 
     // Act
@@ -147,7 +147,7 @@ describe("US-09: Chat Message Wiring", () => {
   it("should render user message optimistically after submit", async () => {
     // Arrange
     const user = userEvent.setup();
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
     const input = screen.getByLabelText("Chat message input");
 
     // Act
@@ -161,7 +161,7 @@ describe("US-09: Chat Message Wiring", () => {
   it("should not submit when input is only whitespace", async () => {
     // Arrange
     const user = userEvent.setup();
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
     const input = screen.getByLabelText("Chat message input");
 
     // Act
@@ -184,7 +184,7 @@ describe("US-12: Connection Status Indicator", () => {
     mockSocketReturn.connectionStatus = "connected";
 
     // Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     expect(screen.getByText("Connected")).toBeInTheDocument();
@@ -196,7 +196,7 @@ describe("US-12: Connection Status Indicator", () => {
     mockSocketReturn.isConnected = false;
 
     // Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     expect(screen.getByText("Disconnected")).toBeInTheDocument();
@@ -209,7 +209,7 @@ describe("US-12: Connection Status Indicator", () => {
     mockSocketReturn.reconnectAttempt = 2;
 
     // Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     expect(
@@ -222,7 +222,7 @@ describe("US-12: Connection Status Indicator", () => {
     mockSocketReturn.connectionStatus = "connected";
 
     // Act
-    render(<ChatContainer />);
+    render(<ChatContainer roomName="test-room" />);
 
     // Assert
     const statusEl = screen.getByRole("status");
