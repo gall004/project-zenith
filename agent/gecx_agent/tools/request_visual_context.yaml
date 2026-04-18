@@ -1,0 +1,106 @@
+openapi: "3.0.3"
+info:
+  title: Request Visual Context — Multimodal Camera Intercept
+  description: >
+    OpenAPI tool enabling the GECX orchestrator to programmatically
+    request visual context from the user's camera feed during a
+    LiveKit WebRTC voice session. Triggers the frontend multimodal
+    intercept handler to enable the camera track.
+  version: "1.0.0"
+  contact:
+    name: Project Zenith — Enterprise Voice AI
+
+servers:
+  - url: "${FASTAPI_BACKEND_URL}/api/v1/agent/webhook"
+    description: >
+      FastAPI backend webhook endpoint. Injected dynamically at
+      deployment time by scripts/bootstrap_gecx.py. Do not hardcode.
+
+paths:
+  /:
+    post:
+      operationId: request_visual_context
+      summary: Request camera access from the user
+      description: >
+        Signals the frontend to programmatically enable the local
+        participant's camera video track in the active LiveKit room.
+        The GECX agent calls this tool when visual inspection would
+        improve the quality of assistance (e.g., the user describes
+        a physical product issue, an on-screen error, or a document).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualContextRequest"
+            example:
+              reason: "User described a blinking red light on their device — need visual confirmation."
+      responses:
+        "200":
+          description: Camera activation signal sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisualContextResponse"
+              example:
+                status: "success"
+                message: "Camera track enable signal dispatched to frontend."
+                camera_enabled: true
+        "503":
+          description: User is not in an active LiveKit session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisualContextResponse"
+              example:
+                status: "error"
+                message: "No active LiveKit session found for participant."
+                camera_enabled: false
+
+components:
+  schemas:
+    VisualContextRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          description: >
+            The specific reason the agent needs visual context. Must be
+            a clear, user-communicable justification. This reason is
+            logged for audit and displayed to the user before camera
+            activation.
+          example: "User reports a blinking error indicator on their device."
+        session_id:
+          type: string
+          description: >
+            Optional LiveKit room session ID for targeting a specific
+            participant. If omitted, targets the active session.
+          nullable: true
+
+    VisualContextResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: '"success" or "error"'
+          enum:
+            - success
+            - error
+        message:
+          type: string
+          description: >
+            Human-readable status message describing what happened.
+        camera_enabled:
+          type: boolean
+          description: >
+            Whether the camera track was successfully enabled on the
+            frontend. False if the user denied permissions or no
+            active session exists.
+        error_detail:
+          type: string
+          description: >
+            Additional error context when status is "error". Only
+            present in error responses.
+          nullable: true

@@ -26,7 +26,7 @@ The `README.md` or internal `docs/` have been updated with any new environment v
 ## 4. No Dead Code
 The codebase contains no `console.log`, commented-out code blocks, or unused Shadcn components.
 - **Frontend Scan:** Run `grep -rn "console\.log" frontend/ --exclude-dir={node_modules,.next}` — output must be empty.
-- **Backend Scan:** Run `grep -rn "print(" backend/app/ agent/` — output must be empty (use structured logging, not print statements).
+- **Backend Scan:** Run `grep -rn "print(" backend/app/ agent/ --exclude-dir=.venv` — output must be empty (use structured logging, not print statements).
 - **Commented-Out Code:** Visually scan the diff for any blocks of commented-out application code. Commented-out code is never acceptable in a merge-ready branch.
 
 ## 5. Artifact Sync
@@ -36,7 +36,7 @@ The PM's `task.md` has all checkboxes explicitly marked complete.
 ## 6. Security Scan
 No credentials, secrets, or sensitive configuration have leaked into the codebase or Git staging area.
 - **Staged `.env` Check:** Run `git diff --cached --name-only | grep -E "\.env"` — output must be empty. Any `.env` variant in the staging area is an immediate gate failure.
-- **Hardcoded Secret Scan:** Run `grep -rn "LIVEKIT_API_SECRET\|GEMINI_API_KEY\|sk_live\|pk_live" frontend/ backend/app/ agent/ --exclude-dir={node_modules,.next}` — output must be empty. Any match indicates a hardcoded credential.
+- **Hardcoded Secret Scan:** Run `grep -rn "LIVEKIT_API_SECRET\|GEMINI_API_KEY\|sk_live\|pk_live" frontend/ backend/app/ agent/ --exclude-dir={node_modules,.next,.venv}` — output must be empty. Any match indicates a hardcoded credential.
 - **`.gitignore` Validation:** Confirm that `.env`, `.env.local`, `.env.test`, and `.env.staging` entries exist in the root `.gitignore` file.
 
 ## 7. CHANGELOG Sync
@@ -60,5 +60,5 @@ If the diff modifies backend API routes or Pydantic request/response schemas, ve
 
 ## 10. TODO/FIXME Hygiene
 Unattributed TODO and FIXME comments are invisible tech debt per `technical-writing.md` §4.
-- **Verification:** Run `grep -rn "TODO\|FIXME" frontend/ backend/app/ agent/ --exclude-dir={node_modules,.next}` and verify every match includes attribution (author) and a linked reference (issue or task.md section).
+- **Verification:** Run `grep -rn "TODO\|FIXME" frontend/ backend/app/ agent/ --exclude-dir={node_modules,.next,.venv}` and verify every match includes attribution (author) and a linked reference (issue or task.md section).
 - **Gate Failure:** Any naked `TODO:` or `FIXME:` without context or attribution is a gate failure. Either add proper attribution or resolve the TODO before merge.
