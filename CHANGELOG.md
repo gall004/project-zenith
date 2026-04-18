@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Feature `feature/nextjs-scaffold`: Initialized Next.js App Router project with Tailwind CSS v4, Shadcn UI (`base-nova` preset), and LiveKit components (`@livekit/components-react@2.9.20`).
+- Configured Vitest testing environment and built landing page UI.
+- Established centralized `.env.example` per monorepo governance.
 - Complete `.agents` governance framework encompassing 13 rules, 4 workflows, and 7 skills.
 - Strict Next.js API, styling, state, and fetching constraints via `frontend-engineering.md`.
 - Strict FastAPI Async Purity, Alembic migration, and middleware limits via `backend-engineering.md`.
