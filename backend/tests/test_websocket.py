@@ -1,6 +1,6 @@
 """Tests for the WebSocket endpoint and message protocol.
 
-Maps to BDD user stories US-01, US-02, US-03, US-04 in .artifacts/task.md.
+Maps to BDD user stories US-01, US-02, US-03 in .artifacts/task.md.
 """
 
 from starlette.testclient import TestClient
@@ -31,15 +31,17 @@ class TestWebSocketConnection:
 class TestWebSocketMessageProtocol:
     """US-03: Strict JSON schema validation for WebSocket messages."""
 
-    @patch("app.api.v1.ws.ACTIVE_PIPELINES")
-    def test_valid_chat_message_returns_agent_response(self, mock_pipelines):
-        """Given a valid chat_message, When sent over WS, Then it queues to Pipecat."""
+    @patch("app.api.v1.ws.ces_client")
+    def test_valid_chat_message_returns_agent_response(self, mock_ces):
+        """Given a valid chat_message, When sent over WS, Then CES response returns."""
         # Arrange
         client = TestClient(app)
-        
-        mock_task = AsyncMock()
-        mock_pipelines.__contains__.return_value = True
-        mock_pipelines.__getitem__.return_value = mock_task
+
+        mock_ces.send_text = AsyncMock(return_value={
+            "text": "Hello from CES agent",
+            "end_session": False,
+            "tool_calls": [],
+        })
 
         message = {
             "type": "chat_message",
@@ -50,11 +52,15 @@ class TestWebSocketMessageProtocol:
         # Act
         with client.websocket_connect("/api/v1/ws?room_name=test-room") as websocket:
             websocket.send_json(message)
-            
-        # We cannot assert `receive_json` because pipecat processing is mocked 
-        # and doesn't bounce back an immediate echo.
-        # But we ensure it didn't throw an error and Pipecat injection was triggered.
-        mock_task.queue_frame.assert_called_once()
+            response = websocket.receive_json()
+
+        # Assert
+        assert response["type"] == "agent_response"
+        assert response["payload"]["text"] == "Hello from CES agent"
+        assert response["payload"]["sender"] == "agent"
+        mock_ces.send_text.assert_called_once_with(
+            session_id="test-room", text="Hello Zenith"
+        )
 
     def test_malformed_message_returns_error_frame(self):
         """Given a malformed message, When sent over WS, Then an error frame returns."""
@@ -90,6 +96,29 @@ class TestWebSocketMessageProtocol:
         assert response["type"] == "error"
         assert response["payload"]["code"] == "INVALID_PAYLOAD"
 
+    @patch("app.api.v1.ws.ces_client")
+    def test_ces_error_returns_error_frame(self, mock_ces):
+        """Given a CES API failure, When chat sent, Then error frame returns."""
+        # Arrange
+        client = TestClient(app)
+        mock_ces.send_text = AsyncMock(side_effect=Exception("CES unavailable"))
+
+        message = {
+            "type": "chat_message",
+            "payload": {"text": "Hello", "sender": "user"},
+            "timestamp": "2026-04-18T12:00:00Z",
+        }
+
+        # Act
+        with client.websocket_connect("/api/v1/ws?room_name=test-room") as websocket:
+            websocket.send_json(message)
+            response = websocket.receive_json()
+
+        # Assert
+        assert response["type"] == "error"
+        assert response["payload"]["code"] == "CES_ERROR"
+
+
 class TestConnectionManager:
     """US-02: Connection lifecycle management."""
 
@@ -100,16 +129,18 @@ class TestConnectionManager:
 
         # Act & Assert — no exception on normal close
         with client.websocket_connect("/api/v1/ws?room_name=test-room") as websocket:
-            websocket.send_json({
-                "type": "chat_message",
-                "payload": {"text": "ping", "sender": "user"},
-                "timestamp": "2026-04-18T12:00:00Z",
-            })
+            assert websocket is not None
 
-    def test_multiple_messages_on_same_connection(self):
+    @patch("app.api.v1.ws.ces_client")
+    def test_multiple_messages_on_same_connection(self, mock_ces):
         """Given an active WS, When multiple messages sent, Then all get responses."""
         # Arrange
         client = TestClient(app)
+        mock_ces.send_text = AsyncMock(return_value={
+            "text": "reply",
+            "end_session": False,
+            "tool_calls": [],
+        })
 
         # Act
         with client.websocket_connect("/api/v1/ws?room_name=test-room") as websocket:
@@ -119,3 +150,8 @@ class TestConnectionManager:
                     "payload": {"text": f"Message {i}", "sender": "user"},
                     "timestamp": "2026-04-18T12:00:00Z",
                 })
+                response = websocket.receive_json()
+
+                # Assert
+                assert response["type"] == "agent_response"
+                assert response["payload"]["text"] == "reply"

@@ -1,7 +1,8 @@
 """WebSocket endpoint for real-time bidirectional messaging (US-01, US-03).
 
 Thin route handler that delegates all business logic to the service layer
-per backend-engineering.md §3.
+per backend-engineering.md §3. Text messages are proxied to the CES agent
+via RunSession; responses are pushed back to the client.
 """
 
 import uuid
@@ -17,13 +18,13 @@ from app.models.websocket import (
     WebSocketEventType,
 )
 from app.services.connection_manager import ConnectionManager
-from app.pipelines.room_pipeline import ACTIVE_PIPELINES
-from pipecat.frames.frames import TextFrame
+from app.services.ces_client import CESClient
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 manager = ConnectionManager()
+ces_client = CESClient()
 
 
 @router.websocket("/ws")
@@ -31,8 +32,10 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
     """Accept a WebSocket connection and process messages.
 
     Assigns a unique connection_id, registers the client, and enters
-    a receive loop. Malformed messages receive a structured error frame
-    without crashing the connection (error-handling.md §1).
+    a receive loop. Chat messages are forwarded to the CES agent via
+    RunSession; agent responses are pushed back through the WebSocket.
+    Malformed messages receive a structured error frame without crashing
+    the connection (error-handling.md §1).
     """
     connection_id = str(uuid.uuid4())
     await manager.connect(websocket, connection_id, room_name)
@@ -74,15 +77,40 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                     )
                     continue
 
-                if room_name in ACTIVE_PIPELINES:
-                    pipeline_task = ACTIVE_PIPELINES[room_name]
-                    # We create an async task so it doesn't block the receive loop
-                    import asyncio
-                    asyncio.create_task(pipeline_task.queue_frame(TextFrame(chat_payload.text)))
-                else:
-                    logger.warning(
-                        "pipeline_not_found",
-                        extra={"room_name": room_name, "connection_id": connection_id}
+                # Route text to CES agent via RunSession API
+                try:
+                    ces_response = await ces_client.send_text(
+                        session_id=room_name,
+                        text=chat_payload.text,
+                    )
+                    await manager.send_to_room_agent_message(
+                        room_name, ces_response["text"]
+                    )
+
+                    # Handle end_session signal from CES agent
+                    if ces_response.get("end_session"):
+                        logger.info(
+                            "ces_end_session",
+                            extra={"room_name": room_name},
+                        )
+
+                except Exception as ces_error:
+                    logger.exception(
+                        "ces_request_failed",
+                        extra={
+                            "room_name": room_name,
+                            "connection_id": connection_id,
+                        },
+                    )
+                    error_event = WebSocketEvent(
+                        type=WebSocketEventType.ERROR,
+                        payload=ErrorPayload(
+                            code="CES_ERROR",
+                            message=f"Agent unavailable: {ces_error}",
+                        ).model_dump(),
+                    )
+                    await manager.send_to(
+                        connection_id, error_event.model_dump()
                     )
 
     except WebSocketDisconnect:

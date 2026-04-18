@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Refactor `chore/ces-text-proxy`: Replaced raw Gemini Multimodal Live API (Pipecat text routing) with CES RunSession proxy (`ces.googleapis.com/v1beta`). Chat messages now route through `CESClient.send_text()` to the deployed GECX agent. Pipecat pipeline preserved for future media/voice routing sprint.
+- Refactor `chore/ces-text-proxy`: Cleaned CES webhook (`POST /api/v1/agent/webhook`) — removed all legacy payload parsing, replaced with strict Pydantic `WebhookRequest`/`WebhookResponse` models.
+- Refactor `chore/ces-text-proxy`: Renamed `GECX_AGENT_ID` to `CES_APP_ID` to match CES resource path hierarchy (`projects/X/locations/Y/apps/Z`).
+
+### Added
+- `backend/app/services/ces_client.py`: Async CES RunSession client using ADC + `httpx` for zero-blocking API calls.
+- `backend/tests/test_ces_client.py`: Unit tests for session path construction, response parsing (text, endSession, toolCalls), and API call structure.
+
+### Removed
+- `backend/tests/test_pipelines.py`: Replaced by `test_ces_client.py`. Pipeline tests will return in the media routing sprint.
+
 ## [v0.3.2] - 2026-04-18
 
 ### Fixed

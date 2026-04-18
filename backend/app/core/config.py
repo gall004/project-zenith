@@ -11,7 +11,12 @@ class Settings(BaseSettings):
     
     NEXT_PUBLIC_API_BASE_URL: str = "http://localhost:8000"
     
-    # Gemini Multimodal Live API
+    # CES Agent Configuration (ces.googleapis.com/v1beta)
+    GCP_PROJECT_ID: str = ""
+    CES_APP_ID: str = ""
+    CES_REGION: str = "us"
+
+    # Gemini API Key (retained for Pipecat media pipeline in future sprints)
     GEMINI_API_KEY: str = "mock-key-for-dev"
 
     model_config = SettingsConfigDict(
@@ -21,3 +26,4 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
