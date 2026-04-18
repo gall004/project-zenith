@@ -10,11 +10,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ChatContainer } from "@/components/ChatContainer";
 
+import type { ConnectionStatus } from "@/types/websocket";
+
 // Mock the useZenithSocket hook
 const mockSendMessage = vi.fn();
 const mockSocketReturn = {
   isConnected: true,
-  connectionStatus: "connected" as const,
+  connectionStatus: "connected" as ConnectionStatus,
   reconnectAttempt: 0,
   lastMessage: null,
   sendMessage: mockSendMessage,

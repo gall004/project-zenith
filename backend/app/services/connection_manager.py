@@ -65,6 +65,28 @@ class ConnectionManager:
         for stale_id in stale_ids:
             await self.disconnect(stale_id)
 
+    async def broadcast_agent_message(self, text: str) -> None:
+        """Send an agent response to all active connections."""
+        import datetime
+        from app.models.websocket import WebSocketEvent, WebSocketEventType
+        event = WebSocketEvent(
+            type=WebSocketEventType.AGENT_RESPONSE,
+            payload={"text": text, "sender": "agent"},
+            timestamp=datetime.datetime.now(datetime.UTC).isoformat()
+        )
+        await self.broadcast(event.model_dump())
+
+    async def broadcast_event(self, event_type: str, payload: dict) -> None:
+        """Send a generic event to all connections (e.g. multimodal intercept)."""
+        import datetime
+        from app.models.websocket import WebSocketEvent, WebSocketEventType
+        event = WebSocketEvent(
+            type=WebSocketEventType(event_type),
+            payload=payload,
+            timestamp=datetime.datetime.now(datetime.UTC).isoformat()
+        )
+        await self.broadcast(event.model_dump())
+
     @property
     def active_count(self) -> int:
         """Return the number of active connections."""

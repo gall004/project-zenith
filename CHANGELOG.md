@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Feature `feature/pipecat-gemini-live`: Designed the backend `Pipecat` pipeline leveraging `LiveKitTransport` and `GeminiLiveLLMService` to stream real-time audio and sampled video.
+- Feature `feature/pipecat-gemini-live`: Wired Gemini WSS client tool execution to trigger LiveKit event dispatch and intercept backend `request_visual_context` dynamically.
+- Feature `feature/pipecat-gemini-live`: Connected Pipecat text generation and tool executions into the backend FastAPI WebSocket event bus using a custom `EventBusProcessor`.
 - Feature `feature/chat-ui-websocket-bus`: Implemented FastAPI WebSocket endpoint (`/api/v1/ws`) with async `ConnectionManager` and strict Pydantic JSON protocol.
 - Feature `feature/chat-ui-websocket-bus`: Built production-ready `ChatContainer` React component featuring auto-scroll, optimistic UI, and Three-State architecture.
 - Feature `feature/chat-ui-websocket-bus`: Developed `useZenithSocket` custom hook enforcing exponential backoff reconnection with jitter.

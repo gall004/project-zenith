@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     
     NEXT_PUBLIC_API_BASE_URL: str = "http://localhost:8000"
+    
+    # Gemini Multimodal Live API
+    GEMINI_API_KEY: str = "mock-key-for-dev"
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), ".env"),

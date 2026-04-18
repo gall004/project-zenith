@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.136.0",
     "livekit-api>=1.1.0",
-    "pipecat-ai>=1.0.0",
+    "pipecat-ai[google,livekit]>=1.0.0",
     "pydantic>=2.13.2",
     "pydantic-settings>=2.13.1",
     "uvicorn>=0.44.0",
