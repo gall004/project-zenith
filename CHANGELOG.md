@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor `chore/ces-text-proxy`: Renamed `GECX_AGENT_ID` to `CES_APP_ID` to match CES resource path hierarchy (`projects/X/locations/Y/apps/Z`).
 
 ### Added
+- Feature `feature/ngrok-dev-tunnel`: Integrated ngrok as a third concurrent process in `npm run dev`. CES webhook callbacks now reach local FastAPI via a stable `NGROK_DOMAIN` tunnel — zero extra commands needed.
 - `backend/app/services/ces_client.py`: Async CES RunSession client using ADC + `httpx` for zero-blocking API calls.
 - `backend/tests/test_ces_client.py`: Unit tests for session path construction, response parsing (text, endSession, toolCalls), and API call structure.
 
