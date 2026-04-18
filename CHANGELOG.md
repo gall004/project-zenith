@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Feature `feature/backend-scaffold`: Initialized FastAPI application inside `/backend` managed by `uv` (Python 3.12).
+- Set up LiveKit Server SDK and Pipecat API orchestration boundaries. 
+- Dispatched ADR 0001 validating Pipecat integration selection.
+- Established `/api/v1/health` heartbeat route checking LiveKit connectivity.
 - Feature `feature/nextjs-scaffold`: Initialized Next.js App Router project with Tailwind CSS v4, Shadcn UI (`base-nova` preset), and LiveKit components (`@livekit/components-react@2.9.20`).
 - Configured Vitest testing environment and built landing page UI.
 - Established centralized `.env.example` per monorepo governance.
