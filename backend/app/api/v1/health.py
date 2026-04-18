@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Response
-from app.models.responses import StandardResponse
+from app.models.responses import StandardResponse, ErrorDetail
 
 router = APIRouter()
 
@@ -15,7 +15,7 @@ async def health_check(response: Response):
     if not dependencies_healthy:
         response.status_code = 503
         return StandardResponse(
-            error={"code": "SERVICE_UNAVAILABLE", "message": "Critical dependencies are unreachable"},
+            error=ErrorDetail(code="SERVICE_UNAVAILABLE", message="Critical dependencies are unreachable"),
             data=None
         )
         

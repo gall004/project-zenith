@@ -1,37 +1,32 @@
-# Task: Backend FastAPI Scaffold
+# Task: GECX Agent Idempotent Deployment Pipeline
 ## Objective
-Initialize the Project Zenith backend architecture with FastAPI, Pipecat, and LiveKit Server SDK, enforcing strict async purity, CORS middleware ordering, and standard REST versioning.
+Build an idempotent deployment pipeline for the Gemini Enterprise for CX (GECX) agent to manage its configuration ("brain") as code using `httpx` and `google-auth` to interact with the Customer Engagement Services (CES) API.
 
 ## P0 — Must Have
 
-### US-01: FastAPI Initialization & Dependencies
-- [x] **Given** the `backend/` directory is empty,
-  **When** the engineer initializes the Python 3.11+ environment,
-  **Then** a clean environment is created using `uv` with `fastapi`, `uvicorn`, `pipecat-ai`, `pydantic`, `pydantic-settings`, and `livekit-server-sdk` installed and securely pinned in a `uv.lock` file.
+### US-01: Agent Configuration as Code
+- [x] **Given** the requirement to manage the agent's behavior and capabilities as code,
+  **When** the engineer defines the configuration module,
+  **Then** a structural JSON file is created at `agent/config.json` serving as the single source of truth, establishing its system instructions and explicitly defining a `request_visual_context` tool.
 
-### US-02: Strict Directory Structure
-- [x] **Given** the Python environment is set up,
-  **When** the engineer creates the core application folders,
-  **Then** the project contains the exact directories mandated by `backend-engineering.md`: `app/api/`, `app/services/`, `app/pipelines/`, `app/core/`, and `app/models/`.
+### US-02: Dependency Management
+- [x] **Given** the backend deployment script requires specific libraries for authentication and HTTP requests,
+  **When** the new libraries are added to the environment,
+  **Then** `httpx` and `google-auth` (with necessary GCP ADC support) are installed and securely locked using `uv`.
 
-### US-03: CORS Configured
-- [x] **Given** the FastAPI application is initialized in `app/main.py`,
-  **When** backend middleware is configured,
-  **Then** CORS middleware is configured as the outermost layer (first to load), accepting requests from the frontend (`NEXT_PUBLIC_API_BASE_URL` or `localhost:3000`), ensuring WebRTC pipeline initialization won't fail due to preflight OPTIONS blocks.
+### US-03: CES API Authentication
+- [x] **Given** the deployment script needs to communicate securely with Google Cloud services,
+  **When** the Python script at `agent/deploy.py` is executed,
+  **Then** it successfully retrieves GCP Application Default Credentials (ADC) and generates valid Bearer tokens targeting `ces.googleapis.com`.
 
-### US-04: API Envelope and Standard Response
-- [x] **Given** the `api-contract.md` rules mandate a standard response envelope,
-  **When** the engineer sets up the `/api/v1/health` endpoint,
-  **Then** the response must be structured precisely as `{ "data": { ... }, "error": null, "meta": { "timestamp": "...", "request_id": "..." } }`.
-
-### US-05: Health Check Endpoint
-- [x] **Given** production infrastructure requires liveness and readiness checks,
-  **When** a client requests `GET /api/v1/health`,
-  **Then** the server responds with a `200 OK` (if dependencies are connected) or `503 Service Unavailable` containing service name, version, uptime, and dependency connectivity status (Redis/LiveKit mock or real status).
+### US-04: Idempotent Agent Deployment Pipeline
+- [x] **Given** the defined system configuration might evolve or be deployed on new environments,
+  **When** `agent/deploy.py` runs,
+  **Then** it checks if the agent exists on `ces.googleapis.com`, idempotently applying a `PATCH` request to update an existing agent or a `POST` request to create a new one based entirely on `agent/config.json`.
 
 ## P1 — Should Have
 
-### US-06: Pytest and TDD Setup
-- [x] **Given** the backend scaffold is complete,
-  **When** the engineer configures the test suite,
-  **Then** `pytest` and `httpx` are installed, and a basic test verifying the `/api/v1/health` endpoint exists in and passes with zero failures.
+### US-05: Resilient Error Handling
+- [x] **Given** external API calls are prone to timeouts and failures,
+  **When** the deployment script interacts with `ces.googleapis.com`,
+  **Then** network failures or Google API errors are caught, logged with the exact HTTP status codes and error payloads, and the script exits gracefully with a non-zero exit code.

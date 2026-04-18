@@ -1,0 +1,33 @@
+{
+  "displayName": "GECX Primary Agent",
+  "name": "projects/default-project/locations/global/agents/gecx-agent",
+  "description": "Enterprise LiveKit/Pipecat AI Agent configured for Customer Engagement Services.",
+  "systemInstruction": {
+    "role": "system",
+    "parts": [
+      {
+        "text": "You are a highly capable enterprise AI agent for Customer Engagement Services. Respond concisely and professionally. You must verify customer context before performing any sensitive operations."
+      }
+    ]
+  },
+  "tools": [
+    {
+      "functionDeclarations": [
+        {
+          "name": "request_visual_context",
+          "description": "Request visual context from the user's screen or camera feed.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "reason": {
+                "type": "STRING",
+                "description": "The reason why visual context is needed"
+              }
+            },
+            "required": ["reason"]
+          }
+        }
+      ]
+    }
+  ]
+}
