@@ -48,3 +48,9 @@ description: End-to-end agile development loop for Next.js/FastAPI/LiveKit featu
 - **Action:** Push the code to the feature branch.
 - **Task:** Update `CHANGELOG.md` with an entry under `[Unreleased]` categorized as `Added`, `Changed`, `Fixed`, or `Removed` per `technical-writing.md` §3.
 - **Handoff:** Pause and ask the user: "Feature complete and DoD verified. Review branch feature/ticket-name. Approve squash merge to main?"
+
+**Step 7: Release Decision**
+- **Action:** After the squash merge lands on `main`, prompt the user for a release decision.
+- **Handoff:** Ask the user: "This is now on main. Should I trigger the `release-manager` skill to cut a versioned release?"
+- **If approved:** Trigger the `release-manager` Skill on `main`. The skill will auto-determine the version bump (MAJOR/MINOR/PATCH) from Conventional Commits, rename `[Unreleased]` to the new version, commit, tag, and push.
+- **If deferred:** Acknowledge that changes will accumulate under `[Unreleased]` until a release is explicitly requested.

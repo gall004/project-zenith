@@ -40,3 +40,9 @@ description: Controlled refactoring loop for tech debt cleanup, dependency upgra
 - **Action:** Commit using Conventional Commits (`refactor: ...`), push the branch.
 - **Task:** Update `CHANGELOG.md` with an entry under `[Unreleased]` → `Changed` or `Removed` per `technical-writing.md` §3.
 - **Handoff:** Pause and ask the user: "Refactoring complete, zero regressions, and DoD verified. Review branch `chore/<description>`. Approve squash merge to main?"
+
+**Step 7: Release Decision**
+- **Action:** After the squash merge lands on `main`, prompt the user for a release decision.
+- **Handoff:** Ask the user: "This is now on main. Should I trigger the `release-manager` skill to cut a versioned release?"
+- **If approved:** Trigger the `release-manager` Skill on `main`. The skill will auto-determine the version bump (MAJOR/MINOR/PATCH) from Conventional Commits, rename `[Unreleased]` to the new version, commit, tag, and push.
+- **If deferred:** Acknowledge that changes will accumulate under `[Unreleased]` until a release is explicitly requested.
