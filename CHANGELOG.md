@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.3.1] - 2026-04-18
+
 ### Fixed
 - Bug Fix `fix/missing-livekit-styles`: Resolved `Module not found: Can't resolve '@livekit/components-styles'` by explicitly installing the missing CSS module in the Next.js frontend package.
 
