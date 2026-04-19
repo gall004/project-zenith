@@ -41,6 +41,9 @@ export default function RootLayout({
       lang="en"
       className={`${manrope.variable} ${spaceGrotesk.variable} ${geistMono.variable} dark h-full antialiased`}
     >
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet" />
+      </head>
       <body className="min-h-full flex flex-col bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container relative">
         {children}
       </body>
