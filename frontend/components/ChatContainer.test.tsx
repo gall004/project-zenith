@@ -49,7 +49,7 @@ describe("US-07: ChatContainer Component", () => {
 
     // Assert
     expect(
-      screen.getByText(/ask zenith anything/i)
+      screen.getByText(/i am ready to diagnose the issue/i)
     ).toBeInTheDocument();
   });
 
@@ -179,7 +179,7 @@ describe("US-12: Connection Status Indicator", () => {
     mockSocketReturn.lastMessage = null;
   });
 
-  it("should display 'Connected' status when connected", () => {
+  it("should display 'Secure Connection Active' status when connected", () => {
     // Arrange
     mockSocketReturn.connectionStatus = "connected";
 
@@ -187,10 +187,10 @@ describe("US-12: Connection Status Indicator", () => {
     render(<ChatContainer roomName="test-room" />);
 
     // Assert
-    expect(screen.getByText("Connected")).toBeInTheDocument();
+    expect(screen.getByText("Secure Connection Active")).toBeInTheDocument();
   });
 
-  it("should display 'Disconnected' status when disconnected", () => {
+  it("should display 'Link Severed' status when disconnected", () => {
     // Arrange
     mockSocketReturn.connectionStatus = "disconnected";
     mockSocketReturn.isConnected = false;
@@ -199,7 +199,7 @@ describe("US-12: Connection Status Indicator", () => {
     render(<ChatContainer roomName="test-room" />);
 
     // Assert
-    expect(screen.getByText("Disconnected")).toBeInTheDocument();
+    expect(screen.getByText("Link Severed")).toBeInTheDocument();
   });
 
   it("should display reconnect attempt count when reconnecting", () => {
@@ -213,7 +213,7 @@ describe("US-12: Connection Status Indicator", () => {
 
     // Assert
     expect(
-      screen.getByText("Reconnecting... (2/5)")
+      screen.getByText("Re-establishing link... (2/5)")
     ).toBeInTheDocument();
   });
 

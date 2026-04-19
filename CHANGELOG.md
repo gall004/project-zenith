@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Refactor `chore/ui-ux-overhaul-shadcn`: Redesigned the primary application layout into a marketing landing page that launches the chat flow into a sliding Shadcn `<Sheet>` Drawer component. Restyled text chat UI (`ChatContainer`) to match specific dark technical aesthetics using custom CSS variables mapped to Tailwind v4. 
+- Refactor `chore/ui-ux-overhaul-shadcn`: Unified WebRTC layout hierarchy by migrating the `<LiveKitSession />` inline into the ChatContainer DOM, ensuring the multimodal video feed rests within the visual flow of the user interaction.
+
+### Removed
+- Refactor `chore/ui-ux-overhaul-shadcn`: Deleted explicit isolated `/voice-session` standalone page in favor of unified Single Page Application logic.
+
 ## [v1.1.0] - 2026-04-18
 
 ### Added

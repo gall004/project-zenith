@@ -40,16 +40,16 @@ function ConnectionStatusBadge({
     { dotColor: string; label: string }
   > = {
     connected: {
-      dotColor: "bg-emerald-500",
-      label: "Connected",
+      dotColor: "bg-[#00D4FF]",
+      label: "Secure Connection Active",
     },
     reconnecting: {
       dotColor: "bg-amber-500",
-      label: `Reconnecting... (${attempt}/5)`,
+      label: `Re-establishing link... (${attempt}/5)`,
     },
     disconnected: {
-      dotColor: "bg-destructive",
-      label: "Disconnected",
+      dotColor: "bg-red-500",
+      label: "Link Severed",
     },
   };
 
@@ -57,12 +57,12 @@ function ConnectionStatusBadge({
 
   return (
     <div
-      className="inline-flex items-center gap-2 text-xs text-muted-foreground"
+      className="inline-flex items-center gap-2 text-xs text-slate-400 font-label tracking-wide uppercase mb-4"
       role="status"
       aria-live="polite"
     >
       <span
-        className={`inline-block h-2 w-2 rounded-full ${dotColor}`}
+        className={`inline-block h-2 w-2 rounded-full ${dotColor} ${status === 'connected' ? 'animate-pulse shadow-[0_0_8px_#00D4FF]' : ''}`}
         aria-hidden="true"
       />
       <span>{label}</span>
@@ -79,13 +79,13 @@ function MessageBubble({
 
   return (
     <div
-      className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+      className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}
     >
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+        className={`max-w-[85%] rounded-lg px-4 py-3 text-sm leading-relaxed ${
           isUser
-            ? "bg-primary text-primary-foreground rounded-br-md"
-            : "bg-muted text-foreground rounded-bl-md"
+            ? "bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/20 rounded-br-none"
+            : "bg-white/5 text-slate-300 border border-white/10 rounded-tl-none"
         }`}
       >
         {message.text}
@@ -96,13 +96,13 @@ function MessageBubble({
 
 function TypingIndicator(): React.JSX.Element {
   return (
-    <div className="flex justify-start">
-      <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+    <div className="flex justify-start mb-4">
+      <div className="bg-white/5 border border-white/10 rounded-lg rounded-tl-none px-4 py-3">
         <div className="flex gap-1" aria-label="Agent is typing">
           {[0, 1, 2].map((dotIndex) => (
             <span
               key={dotIndex}
-              className="inline-block h-2 w-2 rounded-full bg-muted-foreground/50 motion-safe:animate-bounce"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-[#00D4FF]/60 motion-safe:animate-bounce"
               style={{
                 animationDelay: `${dotIndex * 150}ms`,
                 animationDuration: "1s",
@@ -119,12 +119,14 @@ export interface ChatContainerProps {
   roomName: string;
   onMultimodalIntercept?: (event: EnableMultimodalInputEvent) => void;
   onSessionEvent?: (event: SessionEvent) => void;
+  children?: React.ReactNode;
 }
 
 export function ChatContainer({
   roomName,
   onMultimodalIntercept,
   onSessionEvent,
+  children,
 }: ChatContainerProps): React.JSX.Element {
   const {
     isConnected,
@@ -250,205 +252,70 @@ export function ChatContainer({
     inputRef.current?.focus();
   }, [inputValue, isConnected, sendMessage, generateMessageId]);
 
-  // Empty state (US-07 Three-State Rule)
-  if (
-    connectionStatus === "connected" &&
-    messages.length === 0 &&
-    !isAwaitingResponse
-  ) {
-    return (
-      <section
-        id="chat-container"
-        className="flex flex-col h-full w-full"
-        aria-label="Chat"
-      >
-        {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-4 py-3">
-          <h2 className="text-sm font-semibold">Zenith Chat</h2>
-          <ConnectionStatusBadge
-            status={connectionStatus}
-            attempt={reconnectAttempt}
-          />
-        </header>
-
-        {/* Empty state */}
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-          <div className="rounded-full bg-muted p-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-muted-foreground"
-              aria-hidden="true"
-            >
-              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
-            </svg>
-          </div>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            Ask Zenith anything — type your question below.
-          </p>
-        </div>
-
-        {/* Input area */}
-        <div className="border-t border-border p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-          <form
-            onSubmit={(formEvent) => {
-              formEvent.preventDefault();
-              handleSubmit();
-            }}
-            className="flex gap-2"
-          >
-            <Input
-              ref={inputRef}
-              id="chat-input"
-              type="text"
-              placeholder="Type a message..."
-              value={inputValue}
-              onChange={(changeEvent) =>
-                setInputValue(changeEvent.target.value)
-              }
-              className="flex-1 text-[16px]"
-              aria-label="Chat message input"
-              autoComplete="off"
-            />
-            <Button
-              id="chat-submit"
-              type="submit"
-              disabled={
-                inputValue.trim().length === 0 || !isConnected
-              }
-              className="min-w-11 min-h-11"
-              aria-label="Send message"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="m5 12 7-7 7 7" />
-                <path d="M12 19V5" />
-              </svg>
-            </Button>
-          </form>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section
-      id="chat-container"
-      className="flex flex-col h-full w-full"
-      aria-label="Chat"
-    >
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="text-sm font-semibold">Zenith Chat</h2>
+    <div className="flex flex-col h-full w-full" aria-label="Chat">
+      <div className="px-2">
         <ConnectionStatusBadge
           status={connectionStatus}
           attempt={reconnectAttempt}
         />
-      </header>
+      </div>
 
-      {/* Message list */}
       <div
         ref={messageListRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-3"
+        className="flex-1 overflow-y-auto space-y-4 pr-3 custom-scrollbar min-h-0"
         role="log"
         aria-live="polite"
-        aria-label="Message history"
       >
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-4">
+            <span className="material-symbols-outlined text-4xl text-slate-600 mb-2" style={{fontVariationSettings: "'FILL' 0"}}>forum</span>
+            <p className="text-sm text-slate-500 font-body">I am ready to diagnose the issue.</p>
+          </div>
+        ) : (
+          messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))
+        )}
         {isAwaitingResponse && <TypingIndicator />}
+        
+        {/* Render LiveKitSession or escalation state inline here so it appears beneath/inside the chat flow */}
+        {children}
       </div>
 
-      {/* Scroll-to-bottom indicator */}
-      {!isNearBottom && (
-        <div className="flex justify-center py-1">
-          <button
-            type="button"
-            onClick={() => {
-              setIsNearBottom(true);
-              const container = messageListRef.current;
-              if (container?.lastElementChild) {
-                container.lastElementChild.scrollIntoView({
-                  behavior: "smooth",
-                });
-              }
-            }}
-            className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors"
-            aria-label="Scroll to latest messages"
-          >
-            ↓ New messages
-          </button>
-        </div>
-      )}
-
       {/* Input area */}
-      <div className="border-t border-border p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+      <div className="mt-4 relative shrink-0">
         <form
-          onSubmit={(formEvent) => {
-            formEvent.preventDefault();
+          onSubmit={(e) => {
+            e.preventDefault();
             handleSubmit();
           }}
-          className="flex gap-2"
+          className="relative w-full"
         >
           <Input
             ref={inputRef}
             id="chat-input"
             type="text"
-            placeholder="Type a message..."
+            placeholder="Start Chat..."
             value={inputValue}
-            onChange={(changeEvent) =>
-              setInputValue(changeEvent.target.value)
-            }
-            className="flex-1 text-[16px]"
+            onChange={(e) => setInputValue(e.target.value)}
+            className="w-full bg-white/5 border-0 border-b-2 border-[#0054d6]/50 text-white placeholder-slate-500 px-4 py-6 text-sm focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#00D4FF] focus:border-[#00D4FF] transition-colors pr-12 rounded-sm shadow-none"
             aria-label="Chat message input"
             autoComplete="off"
+            disabled={!isConnected}
           />
-          <Button
-            id="chat-submit"
+          <button 
             type="submit"
-            disabled={
-              inputValue.trim().length === 0 || !isConnected
-            }
-            className="min-w-11 min-h-11"
             aria-label="Send message"
+            id="chat-submit"
+            disabled={inputValue.trim().length === 0 || !isConnected}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0054d6] hover:text-[#00D4FF] transition-colors disabled:opacity-50"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="m5 12 7-7 7 7" />
-              <path d="M12 19V5" />
-            </svg>
-          </Button>
+            <span className="material-symbols-outlined text-xl" style={{fontVariationSettings: "'FILL' 1"}}>send</span>
+          </button>
         </form>
       </div>
-    </section>
+    </div>
   );
 }

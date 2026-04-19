@@ -6,6 +6,7 @@ import { LiveKitSession } from "./LiveKitSession";
 // Mock the LiveKit components
 vi.mock("@livekit/components-react", () => ({
   LiveKitRoom: ({ children }: { children: React.ReactNode }) => <div data-testid="livekit-room">{children}</div>,
+  RoomAudioRenderer: () => <div data-testid="room-audio-renderer" />,
   useRoomContext: () => ({
     localParticipant: {
       setCameraEnabled: vi.fn(),

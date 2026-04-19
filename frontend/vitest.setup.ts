@@ -7,6 +7,16 @@ vi.mock("next/font/google", () => ({
     className: "className",
     variable: "--font-sans",
   }),
+  Manrope: () => ({
+    style: { fontFamily: "Manrope" },
+    className: "className",
+    variable: "--font-manrope",
+  }),
+  Space_Grotesk: () => ({
+    style: { fontFamily: "Space Grotesk" },
+    className: "className",
+    variable: "--font-space-grotesk",
+  }),
   Geist_Mono: () => ({
     style: { fontFamily: "Geist Mono" },
     className: "className",
