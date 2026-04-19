@@ -71,7 +71,7 @@ function HeroSection({ onAskZenith }: { onAskZenith: () => void }) {
           </span>
         </h1>
         <p className="text-xl text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
-          Unleash the full potential of multimodal AI with Project Zenith. A seamless fusion of Voice, Vision, and Intelligence built on top of WebRTC and Pipecat.
+          Project Zenith demonstrates the future of customer experience through multimodal AI. A seamless fusion of Voice, Vision, and Intelligence natively powered by Google Customer Engagement Suite and the Gemini API.
         </p>
         <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
           <Button
@@ -83,8 +83,8 @@ function HeroSection({ onAskZenith }: { onAskZenith: () => void }) {
             <span>Ask Zenith (Agent)</span>
             <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
           </Button>
-          <a href="https://docs.livekit.io" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto bg-surface-container hover:bg-surface-container-high text-on-surface px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 border border-outline-variant hover:border-outline flex items-center justify-center space-x-2 text-center h-14">
-            <span>Read Docs</span>
+          <a href="https://cloud.google.com/customer-engagement-suite" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto bg-surface-container hover:bg-surface-container-high text-on-surface px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 border border-outline-variant hover:border-outline flex items-center justify-center space-x-2 text-center h-14">
+            <span>CES & Gemini Docs</span>
           </a>
         </div>
       </div>
@@ -102,9 +102,9 @@ function FeaturesSection() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { icon: "speed", title: "Ultra Low-Latency", desc: "Built on LiveKit WebRTC for sub-100ms audio delivery, enabling truly conversational turn-taking." },
-            { icon: "visibility", title: "Multimodal Vision", desc: "Seamlessly escalate from text to voice and live video analysis using Gemini Live integration." },
-            { icon: "architecture", title: "Pipecat Pipelines", desc: "Robust Python backend managing complex media routing, VAD, and transcription interception." }
+            { icon: "speed", title: "Ultra Low-Latency", desc: "Built on Google's high-speed WebRTC infrastructure for sub-100ms audio delivery, enabling naturally conversational turn-taking." },
+            { icon: "visibility", title: "Multimodal Vision", desc: "Seamlessly escalate from text to voice and live video analysis using Gemini Live's native multimodal capabilities." },
+            { icon: "architecture", title: "Agentic Orchestration", desc: "Routing intelligence powered by Dialogflow CX, maintaining continuous conversational context across modalities." }
           ].map((feature, i) => (
             <div key={i} className="bg-surface p-8 rounded-3xl border border-outline-variant hover:border-primary/50 transition-colors group">
               <div className="w-14 h-14 bg-primary-container text-on-primary-container rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -146,12 +146,12 @@ function BentoGrid() {
           </div>
 
           <div className="md:col-span-2 bg-surface-container rounded-[2rem] p-8 border border-outline-variant flex flex-col justify-between">
-            <h3 className="text-xl font-bold text-on-surface">LiveKit Backend Integration</h3>
+            <h3 className="text-xl font-bold text-on-surface">Vertex AI Integration</h3>
             <div className="bg-surface rounded-xl p-4 mt-4 font-mono text-sm text-secondary overflow-hidden border border-outline-variant">
               <code>
-                <span className="text-tertiary">async def</span> <span className="text-primary">start_pipeline</span>(room):<br/>
-                &nbsp;&nbsp;transport = LiveKitTransport(...)<br/>
-                &nbsp;&nbsp;<span className="text-tertiary">await</span> transport.connect(room)<br/>
+                <span className="text-tertiary">async def</span> <span className="text-primary">invoke_agent</span>(session):<br/>
+                &nbsp;&nbsp;client = AgentsAsyncClient()<br/>
+                &nbsp;&nbsp;<span className="text-tertiary">await</span> client.detect_intent(session)<br/>
                 &nbsp;&nbsp;...
               </code>
             </div>
@@ -185,7 +185,7 @@ function Footer() {
           </span>
         </div>
         <div className="text-sm text-outline-variant">
-          &copy; {new Date().getFullYear()} Precision AI. All systems operational.
+          &copy; {new Date().getFullYear()} TTEC Digital. All systems operational.
         </div>
       </div>
     </footer>

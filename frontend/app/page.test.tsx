@@ -82,4 +82,22 @@ describe("US-08: Landing Page Placeholder", () => {
     const buttons = document.querySelectorAll('[data-slot="button"]');
     expect(buttons.length).toBeGreaterThan(0);
   });
+
+  it("should render the correct company branding", () => {
+    // Arrange & Act
+    render(<Home />);
+
+    // Assert
+    expect(screen.getByText(/TTEC Digital/i)).toBeInTheDocument();
+  });
+
+  it("should render the new mission statement copy", () => {
+    // Arrange & Act
+    render(<Home />);
+
+    // Assert
+    expect(
+      screen.getByText(/Project Zenith demonstrates the future of customer experience through multimodal AI/i)
+    ).toBeInTheDocument();
+  });
 });
