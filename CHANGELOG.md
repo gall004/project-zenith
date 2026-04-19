@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bug `fix/update-company-branding`: Corrected hardcoded company branding in the footer to display "TTEC Digital" instead of "Precision AI" and updated page copy to accurately reflect the goal of demonstrating multimodal AI interactions to customers.
 - Bug `fix/end-session-modal`: Added a Shadcn AlertDialog confirmation barrier to the "End Session" action to prevent accidental UX state deletion.
 - Bug `fix/remove-intercept-node`: Dark-themed the chat's strict webkit scrollbar for visual cohesion and implemented a reactive floating "scroll to bottom" helper button.
+- Bug `fix/multimodal-refresh`: Hydrated orchestration states (`multimodalEvent` and `escalationData`) from `sessionStorage` into `VoiceSessionClient` on component mount. Fixes critical bug where camera streams failed to re-initialize on browser refresh during active LiveKit multimodal escalations.
 
 ### Removed
 - Bug `fix/remove-intercept-node`: Deleted the obsolete 'Intercept Node Active' badge from the LiveKitSession component to resolve the UI overflow and prevent clipping into the "End Session" modal toggle.

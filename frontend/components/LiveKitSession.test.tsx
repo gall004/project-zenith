@@ -11,6 +11,7 @@ vi.mock("@livekit/components-react", () => ({
       setCameraEnabled: vi.fn(),
     },
   }),
+  StartAudio: () => <button data-testid="start-audio">Start Audio</button>,
 }));
 
 // Mock the API fetch

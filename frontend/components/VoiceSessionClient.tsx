@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ChatContainer } from "./ChatContainer";
 import { LiveKitSession } from "./LiveKitSession";
 import type { EnableMultimodalInputEvent, SessionEvent, SessionEventPayload } from "@/types/websocket";
@@ -35,14 +35,50 @@ export function VoiceSessionClient(): React.JSX.Element {
   });
 
   const [multimodalEvent, setMultimodalEvent] =
-    useState<EnableMultimodalInputEvent | null>(null);
-  const [escalationData, setEscalationData] = useState<SessionEventPayload | null>(null);
+    useState<EnableMultimodalInputEvent | null>(() => {
+      if (typeof window !== "undefined") {
+        const saved = sessionStorage.getItem("zenith_multimodal");
+        if (saved) return JSON.parse(saved);
+      }
+      return null;
+    });
+
+  const [escalationData, setEscalationData] = useState<SessionEventPayload | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("zenith_escalation");
+      if (saved) return JSON.parse(saved);
+    }
+    return null;
+  });
+
+  // Sync orchestration states
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (multimodalEvent) {
+        sessionStorage.setItem("zenith_multimodal", JSON.stringify(multimodalEvent));
+      } else {
+        sessionStorage.removeItem("zenith_multimodal");
+      }
+    }
+  }, [multimodalEvent]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (escalationData) {
+        sessionStorage.setItem("zenith_escalation", JSON.stringify(escalationData));
+      } else {
+        sessionStorage.removeItem("zenith_escalation");
+      }
+    }
+  }, [escalationData]);
 
   const handleEndSession = useCallback(async () => {
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("zenith_identity");
       sessionStorage.removeItem("zenith_room");
       sessionStorage.removeItem("zenith_messages"); // will be implemented in ChatContainer
+      sessionStorage.removeItem("zenith_multimodal");
+      sessionStorage.removeItem("zenith_escalation");
     }
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";

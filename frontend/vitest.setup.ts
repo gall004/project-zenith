@@ -1,5 +1,12 @@
 import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
+Object.defineProperty(window.navigator, "mediaDevices", {
+  value: {
+    getUserMedia: vi.fn(),
+    enumerateDevices: vi.fn(),
+  },
+  writable: true,
+});
 
 vi.mock("next/font/google", () => ({
   Inter: () => ({
