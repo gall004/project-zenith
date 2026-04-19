@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Bug `fix/backend-regressions`: Resolved Pytest `RuntimeError: Event loop is closed` during WebSocket testing by patching global `app.services.session_store` directly.
+- Bug `fix/backend-regressions`: Resolved `ruff` static analysis errors by removing extraneous imports in `ws.py` and correctly hoisting `Attachment` module imports in `room_pipeline.py`.
+- Bug `fix/backend-regressions`: Restored previously modified `deploy.sh` script to fix syntax error and committed `system_instruction.xml` persona expansion update.
 
 ## [v1.5.0] - 2026-04-19
 ### Added

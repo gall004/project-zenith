@@ -14,13 +14,14 @@ sys.path.insert(
 from unittest.mock import patch, AsyncMock
 from app.main import app
 
-# Global mock for session_store to prevent Redis connections during WS tests
-_mock_session_store = patch("app.api.v1.ws.session_store", **{
-    "append_transcript": AsyncMock(),
-    "get_session": AsyncMock(return_value=None),
-    "update_session": AsyncMock(return_value=None),
-})
-_mock_session_store.start()
+import pytest
+
+@pytest.fixture(autouse=True)
+def mock_session_store():
+    with patch("app.services.session_store.append_transcript", new_callable=AsyncMock):
+        with patch("app.services.session_store.get_session", new_callable=AsyncMock, return_value=None):
+            with patch("app.services.session_store.update_session", new_callable=AsyncMock, return_value=None):
+                yield
 
 
 class TestWebSocketConnection:
@@ -67,7 +68,7 @@ class TestWebSocketMessageProtocol:
         assert response["payload"]["text"] == "Hello from CES agent"
         assert response["payload"]["sender"] == "agent"
         mock_ces.send_text.assert_called_once_with(
-            session_id="test-room", text="Hello Zenith"
+            session_id="test-room", text="Hello Zenith", attachments=None
         )
 
     def test_malformed_message_returns_error_frame(self):

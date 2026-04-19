@@ -87,7 +87,6 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
 
                 # Route text based on whether we're in a Gemini Live session
                 from app.pipelines.room_pipeline import has_active_pipeline, inject_text_to_pipeline
-                from app.services.gcs_client import gcs_client
 
                 if has_active_pipeline(room_name):
                     # Escalated to Gemini Live — inject text and attachments into the pipeline

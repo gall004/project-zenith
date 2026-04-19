@@ -13,6 +13,7 @@ from livekit import api
 import pathlib
 
 from app.core.config import settings
+from app.models.websocket import Attachment
 
 logger = logging.getLogger(__name__)
 
@@ -217,8 +218,6 @@ def has_active_pipeline(room_name: str) -> bool:
     """Check if a room has an active Pipecat pipeline (i.e., is escalated to Gemini Live)."""
     return room_name in ACTIVE_PIPELINES
 
-
-from app.models.websocket import Attachment
 
 async def inject_text_to_pipeline(room_name: str, text: str, attachments: list[Attachment] | None = None) -> bool:
     """Inject a typed chat message (and optional image attachments) into the active pipeline.
