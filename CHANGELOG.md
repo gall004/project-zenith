@@ -6,10 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v1.6.0] - 2026-04-19
 ### Added
 - Feature `feature/hallway-demo-pivot`: Separated monolithic prompt instructions into `gecx_system.xml` and `pipecat_system.xml` to strictly bound orchestration logic vs multimodal generation.
 - Feature `feature/hallway-demo-pivot`: Pivoted the agent from strict IoT-router support to an enthusiastic "Universal Technical Concierge" capable of playfully identifying random camera objects.
 - Feature `feature/hallway-demo-pivot`: Augmented Pipecat instructions to gracefully handle blank/dark camera feeds by naturally requesting lighting adjustments without breaking spoken delivery.
+- Feature `feature/hallway-demo-pivot`: Implemented two-way multimodal handoff architecture. Video session summaries are dynamically relayed back to the GECX agent to effortlessly resume text-mode context where visual interaction left off.
+- Feature `feature/hallway-demo-pivot`: Introduced interactive LiveKit session control overlay with microphone and hardware-level camera disable toggles to entirely eliminate vision-caching hallucinations.
+- Feature `feature/hallway-demo-pivot`: Added manual visual session `handoff` endpoints and globally accessible agent UI using Context-API-based AppShell architecture.
 
 ### Fixed
 - Bug `fix/backend-regressions`: Resolved Pytest `RuntimeError: Event loop is closed` during WebSocket testing by patching global `app.services.session_store` directly.
