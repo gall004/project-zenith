@@ -11,7 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor `chore/ui-ux-overhaul-shadcn`: Redesigned the primary application layout into a marketing landing page that launches the chat flow into a sliding Shadcn `<Sheet>` Drawer component. Restyled text chat UI (`ChatContainer`) to match specific dark technical aesthetics using custom CSS variables mapped to Tailwind v4. 
 - Refactor `chore/ui-ux-overhaul-shadcn`: Unified WebRTC layout hierarchy by migrating the `<LiveKitSession />` inline into the ChatContainer DOM, ensuring the multimodal video feed rests within the visual flow of the user interaction.
 
-### Fixed
+### Changed
+- Refactor `chore/drawer-presentation-refactor`: Cleaned up the drawer presentation logic by setting the chat input to a higher-contrast background color, fixing an awkward flex-scroll container overlap, and removing the legacy webRTC user-permission block so it immediately negotiates on open.
+- Refactor `chore/drawer-cleanup-round2`: Completely removed the active LiveKit session node placeholder to streamline the chat flow, separated the documentation reference into two explicit links outlining Gemini API and CX Agent Studio, transformed the chat input bar into a fully responsive modern floating pill-style component (dropping the Shadcn variant to fix CSS inheritance bugs on the disabled state), and patched Shadcn Sheet `[data-side=right]` specificity to guarantee a true full-screen overlay experience on mobile.
+
+### Added
+- Feature `feat/session-persistence`: Introduced robust session management capabilities. WebRTC/LiveKit and GECX metadata (room IDs and identities) now persist via local `sessionStorage` alongside the active chat transcript, enabling seamless re-joins after page refreshes. Supported by backend enhancements including a 30-second graceful disconnection window and an explicit `DELETE /api/v1/sessions/{room_name}` REST endpoint mapped to a new "End Session" UI action button in the chat UI.
 - Bug `fix/update-company-branding`: Corrected hardcoded company branding in the footer to display "TTEC Digital" instead of "Precision AI" and updated page copy to accurately reflect the goal of demonstrating multimodal AI interactions to customers.
 
 ### Removed

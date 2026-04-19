@@ -146,10 +146,20 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                         )
 
     except WebSocketDisconnect:
-        from app.pipelines.room_pipeline import stop_pipeline
+        from app.pipelines.room_pipeline import stop_pipeline, has_active_pipeline
         import asyncio
-        asyncio.create_task(stop_pipeline(room_name))
+        
         await manager.disconnect(connection_id)
+
+        async def _graceful_stop_pipeline():
+            await asyncio.sleep(30)
+            if not manager.has_room_connections(room_name):
+                if has_active_pipeline(room_name):
+                    logger.info("Grace period elapsed without reconnection. Terminating pipeline.", extra={"room_name": room_name})
+                    await stop_pipeline(room_name)
+
+        asyncio.create_task(_graceful_stop_pipeline())
+
     except Exception:
         logger.exception(
             "ws_unexpected_error",

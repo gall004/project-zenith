@@ -83,8 +83,11 @@ function HeroSection({ onAskZenith }: { onAskZenith: () => void }) {
             <span>Ask Zenith (Agent)</span>
             <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
           </Button>
-          <a href="https://cloud.google.com/customer-engagement-suite" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto bg-surface-container hover:bg-surface-container-high text-on-surface px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 border border-outline-variant hover:border-outline flex items-center justify-center space-x-2 text-center h-14">
-            <span>CES & Gemini Docs</span>
+          <a href="https://ai.google.dev/gemini-api/docs" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto bg-surface-container hover:bg-surface-container-high text-on-surface px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 border border-outline-variant hover:border-outline flex items-center justify-center space-x-2 text-center h-14">
+            <span>Gemini API Docs</span>
+          </a>
+          <a href="https://docs.cloud.google.com/customer-engagement-ai/conversational-agents/ps" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto bg-surface-container hover:bg-surface-container-high text-on-surface px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 border border-outline-variant hover:border-outline flex items-center justify-center space-x-2 text-center h-14 whitespace-nowrap">
+            <span>CX Agent Studio</span>
           </a>
         </div>
       </div>

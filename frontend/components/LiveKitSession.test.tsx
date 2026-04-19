@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, act } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen } from "@testing-library/react";
 import { LiveKitSession } from "./LiveKitSession";
 
 // Mock the LiveKit components
@@ -20,23 +19,11 @@ vi.mock("@/lib/api/livekit", () => ({
 }));
 
 describe("LiveKitSession", () => {
-  it("forces explicit user interaction before connecting to prevent autoplay exceptions", async () => {
-    // Arrange
-    const user = userEvent.setup();
+  it("automatically initializes the connection and requests a token upon mounting", async () => {
+    // Arrange & Act
     render(<LiveKitSession roomName="test" identity="user" multimodalEvent={null} />);
     
-    // Assert - The autoplay constraint requires we do NOT automatically boot the Room
-    // It must explicitly request user permission first
-    const joinBtn = screen.getByRole("button", { name: /initialize/i });
-    expect(joinBtn).toBeInTheDocument();
-    expect(screen.queryByTestId("livekit-room")).not.toBeInTheDocument();
-    
-    // Act - User gesture
-    await act(async () => {
-      await user.click(joinBtn);
-    });
-    
-    // Assert - State transitions after the user gesture
-    expect(screen.queryByRole("button", { name: /initialize/i })).not.toBeInTheDocument();
+    // Assert - State immediately transitions to loading/connecting
+    expect(screen.getByText(/Negotiating secure connection/i)).toBeInTheDocument();
   });
 });

@@ -33,7 +33,7 @@
           "Rooms"
         ],
         "summary": "Generate LiveKit Token",
-        "description": "Generate a secure AccessToken for the LiveKit server.",
+        "description": "Generate a secure AccessToken for the LiveKit server (US-01).",
         "operationId": "create_token_api_v1_rooms_tokens_post",
         "requestBody": {
           "content": {
@@ -52,6 +52,91 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StandardResponse_TokenResponseData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{room_name}": {
+      "delete": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "End an active session",
+        "description": "Explicitly terminate a multimodal session and sever all pipelines.",
+        "operationId": "end_session_api_v1_sessions__room_name__delete",
+        "parameters": [
+          {
+            "name": "room_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Room Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_dict_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent/webhook": {
+      "post": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "CES Tool Webhook",
+        "description": "Handle the request_visual_context OpenAPI tool execution.\n\nThe GECX agent in CX Agent Studio triggers this endpoint when\nit decides to execute the request_visual_context OpenAPI tool.",
+        "operationId": "request_visual_context_endpoint_api_v1_agent_webhook_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisualContextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisualContextResponse"
                 }
               }
             }
@@ -252,6 +337,56 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VisualContextRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Reason the agent requested camera access"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id",
+            "description": "Target room name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "VisualContextRequest",
+        "description": "Schema for incoming CES tool webhook payloads (request_visual_context)."
+      },
+      "VisualContextResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "camera_enabled": {
+            "type": "boolean",
+            "title": "Camera Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message",
+          "camera_enabled"
+        ],
+        "title": "VisualContextResponse"
       }
     }
   }

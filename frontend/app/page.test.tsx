@@ -88,7 +88,8 @@ describe("US-08: Landing Page Placeholder", () => {
     render(<Home />);
 
     // Assert
-    expect(screen.getByText(/TTEC Digital/i)).toBeInTheDocument();
+    const elements = screen.getAllByText(/TTEC Digital/i);
+    expect(elements.length).toBeGreaterThan(0);
   });
 
   it("should render the new mission statement copy", () => {

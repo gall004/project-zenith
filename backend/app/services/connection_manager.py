@@ -44,6 +44,10 @@ class ConnectionManager:
                 )
                 return
 
+    def has_room_connections(self, room_name: str) -> bool:
+        """Check if a room currently has active websocket connections."""
+        return room_name in self._active_connections and bool(self._active_connections[room_name])
+
     async def send_to(
         self, connection_id: str, message: dict
     ) -> bool:

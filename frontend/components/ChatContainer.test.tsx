@@ -49,7 +49,7 @@ describe("US-07: ChatContainer Component", () => {
 
     // Assert
     expect(
-      screen.getByText(/i am ready to diagnose the issue/i)
+      screen.getByText(/how can i assist you today/i)
     ).toBeInTheDocument();
   });
 

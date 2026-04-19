@@ -27,7 +27,7 @@ async def test_stop_pipeline():
     """Verify stop_pipeline correctly triggers cancellation on the task."""
     room_name = "test-room-stop"
     mock_task = MagicMock()
-    mock_task.cancel = MagicMock()
+    mock_task.cancel = AsyncMock()
     
     ACTIVE_PIPELINES[room_name] = mock_task
     

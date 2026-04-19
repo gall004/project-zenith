@@ -26,7 +26,6 @@ export function LiveKitSession({
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
 
   const loadToken = useCallback(async () => {
     setIsLoading(true);
@@ -46,35 +45,15 @@ export function LiveKitSession({
   }, [roomName, identity]);
 
   useEffect(() => {
-    if (hasStarted && !token && !isLoading && !error) {
+    if (!token && !isLoading && !error) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       loadToken();
     }
-  }, [hasStarted, loadToken, token, isLoading, error]);
+  }, [loadToken, token, isLoading, error]);
 
-  // Auto-escalate: If the agent requests visual context over chat, bridge seamlessly into voice
-  useEffect(() => {
-    if (multimodalEvent && !hasStarted) {
-      setHasStarted(true);
-    }
-  }, [multimodalEvent, hasStarted]);
 
-  // Empty/Ready State
-  if (!hasStarted) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[300px] w-full border-dashed border-2 rounded-xl bg-card p-6 space-y-4 shadow-sm relative overflow-hidden">
-        <h3 className="text-xl font-bold text-foreground">
-          Ready to Connect
-        </h3>
-        <p className="text-sm text-muted-foreground max-w-sm text-center">
-          Click below to establish the secure LiveKit WebRTC connection. This validates the browser media capability securely.
-        </p>
-        <Button onClick={() => setHasStarted(true)} size="lg" className="mt-2">
-          Initialize Audio Session
-        </Button>
-      </div>
-    );
-  }
+
+
 
   // Loading State (Skeleton)
   if (isLoading) {
@@ -121,24 +100,12 @@ export function LiveKitSession({
         process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880"
       }
       connect={true}
-      className="flex flex-col items-center justify-center p-6 border rounded-xl bg-card min-h-[200px] w-full shadow-sm relative overflow-hidden"
+      className="contents"
     >
       <RoomAudioRenderer />
       <MultimodalInterceptHandler
         multimodalEvent={multimodalEvent}
       />
-      <div className="text-card-foreground text-center space-y-4 z-10">
-        <h2 className="text-2xl font-bold tracking-tight">
-          Active Voice Session
-        </h2>
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-sm text-primary shadow-sm">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full motion-safe:animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-          </span>
-          LiveKit Secured
-        </div>
-      </div>
     </LiveKitRoom>
   );
 }
@@ -215,12 +182,13 @@ function MultimodalInterceptHandler({
 
   // Attach preview stream to video element
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.srcObject = previewStream;
+    const videoNode = videoRef.current;
+    if (videoNode) {
+      videoNode.srcObject = previewStream;
     }
     return () => {
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
+      if (videoNode) {
+        videoNode.srcObject = null;
       }
     };
   }, [previewStream]);

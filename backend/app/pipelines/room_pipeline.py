@@ -8,7 +8,7 @@ from pipecat.transports.livekit.transport import LiveKitTransport, LiveKitParams
 from pipecat.services.google.gemini_live.llm import GeminiLiveLLMService
 from pipecat.processors.frame_processor import FrameProcessor, FrameDirection
 from pipecat.processors.aggregators.llm_context import LLMContext
-from pipecat.frames.frames import TextFrame, Frame, LLMFullResponseEndFrame, LLMTextFrame, LLMContextFrame, TranscriptionFrame
+from pipecat.frames.frames import Frame, LLMFullResponseEndFrame, LLMTextFrame, LLMContextFrame, TranscriptionFrame
 from livekit import api
 import pathlib
 

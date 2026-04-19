@@ -8,8 +8,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+
 import { useZenithSocket } from "@/hooks/useZenithSocket";
 import type {
   WebSocketEvent,
@@ -57,7 +56,7 @@ function ConnectionStatusBadge({
 
   return (
     <div
-      className="inline-flex items-center gap-2 text-xs text-slate-400 font-label tracking-wide uppercase mb-4"
+      className="inline-flex items-center gap-2 text-xs text-slate-400 font-label tracking-wide uppercase"
       role="status"
       aria-live="polite"
     >
@@ -119,6 +118,7 @@ export interface ChatContainerProps {
   roomName: string;
   onMultimodalIntercept?: (event: EnableMultimodalInputEvent) => void;
   onSessionEvent?: (event: SessionEvent) => void;
+  onEndSession?: () => void;
   children?: React.ReactNode;
 }
 
@@ -126,6 +126,7 @@ export function ChatContainer({
   roomName,
   onMultimodalIntercept,
   onSessionEvent,
+  onEndSession,
   children,
 }: ChatContainerProps): React.JSX.Element {
   const {
@@ -136,7 +137,15 @@ export function ChatContainer({
     sendMessage,
   } = useZenithSocket(roomName);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("zenith_messages");
+      if (saved) {
+        try { return JSON.parse(saved); } catch { }
+      }
+    }
+    return [];
+  });
   const [inputValue, setInputValue] = useState("");
   const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -202,7 +211,7 @@ export function ChatContainer({
         sender: "user",
         timestamp: transcription.timestamp,
       };
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // removed redundant eslint directive
       setMessages((prev) => [...prev, userMessage]);
     }
 
@@ -224,6 +233,15 @@ export function ChatContainer({
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  // Sync state cleanly when switching context
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("zenith_messages", JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Removed redundant effect because VoiceSessionClient mounts this with key={roomName}
 
   const handleSubmit = useCallback(() => {
     const trimmed = inputValue.trim();
@@ -254,24 +272,33 @@ export function ChatContainer({
 
   return (
     <div className="flex flex-col h-full w-full" aria-label="Chat">
-      <div className="px-2">
+      <div className="px-2 flex justify-between items-center mb-4">
         <ConnectionStatusBadge
           status={connectionStatus}
           attempt={reconnectAttempt}
         />
+        {onEndSession && messages.length > 0 && (
+          <button
+            onClick={onEndSession}
+            className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-full font-medium transition-colors border border-red-500/20"
+            aria-label="End current session"
+          >
+            End Session
+          </button>
+        )}
       </div>
 
       <div
         ref={messageListRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto space-y-4 pr-3 custom-scrollbar min-h-0"
+        className="flex-1 overflow-y-auto space-y-4 pr-3 custom-scrollbar min-h-0 flex flex-col"
         role="log"
         aria-live="polite"
       >
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-4">
+          <div className="flex flex-col items-center justify-center py-8 flex-1 text-center p-4">
             <span className="material-symbols-outlined text-4xl text-slate-600 mb-2" style={{fontVariationSettings: "'FILL' 0"}}>forum</span>
-            <p className="text-sm text-slate-500 font-body">I am ready to diagnose the issue.</p>
+            <p className="text-sm text-slate-400 font-body">How can I assist you today?</p>
           </div>
         ) : (
           messages.map((message) => (
@@ -285,22 +312,22 @@ export function ChatContainer({
       </div>
 
       {/* Input area */}
-      <div className="mt-4 relative shrink-0">
+      <div className="mt-4 pb-2 shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSubmit();
           }}
-          className="relative w-full"
+          className={`relative w-full flex items-center bg-[#1c2022] border-2 border-white/10 rounded-[32px] pl-5 pr-2 py-2 transition-all shadow-md ${!isConnected ? "opacity-70 grayscale" : "focus-within:border-[#00D4FF]/70 focus-within:shadow-[0_0_15px_rgba(0,212,255,0.2)]"}`}
         >
-          <Input
+          <input
             ref={inputRef}
             id="chat-input"
             type="text"
-            placeholder="Start Chat..."
+            placeholder="Type a message..."
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            className="w-full bg-white/5 border-0 border-b-2 border-[#0054d6]/50 text-white placeholder-slate-500 px-4 py-6 text-sm focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#00D4FF] focus:border-[#00D4FF] transition-colors pr-12 rounded-sm shadow-none"
+            className="flex-1 bg-transparent border-none text-white placeholder-slate-400 outline-none ring-0 focus:ring-0 px-0 h-10 text-sm disabled:cursor-not-allowed"
             aria-label="Chat message input"
             autoComplete="off"
             disabled={!isConnected}
@@ -310,9 +337,9 @@ export function ChatContainer({
             aria-label="Send message"
             id="chat-submit"
             disabled={inputValue.trim().length === 0 || !isConnected}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0054d6] hover:text-[#00D4FF] transition-colors disabled:opacity-50"
+            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${!isConnected || inputValue.trim().length === 0 ? "bg-white/10 text-white/30" : "bg-[#00D4FF] text-black hover:bg-[#00D4FF]/90 shadow-[0_0_10px_rgba(0,212,255,0.4)]"}`}
           >
-            <span className="material-symbols-outlined text-xl" style={{fontVariationSettings: "'FILL' 1"}}>send</span>
+            <span className="material-symbols-outlined text-xl" style={{fontVariationSettings: "'FILL' 1"}}>arrow_upward</span>
           </button>
         </form>
       </div>
