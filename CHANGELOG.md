@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Feature `feat/session-persistence`: Introduced robust session management capabilities. WebRTC/LiveKit and GECX metadata (room IDs and identities) now persist via local `sessionStorage` alongside the active chat transcript, enabling seamless re-joins after page refreshes. Supported by backend enhancements including a 30-second graceful disconnection window and an explicit `DELETE /api/v1/sessions/{room_name}` REST endpoint mapped to a new "End Session" UI action button in the chat UI.
 - Bug `fix/update-company-branding`: Corrected hardcoded company branding in the footer to display "TTEC Digital" instead of "Precision AI" and updated page copy to accurately reflect the goal of demonstrating multimodal AI interactions to customers.
+- Bug `fix/end-session-modal`: Added a Shadcn AlertDialog confirmation barrier to the "End Session" action to prevent accidental UX state deletion.
 
 ### Removed
 - Refactor `chore/ui-ux-overhaul-shadcn`: Deleted explicit isolated `/voice-session` standalone page in favor of unified Single Page Application logic.

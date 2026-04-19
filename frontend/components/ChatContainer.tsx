@@ -10,6 +10,17 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 import { useZenithSocket } from "@/hooks/useZenithSocket";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type {
   WebSocketEvent,
   AgentResponseEvent,
@@ -278,13 +289,37 @@ export function ChatContainer({
           attempt={reconnectAttempt}
         />
         {onEndSession && messages.length > 0 && (
-          <button
-            onClick={onEndSession}
-            className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-full font-medium transition-colors border border-red-500/20"
-            aria-label="End current session"
-          >
-            End Session
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <button
+                  className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-full font-medium transition-colors border border-red-500/20"
+                  aria-label="End current session"
+                >
+                  End Session
+                </button>
+              }
+            />
+            <AlertDialogContent className="bg-[#2c3134] text-white border-white/10 sm:max-w-[425px]">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="font-headline text-lg">End Session?</AlertDialogTitle>
+                <AlertDialogDescription className="text-slate-400 text-base">
+                  Are you sure you want to end your session with Zenith? This will clear your chat history and sever the secure connection.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="mt-6 flex gap-3 sm:gap-0">
+                <AlertDialogCancel className="bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white sm:mr-2">
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={onEndSession}
+                  className="bg-red-500 hover:bg-red-600 text-white border-none"
+                >
+                  End Session
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
 
