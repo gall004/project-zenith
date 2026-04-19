@@ -14,7 +14,8 @@ export default function LandingPage() {
       <main className="min-h-screen">
         <HeroSection onAskZenith={() => setIsDrawerOpen(true)} />
         <FeaturesSection />
-        <BentoGrid />
+        <ArchitectureComparisonSection />
+        <CostEstimateSection />
       </main>
 
       <Footer />
@@ -40,6 +41,7 @@ function TopNavBar({ onAskZenith }: { onAskZenith: () => void }) {
         <nav className="hidden md:flex space-x-8">
           <a href="#features" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Features</a>
           <a href="#architecture" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Architecture</a>
+          <a href="#costs" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Costs</a>
         </nav>
         <Button
           onClick={onAskZenith}
@@ -123,59 +125,7 @@ function FeaturesSection() {
   );
 }
 
-function BentoGrid() {
-  return (
-    <section id="architecture" className="py-24">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="mb-16">
-          <h2 className="text-3xl md:text-4xl font-headline font-bold text-on-surface mb-4">Architecture Deep Dive</h2>
-          <p className="text-secondary max-w-2xl">The anatomy of the Zenith Stack.</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 auto-rows-[250px]">
-          <div className="md:col-span-2 md:row-span-2 bg-gradient-to-br from-surface-container-high to-surface rounded-[2rem] p-8 border border-outline-variant relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-            <div className="relative z-10 flex flex-col h-full justify-between">
-              <div>
-                <span className="inline-block bg-primary text-on-primary px-3 py-1 rounded-full text-xs font-bold mb-4 tracking-wider uppercase">Agent Routing</span>
-                <h3 className="text-3xl font-headline font-bold text-on-surface mb-4 leading-tight">Dynamic WebSocket Interception</h3>
-                <p className="text-secondary text-lg">Traffic routed automatically between the lightweight GECX agent and the heavy-duty Gemini Live multimodal pipeline based on conversational context.</p>
-              </div>
-              <div className="mt-8 flex items-center space-x-2 text-primary font-medium hover:text-primary/80 cursor-pointer w-fit">
-                <span>View Routing Logic</span>
-                <span className="material-symbols-outlined text-sm">arrow_outward</span>
-              </div>
-            </div>
-          </div>
 
-          <div className="md:col-span-2 bg-surface-container rounded-[2rem] p-8 border border-outline-variant flex flex-col justify-between">
-            <h3 className="text-xl font-bold text-on-surface">Vertex AI Integration</h3>
-            <div className="bg-surface rounded-xl p-4 mt-4 font-mono text-sm text-secondary overflow-hidden border border-outline-variant">
-              <code>
-                <span className="text-tertiary">async def</span> <span className="text-primary">invoke_agent</span>(session):<br/>
-                &nbsp;&nbsp;client = AgentsAsyncClient()<br/>
-                &nbsp;&nbsp;<span className="text-tertiary">await</span> client.detect_intent(session)<br/>
-                &nbsp;&nbsp;...
-              </code>
-            </div>
-          </div>
-
-          <div className="md:col-span-1 bg-surface-container-highest rounded-[2rem] p-8 border border-outline-variant flex flex-col items-center justify-center text-center">
-            <span className="material-symbols-outlined text-5xl text-primary mb-4">deployed_code</span>
-            <h3 className="font-bold text-on-surface mb-2">Shadcn UI</h3>
-            <p className="text-sm text-secondary">Accessible primitives styling.</p>
-          </div>
-
-          <div className="md:col-span-1 bg-tertiary-container text-on-tertiary-container rounded-[2rem] p-8 flex flex-col items-center justify-center text-center">
-            <span className="material-symbols-outlined text-5xl mb-4">bolt</span>
-            <h3 className="font-bold mb-2">FastAPI Core</h3>
-            <p className="text-sm opacity-90">Async Python Engine.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function Footer() {
   return (
@@ -192,5 +142,201 @@ function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+function ArchitectureComparisonSection() {
+  return (
+    <section id="architecture" className="py-24 bg-surface-container-low border-t border-outline-variant/30">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="mb-16 text-center">
+          <h2 className="text-3xl md:text-4xl font-headline font-bold text-on-surface mb-4">Enterprise Architecture Trade-offs</h2>
+          <p className="text-secondary max-w-2xl mx-auto">Evaluating the path to production: Lightweight Google-native integration vs a Heavyweight portable middleware stack.</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+          <div className="space-y-6">
+            <h3 className="text-2xl font-bold text-on-surface flex items-center">
+              <span className="material-symbols-outlined text-primary mr-3 text-3xl">flight_takeoff</span>
+              Google-Native (Lightweight)
+            </h3>
+            <p className="text-secondary leading-relaxed">
+              This approach completely eliminates WebRTC middleware. The client browser establishes a direct secure feed with the Gemini Live API, bypassing custom server-side media orchestration.
+            </p>
+            <div className="space-y-4 pt-2">
+              <div className="bg-surface p-5 rounded-2xl border border-outline-variant">
+                <h4 className="font-bold text-on-surface mb-2 text-green-500">Pros</h4>
+                <ul className="text-sm text-secondary space-y-2 list-disc pl-4">
+                  <li><strong>Absolute Minimum Latency:</strong> Direct path from browser to Google Cloud CDN.</li>
+                  <li><strong>Lower TCO:</strong> Eliminates continuous server compute costs and third-party WebRTC cloud usage.</li>
+                  <li><strong>Less Operational Burden:</strong> No media servers or Python Pipecat loops to maintain or scale.</li>
+                </ul>
+              </div>
+              <div className="bg-surface p-5 rounded-2xl border border-outline-variant">
+                <h4 className="font-bold text-on-surface mb-2 text-rose-400">Cons</h4>
+                <ul className="text-sm text-secondary space-y-2 list-disc pl-4">
+                  <li><strong>Vendor Lock-in:</strong> Tightly coupled to Google's specific WebRTC implementation and SDK.</li>
+                  <li><strong>Limited Interception:</strong> Audio passes directly to the LLM, making mid-stream server-side redaction/interception difficult.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-6">
+            <h3 className="text-2xl font-bold text-on-surface flex items-center">
+              <span className="material-symbols-outlined text-primary mr-3 text-3xl">Pipecat + LiveKit (Heavyweight)</span>
+            </h3>
+            <p className="text-secondary leading-relaxed">
+              This approach routes all user audio and video through a dedicated WebRTC server (LiveKit), where a backend process (Pipecat) intercepts and orchestras the AI logic before connecting to the LLM.
+            </p>
+            <div className="space-y-4 pt-2">
+              <div className="bg-surface p-5 rounded-2xl border border-outline-variant">
+                <h4 className="font-bold text-on-surface mb-2 text-green-500">Pros</h4>
+                <ul className="text-sm text-secondary space-y-2 list-disc pl-4">
+                  <li><strong>Provider Portability:</strong> Pipecat abstracts the LLM. You can swap Gemini for OpenAI or Anthropic by changing a single node.</li>
+                  <li><strong>Deep Server-Side Orchestration:</strong> Full control to inject tool calls, transcribe in real-time, or alter audio payloads before the LLM hears them.</li>
+                  <li><strong>Enterprise Features:</strong> LiveKit provides native SIP routing, cloud recording, and advanced room management.</li>
+                </ul>
+              </div>
+              <div className="bg-surface p-5 rounded-2xl border border-outline-variant">
+                <h4 className="font-bold text-on-surface mb-2 text-rose-400">Cons</h4>
+                <ul className="text-sm text-secondary space-y-2 list-disc pl-4">
+                  <li><strong>Higher Latency & Cost:</strong> Dual-routing bandwidth (Browser → LiveKit → Pipecat → Gemini) and dedicated container compute limits optimization.</li>
+                  <li><strong>Complex Transports:</strong> Introduces multi-point WebRTC fragility (track dropping, dangling tasks) that must be managed.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Comparison Table */}
+        <div className="bg-surface rounded-3xl border border-outline-variant overflow-hidden mb-16 shadow-lg shadow-outline-variant/10">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container border-b border-outline-variant/50">
+                  <th className="p-4 font-headline font-bold text-on-surface">Phase</th>
+                  <th className="p-4 font-headline font-bold text-on-surface border-l border-outline-variant/30">Google-Native Alternative <span className="text-secondary font-normal text-sm block mt-1">(Lightweight / Direct)</span></th>
+                  <th className="p-4 font-headline font-bold text-on-surface border-l border-outline-variant/30 mt-1">Portable Middleware <span className="text-primary font-normal text-sm block mt-1">(LiveKit + Pipecat)</span></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/30 text-sm">
+                <tr>
+                  <td className="p-4 font-medium text-on-surface">Text chat</td>
+                  <td className="p-4 text-secondary border-l border-outline-variant/30">GECX agent via WebSocket</td>
+                  <td className="p-4 text-secondary border-l border-outline-variant/30">Same — no change</td>
+                </tr>
+                <tr className="bg-surface-container/30">
+                  <td className="p-4 font-medium text-on-surface">Initial Escalation</td>
+                  <td className="p-4 text-secondary border-l border-outline-variant/30">Browser securely fetches API token and connects directly to Gemini via <br/><code className="text-primary bg-primary/10 px-1 py-0.5 rounded">@google/genai</code> JS SDK</td>
+                  <td className="p-4 text-secondary border-l border-outline-variant/30">Backend spins up dedicated Pipecat Python task + LiveKit WebRTC room token.</td>
+                </tr>
+                <tr>
+                  <td className="p-4 font-medium text-on-surface">Audio/Video Path</td>
+                  <td className="p-4 text-secondary border-l border-outline-variant/30">Browser ↔ Gemini Live API</td>
+                  <td className="p-4 text-secondary border-l border-outline-variant/30">Browser ↔ LiveKit ↔ Pipecat ↔ Gemini WSS</td>
+                </tr>
+                <tr className="bg-surface-container/30">
+                  <td className="p-4 font-medium text-on-surface">Required Infrastructure</td>
+                  <td className="p-4 text-secondary border-l border-outline-variant/30">Auth Token Proxy (Minimal Compute)</td>
+                  <td className="p-4 text-secondary border-l border-outline-variant/30">LiveKit Cloud + Sustained Compute Container</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CostEstimateSection() {
+  return (
+    <section id="costs" className="py-24 bg-surface">
+      <div className="container mx-auto px-4 md:px-6">
+        {/* Cost Analysis Module */}
+        <div className="mb-0">
+          <h3 className="text-3xl font-headline font-bold text-on-surface mb-8 text-center text-primary">Cost Estimate per Average Session</h3>
+          <p className="text-secondary text-center mb-8 text-sm">Illustrative per-interaction unit costs for a 10-minute multimodal session. Assumes enterprise scale (1M+ interactions/mo) utilizing standard Gemini Flash tier.</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:px-12">
+            <div className="bg-surface p-8 rounded-3xl border border-outline-variant relative shadow-md">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-t-3xl"></div>
+              <h4 className="text-xl font-bold text-on-surface mb-6 flex items-center justify-between">
+                <span>Google-Native <span className="font-normal text-secondary text-sm block mt-1">Lightweight</span></span>
+                <span className="text-2xl font-mono text-primary">~$0.26</span>
+              </h4>
+              <div className="space-y-4 text-sm mt-8">
+                <div className="flex justify-between border-b border-outline-variant/30 pb-2">
+                  <span className="text-secondary font-medium">GECX Text Processing</span>
+                  <span className="font-mono text-on-surface">$0.05</span>
+                </div>
+                <div className="flex justify-between border-b border-outline-variant/30 pb-2">
+                  <span className="text-secondary font-medium">Gemini Audio Input (10m)</span>
+                  <span className="font-mono text-on-surface">$0.12</span>
+                </div>
+                <div className="flex justify-between border-b border-outline-variant/30 pb-2">
+                  <span className="text-secondary font-medium">Gemini Audio Output (Gen)</span>
+                  <span className="font-mono text-on-surface">$0.08</span>
+                </div>
+                <div className="flex justify-between border-b border-outline-variant/30 pb-2">
+                  <span className="text-secondary font-medium">Secure Auth Proxy Compute</span>
+                  <span className="font-mono text-on-surface">$0.01</span>
+                </div>
+              </div>
+              <p className="mt-6 text-xs text-secondary/70 leading-relaxed italic">By pushing the WebRTC stream natively to the client, infrastructure overhead is effectively zeroed out, limiting the bill to raw API consumption.</p>
+            </div>
+
+            <div className="bg-surface p-8 rounded-3xl border border-primary/40 relative shadow-xl shadow-primary/5">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-primary rounded-t-3xl"></div>
+              <h4 className="text-xl font-bold text-on-surface mb-6 flex items-center justify-between">
+                <span>Pipecat + LiveKit <span className="font-normal text-secondary text-sm block mt-1">Heavyweight</span></span>
+                <span className="text-2xl font-mono text-primary">~$0.32</span>
+              </h4>
+              <div className="space-y-4 text-sm mt-8">
+                <div className="flex justify-between border-b border-outline-variant/30 pb-2">
+                  <span className="text-secondary font-medium">GECX Text Processing</span>
+                  <span className="font-mono text-on-surface">$0.05</span>
+                </div>
+                <div className="flex justify-between border-b border-outline-variant/30 pb-2">
+                  <span className="text-secondary font-medium">Gemini Audio Input (10m)</span>
+                  <span className="font-mono text-on-surface">$0.12</span>
+                </div>
+                <div className="flex justify-between border-b border-outline-variant/30 pb-2">
+                  <span className="text-secondary font-medium">Gemini Audio Output (Gen)</span>
+                  <span className="font-mono text-on-surface">$0.08</span>
+                </div>
+                <div className="flex justify-between border-b border-outline-variant/30 pb-2">
+                  <span className="text-secondary font-medium flex items-center">
+                    Middleware Compute
+                    <span className="ml-2 text-[10px] bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded">Pipecat Container</span>
+                  </span>
+                  <span className="font-mono text-on-surface">$0.05</span>
+                </div>
+                <div className="flex justify-between border-b border-outline-variant/30 pb-2">
+                  <span className="text-secondary font-medium flex items-center">
+                    WebRTC Platform limits
+                    <span className="ml-2 text-[10px] bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded">LiveKit Bandwidth</span>
+                  </span>
+                  <span className="font-mono text-on-surface">$0.02</span>
+                </div>
+              </div>
+              <p className="mt-6 text-xs text-secondary/70 leading-relaxed italic">Accumulates a roughly ~20% markup per session due to the continuous server-side resources strictly required to proxy the media streams.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-12 bg-primary-container/30 rounded-2xl p-6 border border-primary/30 flex items-start gap-4 mx-auto max-w-4xl">
+           <span className="material-symbols-outlined text-primary text-3xl mt-1">balance</span>
+           <div>
+              <p className="text-on-surface font-medium leading-relaxed">
+                <strong className="text-primary tracking-wide">THE VERDICT:</strong><br/>
+                If your deployment focuses strictly on cost-optimization and relies exclusively on Google's Gemini models, the native lightweight approach is vastly superior. Conversely, if you prioritize enterprise portability, multi-LLM fallback strategies, or require deep server-side observability of the audio payload before the AI processes it, the heavyweight investment is mandatory.
+              </p>
+           </div>
+        </div>
+
+      </div>
+    </section>
   );
 }
