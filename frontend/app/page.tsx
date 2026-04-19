@@ -107,7 +107,7 @@ function FeaturesSection() {
           {[
             { icon: "speed", title: "Ultra Low-Latency", desc: "Built on Google's high-speed WebRTC infrastructure for sub-100ms audio delivery, enabling naturally conversational turn-taking." },
             { icon: "visibility", title: "Multimodal Vision", desc: "Seamlessly escalate from text to voice and live video analysis using Gemini Live's native multimodal capabilities." },
-            { icon: "architecture", title: "Agentic Orchestration", desc: "Routing intelligence powered by Dialogflow CX, maintaining continuous conversational context across modalities." }
+            { icon: "architecture", title: "Agentic Orchestration", desc: "Routing intelligence powered by Gemini Enterprise for CX, maintaining continuous conversational context across modalities." }
           ].map((feature, i) => (
             <div key={i} className="bg-surface p-8 rounded-3xl border border-outline-variant hover:border-primary/50 transition-colors group">
               <div className="w-14 h-14 bg-primary-container text-on-primary-container rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">

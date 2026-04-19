@@ -163,11 +163,8 @@ export function ChatContainer({
 
   const messageListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const messageIdCounter = useRef(0);
-
   const generateMessageId = useCallback((): string => {
-    messageIdCounter.current += 1;
-    return `msg-${messageIdCounter.current}`;
+    return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }, []);
 
   // Auto-scroll when new messages arrive and user is near bottom (US-08)
@@ -323,7 +320,8 @@ export function ChatContainer({
         )}
       </div>
 
-      <div
+      <div className="relative flex-1 min-h-0 flex flex-col">
+        <div
         ref={messageListRef}
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto space-y-4 pr-3 custom-scrollbar min-h-0 flex flex-col"
@@ -344,6 +342,23 @@ export function ChatContainer({
         
         {/* Render LiveKitSession or escalation state inline here so it appears beneath/inside the chat flow */}
         {children}
+        </div>
+
+        {/* Scroll-to-bottom helper */}
+        {!isNearBottom && messages.length > 0 && (
+          <button
+            onClick={() => {
+              if (messageListRef.current) {
+                const container = messageListRef.current;
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+              }
+            }}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 p-2 bg-[#2c3134] hover:bg-[#3f465c] text-white rounded-full shadow-xl border border-white/10 transition-all z-20 animate-in fade-in slide-in-from-bottom-2 focus:outline-none focus:ring-2 focus:ring-primary"
+            aria-label="Scroll to bottom"
+          >
+            <span className="material-symbols-outlined text-[20px] leading-none block" style={{fontVariationSettings: "'wght' 300"}}>arrow_downward</span>
+          </button>
+        )}
       </div>
 
       {/* Input area */}

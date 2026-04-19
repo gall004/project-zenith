@@ -139,7 +139,16 @@ export function useZenithSocket(roomName: string): UseZenithSocketReturn {
       isMountedRef.current = false;
       clearReconnectTimeout();
       if (socketRef.current) {
-        socketRef.current.close();
+        const s = socketRef.current;
+        if (s.readyState === WebSocket.CONNECTING) {
+          // Defend against React StrictMode fast-unmount 'WebSocket is closed before connection established' errors
+          s.onopen = () => s.close();
+          s.onmessage = null;
+          s.onerror = null;
+          s.onclose = null;
+        } else {
+          s.close();
+        }
         socketRef.current = null;
       }
     };

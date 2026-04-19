@@ -8,7 +8,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { LiveKitRoom, useRoomContext, RoomAudioRenderer } from "@livekit/components-react";
+import { LiveKitRoom, useRoomContext, RoomAudioRenderer, StartAudio } from "@livekit/components-react";
 import { fetchLiveKitToken } from "@/lib/api/livekit";
 import { Button } from "@/components/ui/button";
 import type { EnableMultimodalInputEvent } from "@/types/websocket";
@@ -103,6 +103,9 @@ export function LiveKitSession({
       className="contents"
     >
       <RoomAudioRenderer />
+      <div className="absolute bottom-6 right-6 z-50">
+        <StartAudio label="Click to Allow Voice Interaction" className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-full shadow-lg border border-primary/20 animate-in fade-in transition-all" />
+      </div>
       <MultimodalInterceptHandler
         multimodalEvent={multimodalEvent}
       />
@@ -217,10 +220,6 @@ function MultimodalInterceptHandler({
         <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-sm bg-black/50 text-[10px] text-white/90 z-10">
           {previewStream ? "Local Feed" : "Acquiring..."}
         </div>
-      </div>
-      {/* Intercept node indicator */}
-      <div className="absolute top-4 right-4 text-xs font-mono px-2 py-1 bg-muted/50 rounded-md text-muted-foreground border border-border/50">
-        Intercept Node Active
       </div>
     </>
   );
