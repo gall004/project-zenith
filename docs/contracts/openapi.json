@@ -69,13 +69,96 @@
         }
       }
     },
+    "/api/v1/sessions": {
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Create or resume a session",
+        "description": "Create a new session or resume an existing one.\n\nIf the caller provides an ``identity`` that already has an active\nsession, the existing session is returned (idempotent resume).\nOtherwise a fresh session is created.",
+        "operationId": "create_session_api_v1_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_CreateSessionResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sessions/{room_name}": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Hydrate session state",
+        "description": "Return the full session state from Redis for frontend hydration.\n\nThe frontend calls this on every mount (including after refresh)\nto restore identity, multimodal state, escalation data, and status.",
+        "operationId": "get_session_api_v1_sessions__room_name__get",
+        "parameters": [
+          {
+            "name": "room_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Room Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_SessionState_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Sessions"
         ],
         "summary": "End an active session",
-        "description": "Explicitly terminate a multimodal session and sever all pipelines.",
+        "description": "Explicitly terminate a session: stop pipeline, purge Redis state.",
         "operationId": "end_session_api_v1_sessions__room_name__delete",
         "parameters": [
           {
@@ -95,6 +178,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StandardResponse_dict_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{room_name}/transcript": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Retrieve chat transcript",
+        "description": "Return the full ordered chat transcript for a session.\n\nThe frontend calls this on mount to hydrate the message list\nwithout relying on sessionStorage.",
+        "operationId": "get_transcript_api_v1_sessions__room_name__transcript_get",
+        "parameters": [
+          {
+            "name": "room_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Room Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_list_TranscriptMessage__"
                 }
               }
             }
@@ -157,6 +283,47 @@
   },
   "components": {
     "schemas": {
+      "CreateSessionRequest": {
+        "properties": {
+          "identity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identity"
+          }
+        },
+        "type": "object",
+        "title": "CreateSessionRequest",
+        "description": "POST /api/v1/sessions request body."
+      },
+      "CreateSessionResponse": {
+        "properties": {
+          "room_name": {
+            "type": "string",
+            "title": "Room Name"
+          },
+          "identity": {
+            "type": "string",
+            "title": "Identity"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SessionStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "room_name",
+          "identity",
+          "status"
+        ],
+        "title": "CreateSessionResponse",
+        "description": "POST /api/v1/sessions response body."
+      },
       "ErrorDetail": {
         "properties": {
           "code": {
@@ -201,6 +368,129 @@
         },
         "type": "object",
         "title": "ResponseMeta"
+      },
+      "SessionState": {
+        "properties": {
+          "room_name": {
+            "type": "string",
+            "title": "Room Name"
+          },
+          "identity": {
+            "type": "string",
+            "title": "Identity"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SessionStatus",
+            "default": "active"
+          },
+          "multimodal_event": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Multimodal Event"
+          },
+          "escalation_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escalation Data"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "room_name",
+          "identity"
+        ],
+        "title": "SessionState",
+        "description": "Canonical session state persisted in Redis.\n\nMirrors the fields previously scattered across frontend\n``sessionStorage`` keys (zenith_identity, zenith_room,\nzenith_multimodal, zenith_escalation)."
+      },
+      "SessionStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "escalated",
+          "ended"
+        ],
+        "title": "SessionStatus",
+        "description": "Lifecycle status of a session."
+      },
+      "StandardResponse_CreateSessionResponse_": {
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreateSessionResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "type": "object",
+        "title": "StandardResponse[CreateSessionResponse]"
+      },
+      "StandardResponse_SessionState_": {
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SessionState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "type": "object",
+        "title": "StandardResponse[SessionState]"
       },
       "StandardResponse_TokenResponseData_": {
         "properties": {
@@ -262,6 +552,39 @@
         "type": "object",
         "title": "StandardResponse[dict]"
       },
+      "StandardResponse_list_TranscriptMessage__": {
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TranscriptMessage"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "type": "object",
+        "title": "StandardResponse[list[TranscriptMessage]]"
+      },
       "TokenRequest": {
         "properties": {
           "room_name": {
@@ -297,6 +620,35 @@
           "token"
         ],
         "title": "TokenResponseData"
+      },
+      "TranscriptMessage": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "sender": {
+            "type": "string",
+            "title": "Sender"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "sender",
+          "timestamp"
+        ],
+        "title": "TranscriptMessage",
+        "description": "A single chat message stored in the transcript list."
       },
       "ValidationError": {
         "properties": {

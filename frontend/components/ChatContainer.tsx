@@ -3,11 +3,13 @@
  *
  * Renders a message list with auto-scroll, text input, and submit.
  * Wired to the useZenithSocket hook for real-time messaging.
+ * Chat transcript is persisted server-side (Redis) — no sessionStorage.
  */
 
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { fetchTranscript } from "@/lib/api/sessions";
 
 import { useZenithSocket } from "@/hooks/useZenithSocket";
 import {
@@ -148,15 +150,30 @@ export function ChatContainer({
     sendMessage,
   } = useZenithSocket(roomName);
 
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("zenith_messages");
-      if (saved) {
-        try { return JSON.parse(saved); } catch { }
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  // Hydrate transcript from backend on mount (replaces sessionStorage)
+  useEffect(() => {
+    let cancelled = false;
+    async function loadTranscript() {
+      try {
+        const transcript = await fetchTranscript(roomName);
+        if (!cancelled && transcript.length > 0) {
+          const hydrated: ChatMessage[] = transcript.map((msg) => ({
+            id: msg.id,
+            text: msg.text,
+            sender: msg.sender as "user" | "agent",
+            timestamp: msg.timestamp,
+          }));
+          setMessages(hydrated);
+        }
+      } catch (err) {
+        console.error("Failed to hydrate transcript", err);
       }
     }
-    return [];
-  });
+    loadTranscript();
+    return () => { cancelled = true; };
+  }, [roomName]);
   const [inputValue, setInputValue] = useState("");
   const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -242,12 +259,8 @@ export function ChatContainer({
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // Sync state cleanly when switching context
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("zenith_messages", JSON.stringify(messages));
-    }
-  }, [messages]);
+  // Transcript persistence is now handled server-side (Redis).
+  // No sessionStorage sync needed.
 
   // Removed redundant effect because VoiceSessionClient mounts this with key={roomName}
 

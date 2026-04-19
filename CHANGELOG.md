@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Feature `feature/redis-session-state`: Introduced Redis-backed backend-owned session state layer. All session metadata (identity, room assignment, multimodal state, escalation data) is now persisted in Redis under `session:{room_name}` with 24-hour TTL auto-expiry.
+- Feature `feature/redis-session-state`: New REST endpoints for session lifecycle — `POST /api/v1/sessions` (create/resume), `GET /api/v1/sessions/{room_name}` (hydrate), `GET /api/v1/sessions/{room_name}/transcript` (chat history), `DELETE /api/v1/sessions/{room_name}` (end session).
+- Feature `feature/redis-session-state`: Chat transcript persistence via Redis lists (`transcript:{room_name}`). Every user and agent message is appended server-side.
+- Feature `feature/redis-session-state`: Frontend session API client (`lib/api/sessions.ts`) with cookie-based session handle replacing all `sessionStorage` usage.
+- Feature `feature/redis-session-state`: Health endpoint now reports `redis: "ok"/"error"` and `active_sessions` count for operations monitoring.
+- ADR `0002-redis-session-state.md`: Documenting the architectural decision to move session state from frontend `sessionStorage` to backend-owned Redis.
+
+### Changed
+- Feature `feature/redis-session-state`: WebSocket handler now persists messages to Redis transcript on send/receive and checks Redis session status during grace period pipeline teardown (replaces in-memory-only connection count check).
+- Feature `feature/redis-session-state`: Agent webhook now writes multimodal state to Redis *before* emitting the WebSocket event (write-before-emit pattern) ensuring simultaneous refreshes always find current state.
+- Feature `feature/redis-session-state`: `VoiceSessionClient` now hydrates from backend API on mount with loading/error states, instead of reading from `sessionStorage`.
+- Feature `feature/redis-session-state`: `ChatContainer` now hydrates transcript from `GET /api/v1/sessions/{room_name}/transcript` on mount.
+- Feature `feature/redis-session-state`: FastAPI lifespan now initializes Redis connection pool on startup and gracefully closes on shutdown.
+
+### Removed
+- Feature `feature/redis-session-state`: Removed all `sessionStorage` reads/writes from `VoiceSessionClient.tsx` and `ChatContainer.tsx`. Frontend no longer owns session state.
+
 ### Changed
 - Refactor `chore/ui-ux-overhaul-shadcn`: Redesigned the primary application layout into a marketing landing page that launches the chat flow into a sliding Shadcn `<Sheet>` Drawer component. Restyled text chat UI (`ChatContainer`) to match specific dark technical aesthetics using custom CSS variables mapped to Tailwind v4. 
 - Refactor `chore/ui-ux-overhaul-shadcn`: Unified WebRTC layout hierarchy by migrating the `<LiveKitSession />` inline into the ChatContainer DOM, ensuring the multimodal video feed rests within the visual flow of the user interaction.

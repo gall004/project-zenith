@@ -27,24 +27,39 @@ async def health_check(response: Response):
                 livekit_status = "connected"
     except Exception:
         pass
-        
-    dependencies_healthy = livekit_status == "connected"
-    
+
+    # 2. Check Redis
+    from app.services.redis_client import redis_health
+    from app.services.session_store import get_active_session_count
+
+    redis_check = await redis_health()
+    redis_status = redis_check.get("redis", "error")
+
+    active_sessions = 0
+    if redis_status == "ok":
+        try:
+            active_sessions = await get_active_session_count()
+        except Exception:
+            pass
+
+    dependencies_healthy = livekit_status == "connected" and redis_status == "ok"
+
     if not dependencies_healthy:
         response.status_code = 503
         return StandardResponse(
             error=ErrorDetail(code="SERVICE_UNAVAILABLE", message="Critical dependencies are unreachable"),
             data=None
         )
-        
+
     data = {
         "service": "zenith-backend",
         "version": "1.0.0",
         "uptime": uptime,
         "dependencies": {
-            "redis": "pending_architecture_migration",
+            "redis": redis_status,
             "livekit": livekit_status
-        }
+        },
+        "active_sessions": active_sessions,
     }
-    
+
     return StandardResponse(data=data)

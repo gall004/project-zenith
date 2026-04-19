@@ -14,6 +14,14 @@ sys.path.insert(
 from unittest.mock import patch, AsyncMock
 from app.main import app
 
+# Global mock for session_store to prevent Redis connections during WS tests
+_mock_session_store = patch("app.api.v1.ws.session_store", **{
+    "append_transcript": AsyncMock(),
+    "get_session": AsyncMock(return_value=None),
+    "update_session": AsyncMock(return_value=None),
+})
+_mock_session_store.start()
+
 
 class TestWebSocketConnection:
     """US-01: Backend WebSocket endpoint accepts connections."""

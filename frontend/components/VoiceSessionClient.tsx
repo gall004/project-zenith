@@ -4,6 +4,10 @@
  * Wires the ChatContainer and LiveKitSession together, routing
  * the `enable_multimodal_input` WebSocket event from the chat
  * layer into the LiveKit intercept handler.
+ *
+ * Session state is hydrated from the backend (Redis) — not from
+ * browser sessionStorage. The only client-side persistence is
+ * a lightweight cookie (`zenith_session_room`) used as a handle.
  */
 
 "use client";
@@ -12,97 +16,92 @@ import { useState, useCallback, useEffect } from "react";
 import { ChatContainer } from "./ChatContainer";
 import { LiveKitSession } from "./LiveKitSession";
 import type { EnableMultimodalInputEvent, SessionEvent, SessionEventPayload } from "@/types/websocket";
+import {
+  createSession,
+  hydrateSession,
+  endSession as endSessionApi,
+  getSessionCookie,
+} from "@/lib/api/sessions";
+
+type HydrationPhase = "loading" | "ready" | "error";
 
 export function VoiceSessionClient(): React.JSX.Element {
-  const [identity, setIdentity] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("zenith_identity");
-      if (saved) return saved;
-    }
-    const val = `user-${Math.floor(Math.random() * 100000)}`;
-    if (typeof window !== "undefined") sessionStorage.setItem("zenith_identity", val);
-    return val;
-  });
-
-  const [roomName, setRoomName] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("zenith_room");
-      if (saved) return saved;
-    }
-    const val = `session-${Math.floor(Math.random() * 100000)}`;
-    if (typeof window !== "undefined") sessionStorage.setItem("zenith_room", val);
-    return val;
-  });
+  const [identity, setIdentity] = useState<string>("");
+  const [roomName, setRoomName] = useState<string>("");
+  const [hydrationPhase, setHydrationPhase] = useState<HydrationPhase>("loading");
 
   const [multimodalEvent, setMultimodalEvent] =
-    useState<EnableMultimodalInputEvent | null>(() => {
-      if (typeof window !== "undefined") {
-        const saved = sessionStorage.getItem("zenith_multimodal");
-        if (saved) return JSON.parse(saved);
-      }
-      return null;
-    });
+    useState<EnableMultimodalInputEvent | null>(null);
 
-  const [escalationData, setEscalationData] = useState<SessionEventPayload | null>(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("zenith_escalation");
-      if (saved) return JSON.parse(saved);
-    }
-    return null;
-  });
+  const [escalationData, setEscalationData] = useState<SessionEventPayload | null>(null);
 
-  // Sync orchestration states
+  // ──────────────────────────────────────────────
+  // Hydrate session from backend on mount
+  // ──────────────────────────────────────────────
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (multimodalEvent) {
-        sessionStorage.setItem("zenith_multimodal", JSON.stringify(multimodalEvent));
-      } else {
-        sessionStorage.removeItem("zenith_multimodal");
+    let cancelled = false;
+
+    async function hydrate() {
+      try {
+        const existingRoom = getSessionCookie();
+
+        if (existingRoom) {
+          // Attempt to resume from backend
+          const session = await hydrateSession(existingRoom);
+          if (session) {
+            if (!cancelled) {
+              setRoomName(session.room_name);
+              setIdentity(session.identity);
+
+              // Restore multimodal and escalation state from backend
+              if (session.multimodal_event) {
+                setMultimodalEvent({
+                  type: "enable_multimodal_input",
+                  payload: {
+                    reason: session.multimodal_event.reason,
+                    camera_requested: session.multimodal_event.camera_requested,
+                    microphone_requested: session.multimodal_event.microphone_requested,
+                  },
+                  timestamp: session.updated_at,
+                });
+              }
+
+              if (session.escalation_data) {
+                setEscalationData(session.escalation_data as SessionEventPayload);
+              }
+
+              setHydrationPhase("ready");
+            }
+            return; // ALWAYS return if session was found, to prevent fallback to createSession
+          }
+        }
+
+        if (cancelled) return;
+
+        // No existing session — create a fresh one
+        const newSession = await createSession();
+        if (!cancelled) {
+          setRoomName(newSession.room_name);
+          setIdentity(newSession.identity);
+          setHydrationPhase("ready");
+        }
+      } catch (err) {
+        console.error("Session hydration failed", err);
+        if (!cancelled) setHydrationPhase("error");
       }
     }
-  }, [multimodalEvent]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (escalationData) {
-        sessionStorage.setItem("zenith_escalation", JSON.stringify(escalationData));
-      } else {
-        sessionStorage.removeItem("zenith_escalation");
-      }
-    }
-  }, [escalationData]);
+    hydrate();
+    return () => { cancelled = true; };
+  }, []);
 
-  const handleEndSession = useCallback(async () => {
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("zenith_identity");
-      sessionStorage.removeItem("zenith_room");
-      sessionStorage.removeItem("zenith_messages"); // will be implemented in ChatContainer
-      sessionStorage.removeItem("zenith_multimodal");
-      sessionStorage.removeItem("zenith_escalation");
-    }
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-      await fetch(`${baseUrl}/api/v1/sessions/${roomName}`, { method: "DELETE" });
-    } catch (e) {
-      console.error("Failed to delete backend session", e);
-    }
-    // Generate new credentials
-    const newId = `user-${Math.floor(Math.random() * 100000)}`;
-    const newRoom = `session-${Math.floor(Math.random() * 100000)}`;
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("zenith_identity", newId);
-      sessionStorage.setItem("zenith_room", newRoom);
-    }
-    setIdentity(newId);
-    setRoomName(newRoom);
-    setMultimodalEvent(null);
-    setEscalationData(null);
-  }, [roomName]);
-
-
+  // ──────────────────────────────────────────────
+  // WebSocket event handlers (update local state)
+  // ──────────────────────────────────────────────
   const handleMultimodalIntercept = useCallback(
     (event: EnableMultimodalInputEvent) => {
       setMultimodalEvent(event);
+      // No sessionStorage write — backend already persisted via write-before-emit
     },
     []
   );
@@ -110,8 +109,70 @@ export function VoiceSessionClient(): React.JSX.Element {
   const handleSessionEvent = useCallback((event: SessionEvent) => {
     if (event.payload.detail === "escalated") {
       setEscalationData(event.payload);
+      // No sessionStorage write — backend already persisted
     }
   }, []);
+
+  // ──────────────────────────────────────────────
+  // End Session
+  // ──────────────────────────────────────────────
+  const handleEndSession = useCallback(async () => {
+    if (roomName) {
+      await endSessionApi(roomName);
+    }
+
+    // Create a new session
+    try {
+      const newSession = await createSession();
+      setRoomName(newSession.room_name);
+      setIdentity(newSession.identity);
+      setMultimodalEvent(null);
+      setEscalationData(null);
+    } catch (err) {
+      console.error("Failed to create new session after end", err);
+    }
+  }, [roomName]);
+
+  // ──────────────────────────────────────────────
+  // Render
+  // ──────────────────────────────────────────────
+  if (hydrationPhase === "loading") {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 flex-1 text-center p-4">
+        <span
+          className="material-symbols-outlined text-4xl text-[#00D4FF] mb-2 motion-safe:animate-pulse"
+          style={{ fontVariationSettings: "'FILL' 0" }}
+        >
+          cloud_sync
+        </span>
+        <p className="text-sm text-slate-400 font-body">
+          Restoring session...
+        </p>
+      </div>
+    );
+  }
+
+  if (hydrationPhase === "error") {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 flex-1 text-center p-4">
+        <span
+          className="material-symbols-outlined text-4xl text-red-400 mb-2"
+          style={{ fontVariationSettings: "'FILL' 0" }}
+        >
+          cloud_off
+        </span>
+        <p className="text-sm text-red-400 font-body">
+          Unable to connect to session service. Please try again.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-3 text-xs bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col h-full overflow-hidden relative">

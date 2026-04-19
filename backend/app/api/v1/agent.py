@@ -50,6 +50,19 @@ async def request_visual_context_endpoint(request: VisualContextRequest) -> Visu
 
     import asyncio
     from app.pipelines.room_pipeline import create_and_run_pipeline
+    from app.services import session_store
+
+    # Write-before-emit: persist multimodal state to Redis so a
+    # simultaneous browser refresh always finds the current state.
+    multimodal_payload = {
+        "reason": request.reason,
+        "camera_requested": True,
+        "microphone_requested": True,
+    }
+    await session_store.update_session(
+        room,
+        multimodal_event=multimodal_payload,
+    )
 
     # dynamically initialize the multimodal pipeline strictly on visual escalation
     asyncio.create_task(create_and_run_pipeline(room, manager, reason=request.reason))

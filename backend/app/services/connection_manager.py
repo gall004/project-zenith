@@ -83,23 +83,35 @@ class ConnectionManager:
             await self.disconnect(stale_id)
 
     async def send_to_room_agent_message(self, room_name: str, text: str) -> None:
-        """Send an agent response to a specific room."""
+        """Send an agent response to a specific room and persist to Redis."""
         import datetime
+        import uuid
         from app.models.websocket import WebSocketEvent, WebSocketEventType
+        from app.services import session_store
+        
+        msg_id = f"msg-{uuid.uuid4().hex[:12]}"
+        await session_store.append_transcript(room_name, msg_id, text, "agent")
+        
         event = WebSocketEvent(
             type=WebSocketEventType.AGENT_RESPONSE,
-            payload={"text": text, "sender": "agent"},
+            payload={"text": text, "sender": "agent", "id": msg_id},
             timestamp=datetime.datetime.now(datetime.UTC).isoformat()
         )
         await self.send_to_room_event(room_name, event.model_dump())
 
     async def send_to_room_user_transcription(self, room_name: str, text: str) -> None:
-        """Send a user speech transcription to a specific room."""
+        """Send a user speech transcription to a specific room and persist to Redis."""
         import datetime
+        import uuid
         from app.models.websocket import WebSocketEvent, WebSocketEventType
+        from app.services import session_store
+        
+        msg_id = f"msg-{uuid.uuid4().hex[:12]}"
+        await session_store.append_transcript(room_name, msg_id, text, "user")
+        
         event = WebSocketEvent(
             type=WebSocketEventType.USER_TRANSCRIPTION,
-            payload={"text": text, "sender": "user"},
+            payload={"text": text, "sender": "user", "id": msg_id},
             timestamp=datetime.datetime.now(datetime.UTC).isoformat()
         )
         await self.send_to_room_event(room_name, event.model_dump())

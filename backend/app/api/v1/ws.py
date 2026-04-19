@@ -19,6 +19,7 @@ from app.models.websocket import (
 )
 from app.services.connection_manager import ConnectionManager
 from app.services.ces_client import CESClient
+from app.services import session_store
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,13 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                     )
                     continue
 
+                # Persist user message to Redis transcript
+                import uuid as _uuid
+                user_msg_id = f"msg-{_uuid.uuid4().hex[:12]}"
+                await session_store.append_transcript(
+                    room_name, user_msg_id, chat_payload.text, "user"
+                )
+
                 # Route text based on whether we're in a Gemini Live session
                 from app.pipelines.room_pipeline import has_active_pipeline, inject_text_to_pipeline
 
@@ -121,6 +129,9 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
 
                         # Handle end_session signal from CES agent
                         if ces_response.get("end_session"):
+                            await session_store.update_session(
+                                room_name, status="ended"
+                            )
                             logger.info(
                                 "ces_end_session",
                                 extra={"room_name": room_name},
@@ -148,15 +159,21 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
     except WebSocketDisconnect:
         from app.pipelines.room_pipeline import stop_pipeline, has_active_pipeline
         import asyncio
-        
+
         await manager.disconnect(connection_id)
 
         async def _graceful_stop_pipeline():
+            """Wait 30s, then check Redis session + in-memory connections."""
             await asyncio.sleep(30)
-            if not manager.has_room_connections(room_name):
-                if has_active_pipeline(room_name):
-                    logger.info("Grace period elapsed without reconnection. Terminating pipeline.", extra={"room_name": room_name})
-                    await stop_pipeline(room_name)
+            session = await session_store.get_session(room_name)
+            still_active = session is not None and session.status.value == "active"
+            has_ws = manager.has_room_connections(room_name)
+            if not has_ws and still_active and has_active_pipeline(room_name):
+                logger.info(
+                    "Grace period elapsed without reconnection. Terminating pipeline.",
+                    extra={"room_name": room_name},
+                )
+                await stop_pipeline(room_name)
 
         asyncio.create_task(_graceful_stop_pipeline())
 

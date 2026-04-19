@@ -1,5 +1,6 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
+from unittest.mock import AsyncMock, patch
 import sys
 import os
 
@@ -15,17 +16,19 @@ async def test_health_check_endpoint():
     US-04 & US-05: API Envelope and Standard Response
     Verifies /api/v1/health returns 200 OK with the standardized response envelope and dependency states.
     """
-    # Arrange
-    transport = ASGITransport(app=app)
-    
-    # Act
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.get("/api/v1/health")
-    
+    # Arrange — mock Redis health at the source module level
+    with patch("app.services.redis_client.redis_health", new=AsyncMock(return_value={"redis": "ok"})), \
+         patch("app.services.session_store.get_active_session_count", new=AsyncMock(return_value=3)):
+        transport = ASGITransport(app=app)
+
+        # Act
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get("/api/v1/health")
+
     # Assert
     assert response.status_code == 200
     json_data = response.json()
-    
+
     # Assert Envelope (US-04)
     assert "data" in json_data
     assert "error" in json_data
@@ -33,7 +36,7 @@ async def test_health_check_endpoint():
     assert json_data["error"] is None
     assert "timestamp" in json_data["meta"]
     assert "request_id" in json_data["meta"]
-    
+
     # Assert structured payload content (US-05)
     data = json_data["data"]
     assert "service" in data
@@ -41,5 +44,7 @@ async def test_health_check_endpoint():
     assert "uptime" in data
     assert "version" in data
     assert "dependencies" in data
-    assert "redis" in data["dependencies"]
+    assert data["dependencies"]["redis"] == "ok"
     assert "livekit" in data["dependencies"]
+    assert "active_sessions" in data
+    assert data["active_sessions"] == 3
