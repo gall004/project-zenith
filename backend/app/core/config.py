@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     GCP_PROJECT_ID: str = ""
     CES_APP_ID: str = ""
     CES_REGION: str = "us"
+    GCS_ATTACHMENT_BUCKET: str = ""
+    GCS_BUCKET_LOCATION: str = "US"
 
     # Gemini API Key (retained for Pipecat media pipeline in future sprints)
     GEMINI_API_KEY: str = "mock-key-for-dev"

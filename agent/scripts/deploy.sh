@@ -93,6 +93,9 @@ GCP_REGION="${GCP_REGION:-us-central1}"
 read -rp "$(echo -e "${YELLOW}Enter your FastAPI backend URL [http://localhost:8000]:${NC} ")" FASTAPI_BACKEND_URL
 FASTAPI_BACKEND_URL="${FASTAPI_BACKEND_URL:-http://localhost:8000}"
 
+    exit 1
+fi
+
 echo ""
 echo -e "${CYAN}Deployment Plan:${NC}"
 echo "  Project ID:     ${GCP_PROJECT_ID}"

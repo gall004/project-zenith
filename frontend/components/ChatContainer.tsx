@@ -29,6 +29,7 @@ import type {
   EnableMultimodalInputEvent,
   SessionEvent,
   ConnectionStatus,
+  AttachmentPayload,
 } from "@/types/websocket";
 
 interface ChatMessage {
@@ -36,6 +37,7 @@ interface ChatMessage {
   text: string;
   sender: "user" | "agent";
   timestamp: string;
+  attachments?: AttachmentPayload[];
 }
 
 const SCROLL_THRESHOLD_PX = 100;
@@ -100,6 +102,14 @@ function MessageBubble({
             : "bg-white/5 text-slate-300 border border-white/10 rounded-tl-none"
         }`}
       >
+        {message.attachments?.map((att, i) => (
+          <img
+            key={i}
+            src={`data:${att.mime_type};base64,${att.data}`}
+            alt="Attachment"
+            className="w-full max-w-sm rounded-md mb-2 object-contain"
+          />
+        ))}
         {message.text}
       </div>
     </div>
@@ -134,6 +144,8 @@ export interface ChatContainerProps {
   onEndSession?: () => void;
   onUserInteraction?: () => void;
   children?: React.ReactNode;
+  maxAttachmentSizeMB?: number;
+  allowedAttachmentTypes?: string[];
 }
 
 export function ChatContainer({
@@ -143,6 +155,8 @@ export function ChatContainer({
   onEndSession,
   onUserInteraction,
   children,
+  maxAttachmentSizeMB = process.env.NEXT_PUBLIC_MAX_ATTACHMENT_SIZE_MB ? Number(process.env.NEXT_PUBLIC_MAX_ATTACHMENT_SIZE_MB) : 5,
+  allowedAttachmentTypes = process.env.NEXT_PUBLIC_ALLOWED_ATTACHMENT_TYPES ? process.env.NEXT_PUBLIC_ALLOWED_ATTACHMENT_TYPES.split(",") : ["image/jpeg", "image/png", "image/webp", "image/gif"],
 }: ChatContainerProps): React.JSX.Element {
   const {
     isConnected,
@@ -178,11 +192,16 @@ export function ChatContainer({
     return () => { cancelled = true; };
   }, [roomName]);
   const [inputValue, setInputValue] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
 
   const messageListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const generateMessageId = useCallback((): string => {
     return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }, []);
@@ -269,9 +288,86 @@ export function ChatContainer({
 
   // Removed redundant effect because VoiceSessionClient mounts this with key={roomName}
 
-  const handleSubmit = useCallback(() => {
+  const handleFile = useCallback((file: File) => {
+    setFileError(null);
+    if (!allowedAttachmentTypes.includes(file.type)) {
+      setFileError(`Format not allowed. Use: ${allowedAttachmentTypes.map(t => t.split('/')[1]).join(', ')}`);
+      return;
+    }
+    if (file.size > maxAttachmentSizeMB * 1024 * 1024) {
+      setFileError(`File too large. Maximum size is ${maxAttachmentSizeMB}MB.`);
+      return;
+    }
+    setSelectedFile(file);
+    const url = URL.createObjectURL(file);
+    setFilePreview(url);
+  }, [allowedAttachmentTypes, maxAttachmentSizeMB]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFile(file);
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
+    setFileError(null);
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview);
+      setFilePreview(null);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (isConnected) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (!isConnected) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    if (!isConnected) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith("image/")) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          handleFile(file);
+          break;
+        }
+      }
+    }
+  };
+
+  const handleSubmit = useCallback(async () => {
     const trimmed = inputValue.trim();
-    if (trimmed.length === 0 || !isConnected) return;
+    if ((trimmed.length === 0 && !selectedFile) || !isConnected) return;
+
+    let attachmentPayload: AttachmentPayload[] | undefined = undefined;
+
+    if (selectedFile) {
+      const buffer = await selectedFile.arrayBuffer();
+      const base64Str = btoa(
+        new Uint8Array(buffer).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          ""
+        )
+      );
+      attachmentPayload = [{ mime_type: selectedFile.type, data: base64Str }];
+    }
 
     // Optimistic UI — add user message immediately (US-09)
     const userMessage: ChatMessage = {
@@ -279,6 +375,7 @@ export function ChatContainer({
       text: trimmed,
       sender: "user",
       timestamp: new Date().toISOString(),
+      attachments: attachmentPayload,
     };
     setMessages((prev) => [...prev, userMessage]);
     setIsAwaitingResponse(true);
@@ -287,15 +384,16 @@ export function ChatContainer({
     // Send via WebSocket
     const event: WebSocketEvent = {
       type: "chat_message",
-      payload: { text: trimmed, sender: "user" },
+      payload: { text: trimmed, sender: "user", attachments: attachmentPayload },
       timestamp: userMessage.timestamp,
     };
     sendMessage(event);
 
     // Clear input and retain focus
     setInputValue("");
+    removeFile();
     inputRef.current?.focus();
-  }, [inputValue, isConnected, sendMessage, generateMessageId]);
+  }, [inputValue, selectedFile, filePreview, isConnected, sendMessage, generateMessageId]);
 
   return (
     <div className="flex flex-col h-full w-full" aria-label="Chat">
@@ -339,7 +437,12 @@ export function ChatContainer({
         )}
       </div>
 
-      <div className="relative flex-1 min-h-0 flex flex-col">
+      <div 
+        className={`relative flex-1 min-h-0 flex flex-col transition-colors rounded-xl border-2 ${isDragging ? "border-[#00D4FF] bg-[#00D4FF]/5" : "border-transparent"}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <div
         ref={messageListRef}
         onScroll={handleScroll}
@@ -387,29 +490,76 @@ export function ChatContainer({
             e.preventDefault();
             handleSubmit();
           }}
-          className={`relative w-full flex items-center bg-[#1c2022] border-2 border-white/10 rounded-[32px] pl-5 pr-2 py-2 transition-all shadow-md ${!isConnected ? "opacity-70 grayscale" : "focus-within:border-[#00D4FF]/70 focus-within:shadow-[0_0_15px_rgba(0,212,255,0.2)]"}`}
+          className={`relative flex flex-col bg-[#1c2022] border-2 border-white/10 rounded-2xl p-2 transition-all shadow-md ${!isConnected ? "opacity-70 grayscale pointer-events-none" : "focus-within:border-[#00D4FF]/70 focus-within:shadow-[0_0_15px_rgba(0,212,255,0.2)]"}`}
         >
-          <input
-            ref={inputRef}
-            id="chat-input"
-            type="text"
-            placeholder="Type a message..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            className="flex-1 bg-transparent border-none text-white placeholder-slate-400 outline-none ring-0 focus:ring-0 px-0 h-10 text-sm disabled:cursor-not-allowed"
-            aria-label="Chat message input"
-            autoComplete="off"
-            disabled={!isConnected}
-          />
-          <button 
-            type="submit"
-            aria-label="Send message"
-            id="chat-submit"
-            disabled={inputValue.trim().length === 0 || !isConnected}
-            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${!isConnected || inputValue.trim().length === 0 ? "bg-white/10 text-white/30" : "bg-[#00D4FF] text-black hover:bg-[#00D4FF]/90 shadow-[0_0_10px_rgba(0,212,255,0.4)]"}`}
-          >
-            <span className="material-symbols-outlined text-xl" style={{fontVariationSettings: "'FILL' 1"}}>arrow_upward</span>
-          </button>
+          {fileError && (
+            <div className="text-red-400 text-xs px-2 pb-2 font-medium" role="alert">
+              <span className="material-symbols-outlined text-[14px] align-text-bottom mr-1">error</span>
+              {fileError}
+            </div>
+          )}
+
+          {filePreview && (
+            <div className="relative inline-block w-24 h-24 mx-2 mb-2 overflow-hidden bg-black rounded-lg border border-white/10 shrink-0">
+              <button
+                type="button"
+                aria-label="Remove attachment"
+                onClick={removeFile}
+                className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white p-0 shadow-lg z-10"
+              >
+                <span className="material-symbols-outlined text-[14px]">close</span>
+              </button>
+              <img
+                src={filePreview}
+                alt="File preview"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
+          <div className="flex items-center w-full">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept="image/*"
+              className="hidden"
+            />
+            
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Attach file"
+              disabled={!isConnected}
+              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mr-2 bg-transparent text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[24px]">attach_file</span>
+            </button>
+
+            <input
+              ref={inputRef}
+              id="chat-input"
+              type="text"
+              placeholder="Type a message or paste an image..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onPaste={handlePaste}
+              className="flex-1 bg-transparent border-none text-white placeholder-slate-400 outline-none ring-0 focus:ring-0 px-2 h-10 text-sm disabled:cursor-not-allowed"
+              aria-label="Chat message input"
+              autoComplete="off"
+              disabled={!isConnected}
+            />
+            
+            <button 
+              type="submit"
+              aria-label="Send message"
+              id="chat-submit"
+              disabled={(inputValue.trim().length === 0 && !selectedFile) || !isConnected}
+              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${!isConnected || (inputValue.trim().length === 0 && !selectedFile) ? "bg-white/10 text-white/30" : "bg-[#00D4FF] text-black hover:bg-[#00D4FF]/90 shadow-[0_0_10px_rgba(0,212,255,0.4)]"}`}
+            >
+              <span className="material-symbols-outlined text-xl" style={{fontVariationSettings: "'FILL' 1"}}>arrow_upward</span>
+            </button>
+          </div>
         </form>
       </div>
     </div>

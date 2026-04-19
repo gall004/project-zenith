@@ -17,10 +17,16 @@ class WebSocketEventType(str, Enum):
     ERROR = "error"
 
 
+class Attachment(BaseModel):
+    """Payload for file attachments."""
+    mime_type: str
+    data: str
+
 class ChatMessagePayload(BaseModel):
     """Payload for user-originated chat messages."""
     text: str
     sender: str = "user"
+    attachments: Optional[list[Attachment]] = None
 
 
 class AgentResponsePayload(BaseModel):

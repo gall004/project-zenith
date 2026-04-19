@@ -87,13 +87,13 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
 
                 # Route text based on whether we're in a Gemini Live session
                 from app.pipelines.room_pipeline import has_active_pipeline, inject_text_to_pipeline
+                from app.services.gcs_client import gcs_client
 
                 if has_active_pipeline(room_name):
-                    # Escalated to Gemini Live — inject text into the pipeline
-                    # This generates a voice+text response from Gemini
+                    # Escalated to Gemini Live — inject text and attachments into the pipeline
                     try:
                         injected = await inject_text_to_pipeline(
-                            room_name, chat_payload.text
+                            room_name, chat_payload.text, chat_payload.attachments
                         )
                         if not injected:
                             logger.warning(
@@ -121,6 +121,7 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                         ces_response = await ces_client.send_text(
                             session_id=room_name,
                             text=chat_payload.text,
+                            attachments=chat_payload.attachments,
                         )
                         logger.info("ces_response_received", extra={"response": ces_response})
                         await manager.send_to_room_agent_message(

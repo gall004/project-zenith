@@ -53,12 +53,13 @@ class CESClient:
         credentials.refresh(google_auth_requests.Request())
         return credentials.token
 
-    async def send_text(self, session_id: str, text: str) -> dict:
+    async def send_text(self, session_id: str, text: str, attachments: list | None = None) -> dict:
         """Send a text message to the CES agent and return the parsed response.
 
         Args:
             session_id: Unique session identifier (maps to room_name).
             text: The user's text message.
+            attachments: List of AttachmentPayload objects containing base64 data.
 
         Returns:
             A dict with keys:
@@ -69,11 +70,26 @@ class CESClient:
         """
         session_path = self._build_session_path(session_id)
         url = f"{_CES_API_BASE}/{session_path}:runSession"
+        inputs_list = [{"text": text}]
+
+        if attachments:
+            for att in attachments:
+                mime_type = att.mime_type
+                b64_data = att.data
+                
+                # strip data uri prefix if present
+                if "," in b64_data:
+                    b64_data = b64_data.split(",")[1]
+
+                inputs_list.append({
+                    "image": {
+                        "mimeType": mime_type,
+                        "data": b64_data
+                    }
+                })
 
         request_body = {
-            "inputs": [
-                {"text": text}
-            ]
+            "inputs": inputs_list
         }
 
         token = await self._get_access_token()

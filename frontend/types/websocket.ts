@@ -14,10 +14,16 @@ export type WebSocketEventType =
   | "session_event"
   | "error";
 
+export interface AttachmentPayload {
+  mime_type: string;
+  data: string;
+}
+
 /** Payload for user-originated chat messages. */
 export interface ChatMessagePayload {
   text: string;
   sender: "user";
+  attachments?: AttachmentPayload[];
 }
 
 /** Payload for agent-originated responses. */

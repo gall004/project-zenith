@@ -1,28 +1,36 @@
-# End-to-End Feature Build: Persistent Multimodal Session Overlay
+# End-to-End Feature Build: Chat Attachments
 
 ## Product Definition
 
-**Goal:** Provide visual continuity and multi-tasking capabilities by persisting the user's WebRTC video feed and session status outside of the hidden drawer canvas.
+**Goal:** Enable users to seamlessly upload and share file attachments (images) during active sessions, ensuring consistency whether routed to the standard GECX agent or the escalated Gemini Live multimodal brain.
 
 ### BDD Requirements
 
-**Scenario 1: Closing the drawer maintains visual awareness of the active session**
-- **Given** a user is in an active Gemini Live session with an initialized local video feed
-- **When** the user closes the ZenithDrawer
-- **Then** a global banner appears at the top of the screen indicating an active session
-- **And** the local video feed (PiP) transitions to a floating window overlay on the main viewport
+**Scenario 1: Uploading an attachment in a standard GECX session**
+- **Given** a user is interacting with the standard text-based GECX agent
+- **When** the user clicks the attachment icon and selects an image
+- **Then** the image is previewed in the chat UI
+- **And** upon sending, the image is uploaded to GCS and its `gs://` URI is passed to the CES `RunSession` API within the `sessionParameters` map.
 
-**Scenario 2: The floating video feed avoids obstructing underlying content**
-- **Given** the user's local video feed is displaying as a global floating PiP overlay
-- **When** the user clicks and drags the video feed
-- **Then** the video snaps or moves to the new bounds
-- **And** the user interface beneath it remains clickable and visually accessible
+**Scenario 2: Uploading an attachment in an escalated Gemini Live session**
+- **Given** the user's session has been escalated to Gemini Live (Pipecat pipeline active)
+- **When** the user selects an image and sends the message
+- **Then** the backend decodes the attachment payload
+- **And** it injects an `LLMMessagesAppendFrame` into Pipecat containing the user text and image contents (anchoring it in context without conflicting with LiveKit camera feeds).
 
-**Scenario 3: Returning to the drawer via the global banner**
-- **Given** the user has closed the drawer and the active session banner is visible
-- **When** the user clicks the "Return to Session" button in the global banner
-- **Then** the ZenithDrawer re-opens seamlessly
-- **And** the active session context is perfectly preserved
+**Scenario 3: Infrastructure management of GCS Resources**
+- **Given** the application needs to store temporary user attachments
+- **When** the Google Cloud environments are provisioned or torn down
+- **Then** the `GCS_ATTACHMENT_BUCKET` is predictably created or destroyed alongside the GECX agent, utilizing variables stored in `.env`.
 
-## Technical Implementation Notes
-To achieve this, the `LiveKitRoom` context (currently isolated deep within `ZenithDrawer` -> `VoiceSessionClient`) must be hoisted to a higher layout level (or utilize React Portals) so that consumer hooks (`useTracks`, `useLocalParticipant`) can render the `<VideoTrack>` and the global banner independent of the Drawer's visibility state.
+## Execution Status
+
+- `[x] Setup git branch `feature/enable-attachments`
+- `[x] Pre-flight checks (`pre-flight-check`)
+- `[x] Configure GCS bucket deployment scripts and `.env.example`
+- `[x] `backend/app/services/gcs_client.py` implementation
+- `[x] `backend/app/api/v1/ws.py` & `models/websocket.py` protocol updates
+- `[x] `backend/app/pipelines/room_pipeline.py` updates (Pipecat image injection)
+- `[x] `backend/app/services/ces_client.py` updates (GCS routing)
+- `[x] `frontend/components/ChatContainer.tsx` and types (UI Paperclip interaction)
+- `[x] Execute DoD Checklist validation

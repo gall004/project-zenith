@@ -218,8 +218,10 @@ def has_active_pipeline(room_name: str) -> bool:
     return room_name in ACTIVE_PIPELINES
 
 
-async def inject_text_to_pipeline(room_name: str, text: str) -> bool:
-    """Inject a typed chat message into the active Gemini Live pipeline.
+from app.models.websocket import Attachment
+
+async def inject_text_to_pipeline(room_name: str, text: str, attachments: list[Attachment] | None = None) -> bool:
+    """Inject a typed chat message (and optional image attachments) into the active pipeline.
     
     Pushes an LLMMessagesAppendFrame which triggers _create_single_response
     on GeminiLiveLLMService. This generates a voice+text response from Gemini,
@@ -234,8 +236,24 @@ async def inject_text_to_pipeline(room_name: str, text: str) -> bool:
     from pipecat.frames.frames import LLMMessagesAppendFrame
     from openai.types.chat import ChatCompletionUserMessageParam
 
+    content_parts = []
+    if text:
+        content_parts.append({"type": "text", "text": text})
+        
+    if attachments:
+        for att in attachments:
+            # Reconstruct the Data URI for Pipecat's OpenAI-compatible schema decoder
+            # Note: Do not use VisionImageRawFrame per architectural constraint.
+            content_parts.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:{att.mime_type};base64,{att.data}"}
+            })
+            
+    # Default to empty string if no text and no valid attachment parts
+    content = content_parts if content_parts else text
+
     messages: list[ChatCompletionUserMessageParam] = [
-        {"role": "user", "content": text}
+        {"role": "user", "content": content}
     ]
     frame = LLMMessagesAppendFrame(messages=messages)
     await task.queue_frame(frame)

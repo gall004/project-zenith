@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Feature: Enable Multimodal File Attachments (`feature/enable-attachments`). Users can now upload images locally via the `ChatContainer`.
+- Chat attachments are passed transparently into the Customer Engagement Suite (CES) as native base64 `Image` payloads, bypassing traditional proxy loops to ensure native agent comprehension.
+- Pipecat seamlessly consumes attachments as `LLMMessagesAppendFrame` instances to retain conversation history and avoid overwriting the live WebRTC stream.
 
 ## [v1.4.0] - 2026-04-19
 
