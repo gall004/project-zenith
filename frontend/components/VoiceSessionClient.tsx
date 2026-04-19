@@ -124,6 +124,8 @@ export function VoiceSessionClient({ onSessionStateChange }: VoiceSessionClientP
       setEscalationData(event.payload);
       markSessionActive();
       // No sessionStorage write — backend already persisted
+    } else if (event.payload.event === "multimodal_ended") {
+      setMultimodalEvent(null);
     }
   }, [markSessionActive]);
 

@@ -14,6 +14,7 @@ import pathlib
 
 from app.core.config import settings
 from app.models.websocket import Attachment
+from app.services.ces_client import CESClient
 
 logger = logging.getLogger(__name__)
 
@@ -96,11 +97,11 @@ async def create_and_run_pipeline(room_name: str, connection_manager: Any, reaso
     )
 
     # US-12: GECX Brain Injection. Load the canonical instruction to configure the persona.
-    prompt_path = pathlib.Path(__file__).parents[3] / "agent" / "gecx_agent" / "prompts" / "system_instruction.xml"
+    prompt_path = pathlib.Path(__file__).parents[3] / "agent" / "gecx_agent" / "prompts" / "pipecat_system.xml"
     if prompt_path.exists():
         system_instruction = prompt_path.read_text()
     else:
-        logger.warning("GECX system_instruction.xml not found!")
+        logger.warning("Pipecat pipecat_system.xml not found!")
         system_instruction = "You are Zenith, a helpful virtual assistant."
 
     # Prepend dynamic multimodal greeting context into the system instruction.
@@ -134,8 +135,28 @@ async def create_and_run_pipeline(room_name: str, connection_manager: Any, reaso
     
     # We removed the local `@llm.register_function` intercepts for end_session and
     # request_visual_context here because ADR-0002 shifted tool orchestration back 
-    # to the Google Cloud CES REST Webhook. The webhook natively receives the tool 
-    # executes via POST and dispatches WebSocket events downward.
+    async def handle_end_visual_session(function_name: str, tool_call_id: str, args: dict, llm_svc: Any, context: Any, result_callback: Any):
+        logger.info(f"Pipecat agent requested {function_name} with args: {args}")
+        await result_callback({"status": "success"})
+        
+        async def close_pipeline_delayed():
+            summary = args.get("summary", "The multimodal session concluded successfully.")
+            await connection_manager.trigger_multimodal_end(room_name)
+            
+            try:
+                ces_client = CESClient()
+                ces_msg = f"[SYSTEM: The live multimodal session has concluded. Briefly acknowledge you are back in text mode and ask the user if they need any more help. Visual Session Summary: {summary}]"
+                ces_response = await ces_client.send_text(session_id=room_name, text=ces_msg)
+                if ces_response and ces_response.get("text"):
+                    await connection_manager.send_to_room_agent_message(room_name, ces_response["text"])
+            except Exception as e:
+                logger.error(f"Failed to handoff context via CES: {e}")
+                
+            await asyncio.sleep(4)
+            await stop_pipeline(room_name)
+        asyncio.create_task(close_pipeline_delayed())
+    
+    llm.register_function("end_visual_session", handle_end_visual_session)
     
     event_bus_processor = EventBusProcessor(connection_manager, room_name)
     transcription_interceptor = TranscriptionInterceptor(connection_manager, room_name)

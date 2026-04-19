@@ -1,36 +1,42 @@
-# End-to-End Feature Build: Chat Attachments
+# End-to-End Feature Build: The Hallway Demo Pivot
 
 ## Product Definition
 
-**Goal:** Enable users to seamlessly upload and share file attachments (images) during active sessions, ensuring consistency whether routed to the standard GECX agent or the escalated Gemini Live multimodal brain.
+**Goal:** Pivot the agent's persona from a restrictive "IoT router support" domain to a context-agnostic **Universal Technical Concierge** suitable for varied, unplanned, "hallway" demonstration environments (e.g., Google Next floor). Critically, this pivot introduces the decoupling of the system brains: GECX becomes the Text/Orchestration Agent, and Pipecat becomes the Specialized Multimodal Agent.
 
-### BDD Requirements
+### P0 (Must Have): Architectural Decoupling & Persona Shift
 
-**Scenario 1: Uploading an attachment in a standard GECX session**
-- **Given** a user is interacting with the standard text-based GECX agent
-- **When** the user clicks the attachment icon and selects an image
-- **Then** the image is previewed in the chat UI
-- **And** upon sending, the image is uploaded to GCS and its `gs://` URI is passed to the CES `RunSession` API within the `sessionParameters` map.
+**Scenario 1: Decoupling Agent Instructions**
+- [x] **Given** GECX and Pipecat currently share a monolithic `system_instruction.xml`
+- [x] **When** the architecture is updated
+- [x] **Then** the instruction files must be split into two separate entities (e.g., `gecx_system.xml` and `pipecat_system.xml`)
+- [x] **And** GECX's instructions must be strictly restricted to text chat logic and escalation orchestration
+- [x] **And** Pipecat's instructions must be strictly restricted to live audio/video analysis and natural spoken delivery
 
-**Scenario 2: Uploading an attachment in an escalated Gemini Live session**
-- **Given** the user's session has been escalated to Gemini Live (Pipecat pipeline active)
-- **When** the user selects an image and sends the message
-- **Then** the backend decodes the attachment payload
-- **And** it injects an `LLMMessagesAppendFrame` into Pipecat containing the user text and image contents (anchoring it in context without conflicting with LiveKit camera feeds).
+**Scenario 2: Updating Persona to Universal Technical Concierge**
+- [x] **Given** the new split instruction domains
+- [x] **When** the prompts are written
+- [x] **Then** both personas must behave as enthusiastic "Universal Technical Concierges"
+- [x] **And** all previous boundaries restricting troubleshooting to Zenith-branded IoT routers must be removed
 
-**Scenario 3: Infrastructure management of GCS Resources**
-- **Given** the application needs to store temporary user attachments
-- **When** the Google Cloud environments are provisioned or torn down
-- **Then** the `GCS_ATTACHMENT_BUCKET` is predictably created or destroyed alongside the GECX agent, utilizing variables stored in `.env`.
+**Scenario 3: Enthusiastic Visual Acknowledgement of Random Objects (Pipecat ONLY)**
+- [x] **Given** a user escalates to a live Gemini Multimodal session with their camera on
+- [x] **When** the user points the camera at an arbitrary, non-technical object (e.g., a Starbucks cup, a coffee pen, shoes)
+- [x] **Then** the Pipecat agent must playfully and enthusiastically acknowledge the object
+- [x] **And** without breaking character, offer pseudo-troubleshooting or engaging commentary on said object
 
-## Execution Status
+### P1 (Should Have): Resiliency in Hallway Conditions
 
-- `[x] Setup git branch `feature/enable-attachments`
-- `[x] Pre-flight checks (`pre-flight-check`)
-- `[x] Configure GCS bucket deployment scripts and `.env.example`
-- `[x] `backend/app/services/gcs_client.py` implementation
-- `[x] `backend/app/api/v1/ws.py` & `models/websocket.py` protocol updates
-- `[x] `backend/app/pipelines/room_pipeline.py` updates (Pipecat image injection)
-- `[x] `backend/app/services/ces_client.py` updates (GCS routing)
-- `[x] `frontend/components/ChatContainer.tsx` and types (UI Paperclip interaction)
-- `[x] Execute DoD Checklist validation
+**Scenario 4: Handling Stream Instability in High-Density Networks**
+- [x] **Given** the LiveKit WebRTC pipeline is active in a busy conference hallway (poor network conditions)
+- [x] **When** the stream experiences packet loss or video frame degradation
+- [x] **Then** the application logic must tolerate the degradation without hard-crashing
+- [x] **And** the Pipecat agent must gracefully handle the interruption, meeting a sub-500ms recovery and response SLA when the network stabilizes
+
+### P2 (Nice to Have): Visual Context Polish
+
+**Scenario 5: Handling Complete Lack of Visual Context**
+- [x] **Given** the WebRTC camera session starts
+- [x] **When** the camera view is completely blank, dark, or obscured
+- [x] **Then** the Pipecat agent must politely ask the user to adjust lighting or camera positioning
+- [x] **And** maintain spoken natural language flow (no markdown)

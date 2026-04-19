@@ -166,4 +166,32 @@ export async function endSession(roomName: string): Promise<void> {
   }
 }
 
+/**
+ * Trigger multimodal handoff to return to text mode.
+ */
+export async function handoffSession(roomName: string): Promise<void> {
+  try {
+    await fetch(`${BASE_URL}/api/v1/sessions/${roomName}/handoff`, {
+      method: "POST",
+    });
+  } catch (e) {
+    console.error("Failed to handoff backend session", e);
+  }
+}
+
+/**
+ * Inform the backend about a camera state change so the agent's context updates.
+ */
+export async function updateCameraState(roomName: string, isEnabled: boolean): Promise<void> {
+  try {
+    await fetch(`${BASE_URL}/api/v1/sessions/${roomName}/camera_state`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_enabled: isEnabled }),
+    });
+  } catch (e) {
+    console.error("Failed to update backend camera state", e);
+  }
+}
+
 export { getSessionCookie, setSessionCookie, clearSessionCookie };

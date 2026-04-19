@@ -142,6 +142,17 @@ class ConnectionManager:
         )
         await self.send_to_room_event(room_name, event.model_dump())
 
+    async def trigger_multimodal_end(self, room_name: str) -> None:
+        """Helper to fire the explicit UI intercept to close multimodal feed"""
+        import datetime
+        from app.models.websocket import WebSocketEvent, WebSocketEventType
+        event = WebSocketEvent(
+            type=WebSocketEventType.SESSION_EVENT,
+            payload={"event": "multimodal_ended", "detail": "success"},
+            timestamp=datetime.datetime.now(datetime.UTC).isoformat()
+        )
+        await self.send_to_room_event(room_name, event.model_dump())
+
     @property
     def active_count(self) -> int:
         """Return the number of active connections globally."""

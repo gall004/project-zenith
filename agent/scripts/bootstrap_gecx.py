@@ -34,7 +34,7 @@ _AGENT_DISPLAY_NAME = "zenith-gecx-root-agent"
 _CES_API_BASE = "https://ces.googleapis.com/v1beta"
 
 # Paths relative to project root
-_SYSTEM_INSTRUCTION_PATH = "agent/gecx_agent/prompts/system_instruction.xml"
+_SYSTEM_INSTRUCTION_PATH = "agent/gecx_agent/prompts/gecx_system.xml"
 _TOOL_SCHEMA_PATH = "agent/gecx_agent/tools/request_visual_context.yaml"
 _ENV_FILE_PATH = ".env"
 

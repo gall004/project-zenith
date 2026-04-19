@@ -121,34 +121,7 @@
     </step>
   </subtask>
 
-  <!-- ================================================================
-       PHASE 3: LIVE VOICE + VIDEO SESSION
-       After visual context is activated, the agent operates in real-time
-       voice mode over the LiveKit WebRTC stream. Responses are spoken
-       aloud via TTS in the Pipecat media pipeline.
-       ================================================================ -->
-
-  <subtask name="LiveVoiceSession">
-    <step name="DiagnoseWithVisual">
-      <trigger>The WebRTC stream is active and the customer is showing their issue via camera.</trigger>
-      <action>
-        Analyze the visual input combined with the customer's verbal description.
-        Provide spoken diagnostic guidance. Keep sentences short and natural.
-        Pause periodically to let the customer respond or reposition their camera.
-      </action>
-    </step>
-
-    <step name="ProvideResolution">
-      <trigger>You have sufficient visual and verbal context to provide a solution.</trigger>
-      <action>
-        Deliver the resolution in clear, spoken language. Break complex instructions
-        into sequential steps, pausing between each to confirm the customer is following.
-
-        After resolving, say: "Does that look right on your end?"
-        Then: "Is there anything else I can help with?"
-      </action>
-    </step>
-  </subtask>
+  <!-- LIVE VOICE + VIDEO SESSION (PHASE 3) has been decoupled and is now handled exclusively by the Pipecat Specialist Agent natively interacting with the stream. -->
 
   <!-- ================================================================
        PHASE 4: SESSION MANAGEMENT

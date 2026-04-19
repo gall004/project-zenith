@@ -11,6 +11,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { LiveKitRoom, useRoomContext, RoomAudioRenderer, StartAudio } from "@livekit/components-react";
 import { fetchLiveKitToken } from "@/lib/api/livekit";
+import { handoffSession, updateCameraState } from "@/lib/api/sessions";
 import { Button } from "@/components/ui/button";
 import type { EnableMultimodalInputEvent } from "@/types/websocket";
 import "@livekit/components-styles";
@@ -142,6 +143,9 @@ function MultimodalInterceptHandler({
   const [mounted, setMounted] = useState(false);
   const [corner, setCorner] = useState<"top-left" | "top-right" | "bottom-left" | "bottom-right">("bottom-right");
 
+  const [isMicEnabled, setIsMicEnabled] = useState(true);
+  const [isCamEnabled, setIsCamEnabled] = useState(true);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -150,6 +154,54 @@ function MultimodalInterceptHandler({
     const sequence = ["bottom-right", "bottom-left", "top-left", "top-right"] as const;
     const currentIndex = sequence.indexOf(corner);
     setCorner(sequence[(currentIndex + 1) % sequence.length]);
+  };
+
+  const toggleMic = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!room?.localParticipant) return;
+    const newState = !isMicEnabled;
+    await room.localParticipant.setMicrophoneEnabled(newState);
+    setIsMicEnabled(newState);
+  };
+
+  const toggleCam = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!room?.localParticipant) return;
+    const newState = !isCamEnabled;
+    await room.localParticipant.setCameraEnabled(newState);
+    
+    // Completely stop and restart the local preview to ensure accurate hardware state representation
+    if (newState) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: 320, height: 240 },
+          audio: false,
+        });
+        setPreviewStream(stream);
+      } catch (err) {
+        setCameraError(err instanceof Error ? err.message : "Failed to resume camera");
+      }
+    } else {
+      if (previewStream) {
+        previewStream.getTracks().forEach(t => t.stop());
+        setPreviewStream(null);
+      }
+    }
+    
+    setIsCamEnabled(newState);
+    if (room) {
+      await updateCameraState(room.name, newState);
+    }
+  };
+
+  const handleManualHandoff = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!room) return;
+    try {
+      await handoffSession(room.name);
+    } catch(err) {
+      console.error("Failed manual handoff", err);
+    }
   };
 
   // Enable LiveKit camera + acquire separate preview stream
@@ -231,19 +283,52 @@ function MultimodalInterceptHandler({
     <>
       <div 
         onClick={rotateCorner}
-        className={`fixed ${cornerClasses[corner]} w-48 aspect-video rounded-xl overflow-hidden shadow-2xl bg-black z-[100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] animate-in fade-in zoom-in cursor-pointer border border-white/20`}
+        className={`fixed ${cornerClasses[corner]} w-48 aspect-video rounded-xl shadow-2xl bg-black z-[100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] animate-in fade-in zoom-in cursor-pointer border border-white/20 group flex flex-col`}
         title="Tap to move video"
       >
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="object-cover w-full h-full transform -scale-x-100 pointer-events-none"
-        />
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[10px] text-white font-medium flex items-center shadow-sm border border-white/10 pointer-events-none whitespace-nowrap">
-          <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 animate-pulse"></span>
-          {previewStream ? "Live" : "Starting"}
+        <div className="relative flex-grow overflow-hidden rounded-t-xl">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="object-cover w-full h-full transform -scale-x-100 pointer-events-none"
+          />
+          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[10px] text-white font-medium flex items-center shadow-sm border border-white/10 pointer-events-none whitespace-nowrap">
+            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${previewStream ? (isCamEnabled ? "bg-green-400 animate-pulse" : "bg-amber-500") : "bg-amber-500"}`}></span>
+            {previewStream ? (isCamEnabled ? "Live" : "Paused") : "Starting"}
+          </div>
+        </div>
+
+        {/* Control Bar Overlay */}
+        <div className="bg-black/90 backdrop-blur-md h-10 w-full rounded-b-xl flex items-center justify-between px-3 border-t border-white/10">
+          <div className="flex space-x-1">
+            <button 
+              onClick={toggleMic}
+              className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${isMicEnabled ? "text-white hover:bg-white/10" : "text-rose-400 bg-rose-500/10 hover:bg-rose-500/20"}`}
+              title={isMicEnabled ? "Mute Microphone" : "Unmute Microphone"}
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                {isMicEnabled ? "mic" : "mic_off"}
+              </span>
+            </button>
+            <button 
+              onClick={toggleCam}
+              className={`p-1.5 rounded-full transition-colors flex items-center justify-center ${isCamEnabled ? "text-white hover:bg-white/10" : "text-rose-400 bg-rose-500/10 hover:bg-rose-500/20"}`}
+              title={isCamEnabled ? "Pause Camera" : "Resume Camera"}
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                {isCamEnabled ? "videocam" : "videocam_off"}
+              </span>
+            </button>
+          </div>
+          <button 
+            onClick={handleManualHandoff}
+            className="px-2 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-[10px] font-bold uppercase tracking-wider transition-colors border border-white/10"
+            title="End video session and return to text chat"
+          >
+            End
+          </button>
         </div>
       </div>
     </>,
