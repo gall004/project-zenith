@@ -132,6 +132,7 @@ export interface ChatContainerProps {
   onMultimodalIntercept?: (event: EnableMultimodalInputEvent) => void;
   onSessionEvent?: (event: SessionEvent) => void;
   onEndSession?: () => void;
+  onUserInteraction?: () => void;
   children?: React.ReactNode;
 }
 
@@ -140,6 +141,7 @@ export function ChatContainer({
   onMultimodalIntercept,
   onSessionEvent,
   onEndSession,
+  onUserInteraction,
   children,
 }: ChatContainerProps): React.JSX.Element {
   const {
@@ -166,6 +168,7 @@ export function ChatContainer({
             timestamp: msg.timestamp,
           }));
           setMessages(hydrated);
+          onUserInteraction?.();
         }
       } catch (err) {
         console.error("Failed to hydrate transcript", err);
@@ -226,6 +229,7 @@ export function ChatContainer({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMessages((prev) => [...prev, agentMessage]);
       setIsAwaitingResponse(false);
+      onUserInteraction?.();
     }
 
     if (lastMessage.type === "user_transcription") {
@@ -238,6 +242,7 @@ export function ChatContainer({
       };
       // removed redundant eslint directive
       setMessages((prev) => [...prev, userMessage]);
+      onUserInteraction?.();
     }
 
     if (
@@ -277,6 +282,7 @@ export function ChatContainer({
     };
     setMessages((prev) => [...prev, userMessage]);
     setIsAwaitingResponse(true);
+    onUserInteraction?.();
 
     // Send via WebSocket
     const event: WebSocketEvent = {

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Feature `feature/persistent-video-overlay`: Decoupled the multimodal LiveKit viewfinder from the drawer using React Portals, adding a tap-to-corner positioning system and a persistent global UI banner indicating active session status when the agent drawer is collapsed.
+
 ## [v1.3.0] - 2026-04-19
 
 ### Added

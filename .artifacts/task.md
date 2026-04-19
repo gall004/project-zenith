@@ -1,34 +1,28 @@
-# Feature Task: Architecture & Cost Breakdown Section
+# End-to-End Feature Build: Persistent Multimodal Session Overlay
 
-## Epic
-Enhance the marketing landing page (`frontend/app/page.tsx`) to illustrate the explicit architectural trade-offs and session cost breakdowns between a Google-native lightweight approach vs the current heavyweight Pipecat/LiveKit portable solution.
+## Product Definition
 
-## User Stories (BDD)
+**Goal:** Provide visual continuity and multi-tasking capabilities by persisting the user's WebRTC video feed and session status outside of the hidden drawer canvas.
 
-### Story 1: Architecture Comparison Display
-**As a** prospective enterprise client or engineer evaluating Zenith
-**I want to** read the explicit pros and cons of the chosen Pipecat transport layer vs a native Google Gemini web integration
-**So that** I understand why the more complex, enterprise-ready path was chosen despite added transport complexity.
+### BDD Requirements
 
-**Acceptance Criteria:**
-- **Given** I am on the landing page
-- **When** I scroll to the Architecture Deep Dive or new Architecture Section
-- **Then** I should see a clean presentation summarizing "The Short Answer", "Why LiveKit + Pipecat Was Chosen", and "Did We Make Our Lives Harder?"
-- **And** I should see a stylized comparison table illustrating "What A Google-Native Alternative Would Look Like" vs the Current Stack (Text Chat, Escalation, Audio/Video flow, Infrastructure).
+**Scenario 1: Closing the drawer maintains visual awareness of the active session**
+- **Given** a user is in an active Gemini Live session with an initialized local video feed
+- **When** the user closes the ZenithDrawer
+- **Then** a global banner appears at the top of the screen indicating an active session
+- **And** the local video feed (PiP) transitions to a floating window overlay on the main viewport
 
-### Story 2: Line-by-Line Cost Estimate Display
-**As a** decision-maker evaluating Zenith
-**I want to** see an illustrative line-by-line cost breakdown per session for both architectures
-**So that** I can gauge the infrastructure overhead of the heavyweight portable solution (Pipecat + LiveKit) vs the lightweight direct proxy solution.
+**Scenario 2: The floating video feed avoids obstructing underlying content**
+- **Given** the user's local video feed is displaying as a global floating PiP overlay
+- **When** the user clicks and drags the video feed
+- **Then** the video snaps or moves to the new bounds
+- **And** the user interface beneath it remains clickable and visually accessible
 
-**Acceptance Criteria:**
-- **Given** the Architecture Comparison section
-- **When** I view the cost analysis module
-- **Then** I should see an estimated cost-per-session analysis (based on industry benchmarks) separated by Lightweight vs Heavyweight architectures.
-- **And** the Heavyweight cost breakdown should explicitly itemize "LiveKit Cloud bandwidth/minutes", "Server Compute (Pipecat process)", and "Gemini API usage".
-- **And** the Lightweight breakdown should explicitly show only "Proxy Compute" and "Gemini API usage".
+**Scenario 3: Returning to the drawer via the global banner**
+- **Given** the user has closed the drawer and the active session banner is visible
+- **When** the user clicks the "Return to Session" button in the global banner
+- **Then** the ZenithDrawer re-opens seamlessly
+- **And** the active session context is perfectly preserved
 
-## Implementation Plan details to resolve:
-1. Exact component placement inside `page.tsx` (e.g., underneath BentoGrid in a new full-width section).
-2. Data structures for the comparison table.
-3. Reasonable dummy/illustrative estimates for the Cost Analysis elements based on known cloud pricing.
+## Technical Implementation Notes
+To achieve this, the `LiveKitRoom` context (currently isolated deep within `ZenithDrawer` -> `VoiceSessionClient`) must be hoisted to a higher layout level (or utilize React Portals) so that consumer hooks (`useTracks`, `useLocalParticipant`) can render the `<VideoTrack>` and the global banner independent of the Drawer's visibility state.

@@ -6,9 +6,10 @@ import { VoiceSessionClient } from "./VoiceSessionClient";
 interface ZenithDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSessionStateChange?: (isActive: boolean) => void;
 }
 
-export function ZenithDrawer({ open, onOpenChange }: ZenithDrawerProps): React.JSX.Element {
+export function ZenithDrawer({ open, onOpenChange, onSessionStateChange }: ZenithDrawerProps): React.JSX.Element {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -37,7 +38,7 @@ export function ZenithDrawer({ open, onOpenChange }: ZenithDrawerProps): React.J
         {/* Payload Space for dual-channel interface */}
         <div className="flex-1 flex flex-col h-full overflow-hidden p-6 pt-2">
           {/* Unconditional mount with keepMounted Sheet ensures we do not disconnect on close */}
-          <VoiceSessionClient />
+          <VoiceSessionClient onSessionStateChange={onSessionStateChange} />
         </div>
       </SheetContent>
     </Sheet>

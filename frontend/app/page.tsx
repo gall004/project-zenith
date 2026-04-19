@@ -6,10 +6,32 @@ import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isSessionActive, setIsSessionActive] = useState(false);
 
   return (
     <div className="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container relative">
       <TopNavBar onAskZenith={() => setIsDrawerOpen(true)} />
+
+      {isSessionActive && !isDrawerOpen && (
+        <div className="fixed top-16 left-0 right-0 z-40 bg-primary text-on-primary shadow-md animate-in slide-in-from-top duration-300 border-b border-primary-container">
+          <div className="container mx-auto px-4 md:px-6 py-2 flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+              </span>
+              <span className="text-sm font-medium tracking-tight">Active Zenith Session</span>
+            </div>
+            <Button 
+              size="sm" 
+              onClick={() => setIsDrawerOpen(true)}
+              className="h-8 text-xs font-bold bg-white text-slate-900 hover:bg-slate-100 border border-slate-200 shadow-sm"
+            >
+              Return to Session
+            </Button>
+          </div>
+        </div>
+      )}
 
       <main className="min-h-screen">
         <HeroSection onAskZenith={() => setIsDrawerOpen(true)} />
@@ -21,7 +43,11 @@ export default function LandingPage() {
       <Footer />
 
       {/* The unified drawer overlay for the live application interaction */}
-      <ZenithDrawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} />
+      <ZenithDrawer 
+        open={isDrawerOpen} 
+        onOpenChange={setIsDrawerOpen} 
+        onSessionStateChange={setIsSessionActive}
+      />
     </div>
   );
 }

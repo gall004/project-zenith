@@ -8,6 +8,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { LiveKitRoom, useRoomContext, RoomAudioRenderer, StartAudio } from "@livekit/components-react";
 import { fetchLiveKitToken } from "@/lib/api/livekit";
 import { Button } from "@/components/ui/button";
@@ -138,6 +139,19 @@ function MultimodalInterceptHandler({
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const [mounted, setMounted] = useState(false);
+  const [corner, setCorner] = useState<"top-left" | "top-right" | "bottom-left" | "bottom-right">("bottom-right");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const rotateCorner = () => {
+    const sequence = ["bottom-right", "bottom-left", "top-left", "top-right"] as const;
+    const currentIndex = sequence.indexOf(corner);
+    setCorner(sequence[(currentIndex + 1) % sequence.length]);
+  };
+
   // Enable LiveKit camera + acquire separate preview stream
   useEffect(() => {
     if (multimodalEvent === null) return;
@@ -204,23 +218,35 @@ function MultimodalInterceptHandler({
     );
   }
 
-  if (multimodalEvent === null) return null;
+  if (multimodalEvent === null || !mounted) return null;
 
-  return (
+  const cornerClasses = {
+    "top-left": "top-20 left-4",
+    "top-right": "top-20 right-4",
+    "bottom-left": "bottom-6 left-4",
+    "bottom-right": "bottom-6 right-4"
+  };
+
+  return createPortal(
     <>
-      {/* Local camera viewfinder — independent preview stream */}
-      <div className="absolute top-4 left-4 w-32 h-44 rounded-lg overflow-hidden border-2 border-primary/50 shadow-xl bg-black z-20 transition-all duration-300 animate-in fade-in zoom-in">
+      <div 
+        onClick={rotateCorner}
+        className={`fixed ${cornerClasses[corner]} w-48 aspect-video rounded-xl overflow-hidden shadow-2xl bg-black z-[100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] animate-in fade-in zoom-in cursor-pointer border border-white/20`}
+        title="Tap to move video"
+      >
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="object-cover w-full h-full transform -scale-x-100"
+          className="object-cover w-full h-full transform -scale-x-100 pointer-events-none"
         />
-        <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-sm bg-black/50 text-[10px] text-white/90 z-10">
-          {previewStream ? "Local Feed" : "Acquiring..."}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[10px] text-white font-medium flex items-center shadow-sm border border-white/10 pointer-events-none whitespace-nowrap">
+          <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 animate-pulse"></span>
+          {previewStream ? "Live" : "Starting"}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }

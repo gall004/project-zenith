@@ -25,7 +25,11 @@ import {
 
 type HydrationPhase = "loading" | "ready" | "error";
 
-export function VoiceSessionClient(): React.JSX.Element {
+export interface VoiceSessionClientProps {
+  onSessionStateChange?: (isActive: boolean) => void;
+}
+
+export function VoiceSessionClient({ onSessionStateChange }: VoiceSessionClientProps): React.JSX.Element {
   const [identity, setIdentity] = useState<string>("");
   const [roomName, setRoomName] = useState<string>("");
   const [hydrationPhase, setHydrationPhase] = useState<HydrationPhase>("loading");
@@ -71,6 +75,10 @@ export function VoiceSessionClient(): React.JSX.Element {
               }
 
               setHydrationPhase("ready");
+              
+              if (session.multimodal_event || session.escalation_data) {
+                onSessionStateChange?.(true);
+              }
             }
             return; // ALWAYS return if session was found, to prevent fallback to createSession
           }
@@ -98,20 +106,26 @@ export function VoiceSessionClient(): React.JSX.Element {
   // ──────────────────────────────────────────────
   // WebSocket event handlers (update local state)
   // ──────────────────────────────────────────────
+  const markSessionActive = useCallback(() => {
+    onSessionStateChange?.(true);
+  }, [onSessionStateChange]);
+
   const handleMultimodalIntercept = useCallback(
     (event: EnableMultimodalInputEvent) => {
       setMultimodalEvent(event);
+      markSessionActive();
       // No sessionStorage write — backend already persisted via write-before-emit
     },
-    []
+    [markSessionActive]
   );
 
   const handleSessionEvent = useCallback((event: SessionEvent) => {
     if (event.payload.detail === "escalated") {
       setEscalationData(event.payload);
+      markSessionActive();
       // No sessionStorage write — backend already persisted
     }
-  }, []);
+  }, [markSessionActive]);
 
   // ──────────────────────────────────────────────
   // End Session
@@ -128,10 +142,12 @@ export function VoiceSessionClient(): React.JSX.Element {
       setIdentity(newSession.identity);
       setMultimodalEvent(null);
       setEscalationData(null);
+      // Explicitly mark session as inactive until new interactions happen
+      onSessionStateChange?.(false);
     } catch (err) {
       console.error("Failed to create new session after end", err);
     }
-  }, [roomName]);
+  }, [roomName, onSessionStateChange]);
 
   // ──────────────────────────────────────────────
   // Render
@@ -182,6 +198,7 @@ export function VoiceSessionClient(): React.JSX.Element {
         onMultimodalIntercept={handleMultimodalIntercept}
         onSessionEvent={handleSessionEvent}
         onEndSession={handleEndSession}
+        onUserInteraction={markSessionActive}
       >
         {/* Render escalation payload OR the live kit video session inside the chat trace */}
         <div className="mt-4 shrink-0">
