@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.2.0] - 2026-04-19
+
 ### Added
 - Feature `feature/redis-session-state`: Introduced Redis-backed backend-owned session state layer. All session metadata (identity, room assignment, multimodal state, escalation data) is now persisted in Redis under `session:{room_name}` with 24-hour TTL auto-expiry.
 - Feature `feature/redis-session-state`: New REST endpoints for session lifecycle — `POST /api/v1/sessions` (create/resume), `GET /api/v1/sessions/{room_name}` (hydrate), `GET /api/v1/sessions/{room_name}/transcript` (chat history), `DELETE /api/v1/sessions/{room_name}` (end session).
