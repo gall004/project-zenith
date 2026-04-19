@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.3.0] - 2026-04-19
+
 ### Added
 - Feature `feature/architecture-cost-section`: Added an interactive "Architectural Trade-off" component to the landing page demonstrating the specific Google-Native vs Pipecat/LiveKit trade-offs alongside a line-by-line estimated session cost breakdown.
 
