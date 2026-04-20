@@ -136,18 +136,37 @@ async def handoff_session(room_name: str):
     if not has_active_pipeline(room_name):
         return StandardResponse(data={"status": "no_pipeline"})
 
+    # CLOSE UI IMMEDIATELY for responsive feel
     await manager.trigger_multimodal_end(room_name)
 
-    try:
-        ces_client = CESClient()
-        ces_msg = "[SYSTEM: The live multimodal session was manually concluded by the user. Briefly acknowledge you are back in text mode and ask the user if they need any more help.]"
-        ces_response = await ces_client.send_text(session_id=room_name, text=ces_msg)
-        if ces_response and ces_response.get("text"):
-            await manager.send_to_room_agent_message(room_name, ces_response["text"])
-    except Exception as e:
-        logger.error(f"Failed to handoff context via CES: {e}")
+    async def bg_handoff():
+        from app.pipelines.room_pipeline import SESSION_TRANSCRIPTS
+        try:
+            transcript_lines = SESSION_TRANSCRIPTS.get(room_name, [])
+            # Build a concise summary from the transcript for the event variable
+            summary = (
+                f"Live video session transcript ({len(transcript_lines)} turns)."
+                if transcript_lines
+                else "The multimodal session was ended manually by the user."
+            )
+            ces_client = CESClient()
+            ces_response = await ces_client.send_event(
+                session_id=room_name,
+                event_name="vision_session_complete",
+                variables={"vision_summary": summary},
+            )
+            
+            if ces_response and ces_response.get("text"):
+                # Sleep briefly to ensure the frontend WebSocket is fully stable
+                # and ready to receive messages after tearing down the video components.
+                await asyncio.sleep(2)
+                await manager.send_to_room_agent_message(room_name, ces_response["text"])
+        except Exception as e:
+            logger.error(f"Failed to handoff context via CES event: {e}")
+            
+        await stop_pipeline(room_name)
 
-    asyncio.create_task(stop_pipeline(room_name))
+    asyncio.create_task(bg_handoff())
 
     return StandardResponse(data={"status": "handed_off"})
 

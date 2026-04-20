@@ -9,7 +9,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { LiveKitRoom, useRoomContext, RoomAudioRenderer, StartAudio } from "@livekit/components-react";
+import { LiveKitRoom, useRoomContext, RoomAudioRenderer, StartAudio, useRemoteParticipants, useIsSpeaking } from "@livekit/components-react";
 import { fetchLiveKitToken } from "@/lib/api/livekit";
 import { handoffSession, updateCameraState } from "@/lib/api/sessions";
 import { Button } from "@/components/ui/button";
@@ -145,10 +145,19 @@ function MultimodalInterceptHandler({
 
   const [isMicEnabled, setIsMicEnabled] = useState(true);
   const [isCamEnabled, setIsCamEnabled] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isHandingOff, setIsHandingOff] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Reset handing off state if the modal closes/changes
+  useEffect(() => {
+    if (!multimodalEvent) {
+      setIsHandingOff(false);
+    }
+  }, [multimodalEvent]);
 
   const rotateCorner = () => {
     const sequence = ["bottom-right", "bottom-left", "top-left", "top-right"] as const;
@@ -196,11 +205,13 @@ function MultimodalInterceptHandler({
 
   const handleManualHandoff = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!room) return;
+    if (!room || isHandingOff) return;
+    setIsHandingOff(true);
     try {
       await handoffSession(room.name);
     } catch(err) {
       console.error("Failed manual handoff", err);
+      setIsHandingOff(false);
     }
   };
 
@@ -282,9 +293,13 @@ function MultimodalInterceptHandler({
   return createPortal(
     <>
       <div 
-        onClick={rotateCorner}
-        className={`fixed ${cornerClasses[corner]} w-48 aspect-video rounded-xl shadow-2xl bg-black z-[100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] animate-in fade-in zoom-in cursor-pointer border border-white/20 group flex flex-col`}
-        title="Tap to move video"
+        onClick={isExpanded ? undefined : rotateCorner}
+        className={`fixed z-[100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] animate-in fade-in zoom-in border border-white/20 group flex flex-col shadow-2xl bg-black rounded-xl ${
+          isExpanded 
+            ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,640px)] aspect-video" 
+            : `${cornerClasses[corner]} w-48 aspect-video cursor-pointer`
+        }`}
+        title={isExpanded ? undefined : "Tap to move video"}
       >
         <div className="relative flex-grow overflow-hidden rounded-t-xl">
           <video
@@ -298,10 +313,11 @@ function MultimodalInterceptHandler({
             <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${previewStream ? (isCamEnabled ? "bg-green-400 animate-pulse" : "bg-amber-500") : "bg-amber-500"}`}></span>
             {previewStream ? (isCamEnabled ? "Live" : "Paused") : "Starting"}
           </div>
+          <OrbAvatar />
         </div>
 
         {/* Control Bar Overlay */}
-        <div className="bg-black/90 backdrop-blur-md h-10 w-full rounded-b-xl flex items-center justify-between px-3 border-t border-white/10">
+        <div className={`bg-black/90 backdrop-blur-md w-full rounded-b-xl flex items-center justify-between border-t border-white/10 ${isExpanded ? "h-12 px-4" : "h-10 px-3"}`}>
           <div className="flex space-x-1">
             <button 
               onClick={toggleMic}
@@ -322,16 +338,56 @@ function MultimodalInterceptHandler({
               </span>
             </button>
           </div>
+          <div className="flex items-center space-x-1">
+            <button 
+              onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+              className="p-1.5 rounded-full text-white hover:bg-white/10 transition-colors flex items-center justify-center"
+              title={isExpanded ? "Minimize" : "Expand"}
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                {isExpanded ? "close_fullscreen" : "open_in_full"}
+              </span>
+            </button>
           <button 
             onClick={handleManualHandoff}
-            className="px-2 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-[10px] font-bold uppercase tracking-wider transition-colors border border-white/10"
+            disabled={isHandingOff}
+            className={`px-2 py-1 text-white rounded text-[10px] font-bold uppercase tracking-wider transition-colors border border-white/10 ${
+              isHandingOff ? "bg-amber-500/30 cursor-wait" : "bg-white/10 hover:bg-white/20"
+            }`}
             title="End video session and return to text chat"
           >
-            End
+            {isHandingOff ? "Ending…" : "End"}
           </button>
+          </div>
         </div>
       </div>
     </>,
     document.body
+  );
+}
+
+function OrbAvatar(): React.JSX.Element | null {
+  const participants = useRemoteParticipants();
+  const agent = participants[0];
+
+  if (!agent) return null;
+
+  return <ActiveOrbAvatar participant={agent} />;
+}
+
+function ActiveOrbAvatar({ participant }: { participant: any }): React.JSX.Element {
+  const isSpeaking = useIsSpeaking(participant);
+
+  return (
+    <div className="absolute top-2 right-2 pointer-events-none flex items-center justify-center p-1" title="Agent Presence">
+      <div className={`relative flex items-center justify-center transition-all duration-300 ${isSpeaking ? "scale-110" : "scale-100"}`}>
+        {/* Glow effect */}
+        <div className={`absolute inset-0 rounded-full bg-cyan-400 blur-md transition-opacity duration-300 ${isSpeaking ? "opacity-80 animate-pulse" : "opacity-30"}`}></div>
+        {/* Core orb */}
+        <div className={`relative h-3.5 w-3.5 rounded-full bg-white shadow-[0_0_10px_rgba(34,211,238,1)] z-10 flex items-center justify-center overflow-hidden`}>
+          <div className={`h-full w-full bg-cyan-400 transition-transform duration-100 origin-bottom ${isSpeaking ? "scale-y-100" : "scale-y-50"}`}></div>
+        </div>
+      </div>
+    </div>
   );
 }

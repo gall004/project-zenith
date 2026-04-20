@@ -1,14 +1,14 @@
 /**
- * ChatContainer — Text chat UI component (US-07, US-08, US-09)
+ * ChatContainer — Enterprise-grade text chat UI component (US-07, US-08, US-09)
  *
- * Renders a message list with auto-scroll, text input, and submit.
- * Wired to the useZenithSocket hook for real-time messaging.
- * Chat transcript is persisted server-side (Redis) — no sessionStorage.
+ * Features: message grouping, timestamps, avatars, copy-to-clipboard,
+ * sender labels, mic badge for voice transcriptions, typing indicator,
+ * drag-and-drop attachments, and auto-scroll.
  */
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { fetchTranscript } from "@/lib/api/sessions";
 
 import { useZenithSocket } from "@/hooks/useZenithSocket";
@@ -40,7 +40,38 @@ interface ChatMessage {
   attachments?: AttachmentPayload[];
 }
 
+/** Group of consecutive messages from the same sender. */
+interface MessageGroup {
+  sender: "user" | "agent";
+  messages: ChatMessage[];
+}
+
 const SCROLL_THRESHOLD_PX = 100;
+
+/* ─── Helpers ───────────────────────────────────────────────── */
+
+function formatTimestamp(isoString: string): string {
+  return new Date(isoString).toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function groupMessages(messages: ChatMessage[]): MessageGroup[] {
+  const groups: MessageGroup[] = [];
+  for (const msg of messages) {
+    const last = groups[groups.length - 1];
+    if (last && last.sender === msg.sender) {
+      last.messages.push(msg);
+    } else {
+      groups.push({ sender: msg.sender, messages: [msg] });
+    }
+  }
+  return groups;
+}
+
+/* ─── Sub-components ────────────────────────────────────────── */
 
 function ConnectionStatusBadge({
   status,
@@ -84,51 +115,155 @@ function ConnectionStatusBadge({
   );
 }
 
-function MessageBubble({
-  message,
-}: {
-  message: ChatMessage;
-}): React.JSX.Element {
-  const isUser = message.sender === "user";
+function SenderAvatar({ sender }: { sender: "user" | "agent" }): React.JSX.Element {
+  if (sender === "agent") {
+    return (
+      <div className="w-8 h-8 rounded-full overflow-hidden border border-[#00D4FF]/20 shrink-0 shadow-[0_0_12px_rgba(0,212,255,0.15)]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzgUdavKeju415VcsW9QLzNVWs7ACDrxXkmdS86pWHWA7r-FfitJ83dzmzHz5QSt9nYQjg20LpbNPGG-D3Flxh9CBterzvyHzbsQwQidUEWGcOo41QnuYg-QBDG5CfDgS7AcQ-YIBHDDVmhYXKNqXaj4jefFMv04J9w5Cf5MEagAXKVHmxuy0Ey72EEXb24_M1ud4yuJoDLyeRyjupnhyB4wYk-QqVMhUBjIFvi0Y7cB0GrN85qEaGBdKf1lTBAsIhS3-lokXwtCJk"
+          alt="Zenith"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
+      <span
+        className="material-symbols-outlined text-[16px] text-slate-400"
+        style={{ fontVariationSettings: "'FILL' 1" }}
+      >
+        person
+      </span>
+    </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }): React.JSX.Element {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard API may not be available */
+    }
+  };
 
   return (
-    <div
-      className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}
+    <button
+      onClick={handleCopy}
+      className="opacity-0 group-hover/msg:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-white/10 text-slate-500 hover:text-slate-300"
+      aria-label="Copy message"
+      title="Copy to clipboard"
     >
+      <span
+        className="material-symbols-outlined text-[14px]"
+        style={{ fontVariationSettings: "'FILL' 0" }}
+      >
+        {copied ? "check" : "content_copy"}
+      </span>
+    </button>
+  );
+}
+
+function MessageBubble({
+  message,
+  isFirst,
+  isLast,
+}: {
+  message: ChatMessage;
+  isFirst: boolean;
+  isLast: boolean;
+}): React.JSX.Element {
+  const isUser = message.sender === "user";
+  const isVoice = message.text.startsWith("🎙️");
+  const displayText = isVoice ? message.text.replace(/^🎙️\s*/, "") : message.text;
+
+  return (
+    <div className={`group/msg relative ${isFirst ? "" : "mt-1"}`}>
       <div
-        className={`max-w-[85%] rounded-lg px-4 py-3 text-sm leading-relaxed ${
+        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
           isUser
-            ? "bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/20 rounded-br-none"
-            : "bg-white/5 text-slate-300 border border-white/10 rounded-tl-none"
+            ? `bg-[#00D4FF]/8 text-[#c0efff] border border-[#00D4FF]/15 ${isFirst ? "rounded-tr-2xl" : "rounded-tr-lg"} ${isLast ? "rounded-br-sm" : "rounded-br-lg"}`
+            : `bg-white/[0.04] text-slate-300 border border-white/[0.06] ${isFirst ? "rounded-tl-2xl" : "rounded-tl-lg"} ${isLast ? "rounded-bl-sm" : "rounded-bl-lg"}`
         }`}
       >
+        {isVoice && (
+          <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 font-medium uppercase tracking-wider mr-2 align-middle">
+            <span
+              className="material-symbols-outlined text-[13px] text-[#00D4FF]/60"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              mic
+            </span>
+            voice
+          </span>
+        )}
         {message.attachments?.map((att, i) => (
           <img
             key={i}
             src={`data:${att.mime_type};base64,${att.data}`}
             alt="Attachment"
-            className="w-full max-w-sm rounded-md mb-2 object-contain"
+            className="w-full max-w-sm rounded-lg mb-2 object-contain"
           />
         ))}
-        {message.text}
+        {displayText}
+      </div>
+
+      {/* Footer: timestamp on last msg, copy on every agent msg */}
+      <div className={`flex items-center gap-2 mt-0.5 min-h-[18px] ${
+        isUser ? "justify-end" : "justify-start"
+      }`}>
+        {isLast && (
+          <span className="text-[10px] text-slate-600 font-mono tracking-tight">
+            {formatTimestamp(message.timestamp)}
+          </span>
+        )}
+        {!isUser && <CopyButton text={displayText} />}
       </div>
     </div>
   );
 }
 
-function TypingIndicator(): React.JSX.Element {
+
+
+function MessageGroupView({
+  group,
+}: {
+  group: MessageGroup;
+}): React.JSX.Element {
+  const isUser = group.sender === "user";
+
   return (
-    <div className="flex justify-start mb-4">
-      <div className="bg-white/5 border border-white/10 rounded-lg rounded-tl-none px-4 py-3">
-        <div className="flex gap-1" aria-label="Agent is typing">
-          {[0, 1, 2].map((dotIndex) => (
-            <span
-              key={dotIndex}
-              className="inline-block h-1.5 w-1.5 rounded-full bg-[#00D4FF]/60 motion-safe:animate-bounce"
-              style={{
-                animationDelay: `${dotIndex * 150}ms`,
-                animationDuration: "1s",
-              }}
+    <div className="mb-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      {/* Sender label — sits above the avatar+bubbles row */}
+      <div className={`mb-1.5 ${isUser ? "text-right pr-11" : "pl-11"}`}>
+        <span className={`text-[11px] font-semibold uppercase tracking-wider ${
+          isUser ? "text-[#00D4FF]/50" : "text-slate-500"
+        }`}>
+          {isUser ? "You" : "Zenith"}
+        </span>
+      </div>
+
+      {/* Avatar + bubbles row */}
+      <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+        {/* Avatar — top-aligned with first bubble */}
+        <div className="shrink-0">
+          <SenderAvatar sender={group.sender} />
+        </div>
+
+        {/* Messages column */}
+        <div className={`flex flex-col max-w-[80%] ${isUser ? "items-end" : "items-start"}`}>
+          {group.messages.map((msg, i) => (
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+              isFirst={i === 0}
+              isLast={i === group.messages.length - 1}
             />
           ))}
         </div>
@@ -136,6 +271,39 @@ function TypingIndicator(): React.JSX.Element {
     </div>
   );
 }
+
+function TypingIndicator(): React.JSX.Element {
+  return (
+    <div className="mb-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="mb-1.5 pl-11">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          Zenith
+        </span>
+      </div>
+      <div className="flex gap-3">
+        <div className="shrink-0">
+          <SenderAvatar sender="agent" />
+        </div>
+        <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl rounded-tl-lg rounded-bl-sm px-4 py-3">
+          <div className="flex gap-1.5" aria-label="Agent is typing">
+            {[0, 1, 2].map((dotIndex) => (
+              <span
+                key={dotIndex}
+                className="inline-block h-1.5 w-1.5 rounded-full bg-[#00D4FF]/50 motion-safe:animate-bounce"
+                style={{
+                  animationDelay: `${dotIndex * 150}ms`,
+                  animationDuration: "1s",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main Component ────────────────────────────────────────── */
 
 export interface ChatContainerProps {
   roomName: string;
@@ -205,6 +373,9 @@ export function ChatContainer({
   const generateMessageId = useCallback((): string => {
     return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }, []);
+
+  // Compute grouped messages for rendering
+  const messageGroups = useMemo(() => groupMessages(messages), [messages]);
 
   // Auto-scroll when new messages arrive and user is near bottom (US-08)
   const scrollToBottom = useCallback(() => {
@@ -395,6 +566,27 @@ export function ChatContainer({
     inputRef.current?.focus();
   }, [inputValue, selectedFile, filePreview, isConnected, sendMessage, generateMessageId]);
 
+  const handleSuggestedAction = useCallback((text: string) => {
+    if (!isConnected) return;
+    
+    const userMessage: ChatMessage = {
+      id: generateMessageId(),
+      text,
+      sender: "user",
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsAwaitingResponse(true);
+    onUserInteraction?.();
+
+    const event: WebSocketEvent = {
+      type: "chat_message",
+      payload: { text, sender: "user" },
+      timestamp: userMessage.timestamp,
+    };
+    sendMessage(event);
+  }, [isConnected, sendMessage, generateMessageId, onUserInteraction]);
+
   return (
     <div className="flex flex-col h-full w-full" aria-label="Chat">
       <div className="px-2 flex justify-between items-center mb-4">
@@ -446,19 +638,38 @@ export function ChatContainer({
         <div
         ref={messageListRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto space-y-4 pr-3 custom-scrollbar min-h-0 flex flex-col"
+        className="flex-1 overflow-y-auto pr-3 custom-scrollbar min-h-0 flex flex-col"
         role="log"
         aria-live="polite"
       >
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 flex-1 text-center p-4">
+          <div className="flex flex-col items-center justify-center pt-8 pb-4 flex-1 text-center px-4 w-full h-full min-h-[min(50vh,300px)]">
             <span className="material-symbols-outlined text-4xl text-slate-600 mb-2" style={{fontVariationSettings: "'FILL' 0"}}>forum</span>
-            <p className="text-sm text-slate-400 font-body">How can I assist you today?</p>
+            <p className="text-sm text-slate-400 font-body mb-4">How can I assist you today?</p>
+            
+            <div className="w-full flex flex-wrap justify-center gap-2 mt-2 max-w-[95%] mx-auto">
+              <button 
+                onClick={() => handleSuggestedAction("I have an object here but I'm not sure what it is. Can you help me identify it?")}
+                className="px-3 py-1.5 bg-[#3f465c]/40 hover:bg-[#3f465c]/80 border border-white/5 hover:border-[#00D4FF]/30 rounded-full transition-all duration-200 text-xs text-slate-300 flex items-center gap-1.5 group hover:text-white hover:shadow-[0_0_10px_rgba(0,212,255,0.1)]"
+              >
+                <span className="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-[#00D4FF] transition-colors">visibility</span>
+                Visual Context Demo
+              </button>
+              <button 
+                onClick={() => handleSuggestedAction("I've been feeling a bit off today and I'm not sure why. Could you take a look at me and tell me how I'm coming across?")}
+                className="px-3 py-1.5 bg-[#3f465c]/40 hover:bg-[#3f465c]/80 border border-white/5 hover:border-[#00D4FF]/30 rounded-full transition-all duration-200 text-xs text-slate-300 flex items-center gap-1.5 group hover:text-white hover:shadow-[0_0_10px_rgba(0,212,255,0.1)]"
+              >
+                <span className="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-[#00D4FF] transition-colors">mood</span>
+                Sentiment Analysis
+              </button>
+            </div>
           </div>
         ) : (
-          messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))
+          <div className="py-4">
+            {messageGroups.map((group, gi) => (
+              <MessageGroupView key={`group-${gi}-${group.messages[0].id}`} group={group} />
+            ))}
+          </div>
         )}
         {isAwaitingResponse && <TypingIndicator />}
         

@@ -23,18 +23,27 @@ Every system instruction file must include the following XML sections in this ex
    - `<tool_call>` (optional): If the step involves a tool invocation, the exact tool name and parameter template.
 5. **`<escalation_protocol>`** — The human handoff procedure. Mandatory for all customer-facing agents.
 
-### Formatting Rules
+### Formatting & Prompting Rules
 - **FORBIDDEN:** Free-form text blocks outside of PIF XML elements. All behavioral instructions must be scoped to a specific PIF section.
+- **FORBIDDEN:** Adding, renaming, or inventing new top-level XML tags. You must ALWAYS use exact `<role>`, `<persona>`, `<constraints>`, and `<instructions>/<taskflow>` tags.
 - **MANDATORY:** All `<step>` elements must have a unique `name` attribute for traceability in conversation logs.
-- **MANDATORY:** System instruction files must be stored at `agent/gecx_agent/prompts/` with the `.xml` extension.
+- **MANDATORY:** System instruction files must be stored in their appropriate execution directory (`gecx_agent/definitions/prompts/` for GECX, `backend/app/pipelines/prompts/` for Pipecat) with the `.xml` extension.
+- **AFFIRMATIVE PROMPTING:** When writing `<constraints>`, rely on affirmative instructions rather than hyper-specific negative ones (No Pink Elephants). E.g., instead of "Do not use the request_visual_context tool", write "You are restricted to live voice communication."
 
-## 2. Multi-Agent Hierarchy (Divide and Conquer)
+## 2. Strict "Dual-Brain" Execution Segregation & Hierarchy
 
-GECX deployments must follow a strict routing architecture. A single monolithic agent handling all customer intents is forbidden at scale.
+Project Zenith operates on a decoupled architecture with two distinct "brains." When configuring agents or tools, you must explicitly respect their execution tier boundaries and never cross-contaminate contexts:
 
-### Architecture Pattern
-- **Root Steering Agent:** The top-level agent that receives all inbound customer interactions. Its only job is intent classification and routing — it must never attempt to resolve complex queries directly.
-- **Specialized Sub-Agents:** Domain-specific agents that handle a single category of inquiries (e.g., billing, hardware diagnostics, account management). Each sub-agent has its own PIF system instruction scoped to its domain.
+### A. Orchestration Tier (GECX via Google Cloud)
+- **Execution:** Runs remotely via Vertex AI (CX Agent Studio).
+- **Purpose:** Handles text triage, intent classification, and macro-level tool routing via REST APIs and OpenAPI schemas.
+- **Hierarchy:** Implements a Root Steering Agent for triage, escalating to Specialized Sub-Agents (e.g., billing, hardware diagnostics).
+- **Boundary Restriction:** GECX cannot see or control live user hardware. It must never output generic conversational text when returning from a deterministic tool success (e.g., `HandleStreamSuccess` must be strictly silent).
+
+### B. Edge-Diagnostic Tier (Pipecat via WebRTC)
+- **Execution:** Runs locally within the FastAPI backend process over LiveKit.
+- **Purpose:** Handles ultra-low latency, live audio/video streaming via Gemini Multimodal.
+- **Boundary Restriction:** Interacts *only* with native Python Pipecat tools. It has absolutely no awareness of GECX webhooks or external REST APIs. Never reference GECX tools inside a Pipecat prompt.
 
 ### Routing Rules
 - The Root Steering Agent must classify intent within the first 2 conversational turns.
@@ -57,7 +66,7 @@ CES agents support lifecycle callbacks that execute code at specific points in t
 - **After Tool Call:** Fires after a tool returns. Use for response transformation, logging, or triggering side effects.
 
 ### Implementation Rules
-- Callbacks must be implemented as Python functions in `agent/gecx_agent/callbacks/`.
+- Callbacks must be implemented as Python functions in `gecx_agent/definitions/callbacks/`.
 - Each callback function must be stateless — no persistent in-memory state across invocations.
 - **FORBIDDEN:** Using callbacks to override the agent's core personality or conversational flow. Callbacks are for programmatic guardrails, not behavioral modification.
 - **MANDATORY:** All callbacks must log their execution via structured logging (`logging.info`) for observability.
@@ -98,8 +107,9 @@ Before invoking `end_session`, the agent must say exactly:
 
 ## 5. Tool Schema Standards
 
-All GECX agent tools must be defined as OpenAPI 3.0.3 YAML specifications stored in `agent/gecx_agent/tools/`.
+All GECX agent tools must be defined as OpenAPI 3.0.3 YAML specifications stored in `gecx_agent/definitions/tools/`. Native Pipecat tools are defined purely in Python schemas within the backend pipeline.
 
+- **Backend-First Tooling:** Do not write instructions telling an AI to invoke a tool unless you have *already* written and registered the corresponding programmatic Python or OpenAPI schema in the backend. The code must exist before the prompt can reference it.
 - **Dynamic URL Injection:** Server URLs must use `${VARIABLE_NAME}` placeholders, never hardcoded URLs.
 - **Full Schema Coverage:** Every tool must define complete request and response schemas with proper types, descriptions, and examples.
 - **Versioning:** Tool schemas must include a `version` field in the `info` block. Breaking changes require a version bump.

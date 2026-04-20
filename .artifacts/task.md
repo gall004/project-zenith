@@ -1,42 +1,28 @@
-# End-to-End Feature Build: The Hallway Demo Pivot
+# End-to-End Feature Build: Emotionally Intelligent Sentiment Demo
 
 ## Product Definition
 
-**Goal:** Pivot the agent's persona from a restrictive "IoT router support" domain to a context-agnostic **Universal Technical Concierge** suitable for varied, unplanned, "hallway" demonstration environments (e.g., Google Next floor). Critically, this pivot introduces the decoupling of the system brains: GECX becomes the Text/Orchestration Agent, and Pipecat becomes the Specialized Multimodal Agent.
+**Goal:** Expand the "Universal Technical Concierge" into an emotionally intelligent conversational partner. The agent should be able to analyze user facial expressions across the video feed, adapt its tone and responses to match user sentiment, and provide a visual manifestation (an avatar/orb) to create a sense of conversational presence rather than talking "into outer space."
 
-### P0 (Must Have): Architectural Decoupling & Persona Shift
+### P0 (Must Have): Facial Expression Sentiment Analysis
 
-**Scenario 1: Decoupling Agent Instructions**
-- [x] **Given** GECX and Pipecat currently share a monolithic `system_instruction.xml`
-- [x] **When** the architecture is updated
-- [x] **Then** the instruction files must be split into two separate entities (e.g., `gecx_system.xml` and `pipecat_system.xml`)
-- [x] **And** GECX's instructions must be strictly restricted to text chat logic and escalation orchestration
-- [x] **And** Pipecat's instructions must be strictly restricted to live audio/video analysis and natural spoken delivery
+**Scenario 1: Emotionally Reactive Persona Modifications**
+- [x] **Given** the user is in an active multimodal Pipecat session
+- [x] **When** the camera captures the user's face (e.g., smiling, frowning, looking confused)
+- [x] **Then** the agent must accurately detect the user's facial expression and emotional state natively via Pipecat video frames
+- [x] **And** dynamically adjust its spoken response to acknowledge and match or soothe the user's emotional state (e.g., "You look a bit frustrated, let's take this slow...")
 
-**Scenario 2: Updating Persona to Universal Technical Concierge**
-- [x] **Given** the new split instruction domains
-- [x] **When** the prompts are written
-- [x] **Then** both personas must behave as enthusiastic "Universal Technical Concierges"
-- [x] **And** all previous boundaries restricting troubleshooting to Zenith-branded IoT routers must be removed
+### P1 (Must Have): Reactive Visual Avatar
 
-**Scenario 3: Enthusiastic Visual Acknowledgement of Random Objects (Pipecat ONLY)**
-- [x] **Given** a user escalates to a live Gemini Multimodal session with their camera on
-- [x] **When** the user points the camera at an arbitrary, non-technical object (e.g., a Starbucks cup, a coffee pen, shoes)
-- [x] **Then** the Pipecat agent must playfully and enthusiastically acknowledge the object
-- [x] **And** without breaking character, offer pseudo-troubleshooting or engaging commentary on said object
+**Scenario 2: Creating Conversational Presence**
+- [x] **Given** a user is interacting with the agent via a live voice/video session
+- [x] **When** the session connects successfully
+- [x] **Then** the UI must render a visual representation of the agent (e.g., a dynamic orb, waveform, or Zenith-branded avatar) prominently on the screen
+- [x] **And** this avatar must animate or pulse in direct correlation to the agent's real-time audio output stream to simulate "speaking"
 
-### P1 (Should Have): Resiliency in Hallway Conditions
+### P2 (Nice to Have): Avatar State Management
 
-**Scenario 4: Handling Stream Instability in High-Density Networks**
-- [x] **Given** the LiveKit WebRTC pipeline is active in a busy conference hallway (poor network conditions)
-- [x] **When** the stream experiences packet loss or video frame degradation
-- [x] **Then** the application logic must tolerate the degradation without hard-crashing
-- [x] **And** the Pipecat agent must gracefully handle the interruption, meeting a sub-500ms recovery and response SLA when the network stabilizes
-
-### P2 (Nice to Have): Visual Context Polish
-
-**Scenario 5: Handling Complete Lack of Visual Context**
-- [x] **Given** the WebRTC camera session starts
-- [x] **When** the camera view is completely blank, dark, or obscured
-- [x] **Then** the Pipecat agent must politely ask the user to adjust lighting or camera positioning
-- [x] **And** maintain spoken natural language flow (no markdown)
+**Scenario 3: Connecting Avatar States to WebRTC Lifecycle**
+- [x] **Given** the visual avatar component is rendered
+- [x] **When** pipeline lifecycle events occur (Connecting, Listening, Agent Thinking, Agent Speaking)
+- [x] **Then** the avatar should visually change states to reflect what the agent is doing (e.g., pulsing while speaking, soft glow while listening, spinning/loading while connecting)

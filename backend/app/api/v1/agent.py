@@ -23,6 +23,7 @@ class VisualContextRequest(BaseModel):
     """Schema for incoming CES tool webhook payloads (request_visual_context)."""
     reason: str = Field(..., description="Reason the agent requested camera access")
     session_id: str | None = Field(default=None, description="Target room name")
+    pipeline_type: str | None = Field(default="concierge", description="Type of pipecat pipeline to run: 'concierge' or 'sentiment'")
 
 class VisualContextResponse(BaseModel):
     status: str
@@ -65,7 +66,7 @@ async def request_visual_context_endpoint(request: VisualContextRequest) -> Visu
     )
 
     # dynamically initialize the multimodal pipeline strictly on visual escalation
-    asyncio.create_task(create_and_run_pipeline(room, manager, reason=request.reason))
+    asyncio.create_task(create_and_run_pipeline(room, manager, reason=request.reason, pipeline_type=request.pipeline_type))
 
     await manager.trigger_multimodal_intercept(room)
     return VisualContextResponse(

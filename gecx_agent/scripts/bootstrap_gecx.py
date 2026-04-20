@@ -34,8 +34,10 @@ _AGENT_DISPLAY_NAME = "zenith-gecx-root-agent"
 _CES_API_BASE = "https://ces.googleapis.com/v1beta"
 
 # Paths relative to project root
-_SYSTEM_INSTRUCTION_PATH = "agent/gecx_agent/prompts/gecx_system.xml"
-_TOOL_SCHEMA_PATH = "agent/gecx_agent/tools/request_visual_context.yaml"
+_SYSTEM_INSTRUCTION_PATH = "gecx_agent/definitions/prompts/gecx_system.xml"
+_SENTIMENT_INSTRUCTION_PATH = "gecx_agent/definitions/prompts/gecx_sentiment_agent.xml"
+_VISION_INSTRUCTION_PATH = "gecx_agent/definitions/prompts/gecx_vision_agent.xml"
+_TOOL_SCHEMA_PATH = "gecx_agent/definitions/tools/request_visual_context.yaml"
 _ENV_FILE_PATH = ".env"
 
 
@@ -66,11 +68,12 @@ def _get_auth_headers() -> dict:
 # ===================================================================
 
 
-def _read_system_instruction(project_root: Path) -> str:
-    """Read the GECX agent's system instruction from file.
+def _read_instruction(project_root: Path, rel_path: str) -> str:
+    """Read a GECX agent's system instruction from a file.
 
     Args:
         project_root: Absolute path to the project root.
+        rel_path: Relative path to the XML file.
 
     Returns:
         The system instruction text.
@@ -78,7 +81,7 @@ def _read_system_instruction(project_root: Path) -> str:
     Raises:
         FileNotFoundError: If the system instruction file is missing.
     """
-    path = project_root / _SYSTEM_INSTRUCTION_PATH
+    path = project_root / rel_path
     if not path.exists():
         raise FileNotFoundError(f"System instruction not found: {path}")
     text = path.read_text(encoding="utf-8")
@@ -377,6 +380,55 @@ def _set_root_agent(
         logger.warning("Failed to set root agent (non-fatal): %s", e)
 
 
+def _provision_agent(
+    app_name: str,
+    display_name: str,
+    instruction: str,
+    description: str,
+    headers: dict,
+    toolsets: list[dict] = None,
+    child_agents: list[str] = None,
+) -> str:
+    """Create or update a CES agent within an app.
+    
+    Returns the full agent resource name.
+    """
+    existing = _find_existing_agent(app_name, display_name, headers)
+    
+    body = {
+        "displayName": display_name,
+        "instruction": instruction,
+        "description": description,
+    }
+    if toolsets:
+        body["toolsets"] = toolsets
+    if child_agents:
+        body["childAgents"] = child_agents
+
+    if existing:
+        agent_name = existing["name"]
+        logger.info("CES agent already exists — syncing: %s", display_name)
+        url = f"{_CES_API_BASE}/{agent_name}"
+        try:
+            resp = httpx.patch(url, headers=headers, json=body, timeout=60)
+            resp.raise_for_status()
+            logger.info("Updated CES agent config for %s", display_name)
+        except httpx.HTTPError as e:
+            logger.warning("Agent update failed (non-fatal) for %s: %s", display_name, e)
+        return agent_name
+
+    logger.info("Creating CES agent: %s", display_name)
+    url = f"{_CES_API_BASE}/{app_name}/agents"
+    resp = httpx.post(url, headers=headers, json=body, timeout=60)
+    resp.raise_for_status()
+    raw = resp.json()
+    logger.info("CES agent create response for %s: %s", display_name, raw.get("name", "?"))
+    agent = _resolve_lro_response(raw, headers)
+    agent_name = agent["name"]
+    logger.info("CES agent created: %s", agent_name)
+    return agent_name
+
+
 def provision_gecx_agent(
     project_id: str,
     region: str,
@@ -397,7 +449,9 @@ def provision_gecx_agent(
     Returns:
         A tuple of (agent_id, app_id).
     """
-    system_instruction = _read_system_instruction(project_root)
+    root_instruction = _read_instruction(project_root, _SYSTEM_INSTRUCTION_PATH)
+    sentiment_instruction = _read_instruction(project_root, _SENTIMENT_INSTRUCTION_PATH)
+    vision_instruction = _read_instruction(project_root, _VISION_INSTRUCTION_PATH)
     tool_schema = _read_tool_schema(project_root, webhook_url)
     headers = _get_auth_headers()
 
@@ -422,61 +476,45 @@ def provision_gecx_agent(
 
     # --- Provision toolset ---
     toolset_name = _provision_toolset(app_name, tool_schema, headers)
+    toolsets_payload = [{"toolset": toolset_name, "toolIds": ["request_visual_context"]}]
 
-    # --- Create or find root agent ---
-    agent = _find_existing_agent(app_name, _AGENT_DISPLAY_NAME, headers)
-    if agent:
-        agent_name = agent["name"]
-        agent_id = agent_name.split("/agents/")[-1]
-        logger.info("CES agent already exists — syncing: %s", agent_id)
+    # --- Provision Sentiment Sub-Agent ---
+    sentiment_agent_name = _provision_agent(
+        app_name=app_name,
+        display_name="zenith-gecx-sentiment-agent",
+        instruction=sentiment_instruction,
+        description="Handles emotionally intelligent sentiment demo interactions.",
+        headers=headers,
+        toolsets=toolsets_payload,
+    )
 
-        # Update agent with latest instruction and toolset binding
-        url = f"{_CES_API_BASE}/{agent_name}"
-        body = {
-            "displayName": _AGENT_DISPLAY_NAME,
-            "instruction": system_instruction,
-            "toolsets": [{"toolset": toolset_name, "toolIds": ["request_visual_context"]}],
-            "description": (
-                "Customer-facing GECX orchestrator for Project Zenith. "
-                "Communicates via real-time LiveKit voice and can request "
-                "visual context from the user's camera feed."
-            ),
-        }
-        try:
-            resp = httpx.patch(url, headers=headers, json=body, timeout=60)
-            resp.raise_for_status()
-            logger.info("Updated CES agent config")
-        except httpx.HTTPError as e:
-            logger.warning("Agent update failed (non-fatal): %s", e)
+    # --- Provision Vision Sub-Agent ---
+    vision_agent_name = _provision_agent(
+        app_name=app_name,
+        display_name="zenith-gecx-vision-agent",
+        instruction=vision_instruction,
+        description="Handles standard visual context / object analysis interactions.",
+        headers=headers,
+        toolsets=toolsets_payload,
+    )
 
-        _set_root_agent(app_name, agent_name, headers)
-        app_id = app_name.split("/apps/")[-1]
-        return agent_id, app_id
+    # --- Provision Root Agent ---
+    root_agent_name = _provision_agent(
+        app_name=app_name,
+        display_name=_AGENT_DISPLAY_NAME,
+        instruction=root_instruction,
+        description="Customer-facing GECX root router. Triages and delegates to child agents.",
+        headers=headers,
+        toolsets=None, # Root agent no longer has tools
+        child_agents=[sentiment_agent_name, vision_agent_name],
+    )
 
-    # Create new root agent
-    logger.info("Creating CES root agent: %s", _AGENT_DISPLAY_NAME)
-    url = f"{_CES_API_BASE}/{app_name}/agents"
-    body = {
-        "displayName": _AGENT_DISPLAY_NAME,
-        "instruction": system_instruction,
-        "toolsets": [{"toolset": toolset_name}],
-        "description": (
-            "Customer-facing GECX orchestrator for Project Zenith. "
-            "Communicates via real-time LiveKit voice and can request "
-            "visual context from the user's camera feed."
-        ),
-    }
-    resp = httpx.post(url, headers=headers, json=body, timeout=60)
-    resp.raise_for_status()
-    raw = resp.json()
-    logger.info("CES agent create response: %s", raw.get("name", "?"))
-    agent = _resolve_lro_response(raw, headers)
-    agent_name = agent["name"]
-    agent_id = agent_name.split("/agents/")[-1]
-    logger.info("CES agent created: %s (ID: %s)", agent_name, agent_id)
-    _set_root_agent(app_name, agent_name, headers)
+    # Set the root agent for the app
+    _set_root_agent(app_name, root_agent_name, headers)
+    
     app_id = app_name.split("/apps/")[-1]
-    return agent_id, app_id
+    root_agent_id = root_agent_name.split("/agents/")[-1]
+    return root_agent_id, app_id
 
 
 # ===================================================================

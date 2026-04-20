@@ -238,6 +238,102 @@
         }
       }
     },
+    "/api/v1/sessions/{room_name}/handoff": {
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Trigger multimodal handoff manually",
+        "description": "Manually trigger the multimodal handoff to text chat.",
+        "operationId": "handoff_session_api_v1_sessions__room_name__handoff_post",
+        "parameters": [
+          {
+            "name": "room_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Room Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_dict_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{room_name}/camera_state": {
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Inform the active Pipecat session of a camera state change",
+        "description": "Injects a system prompt into Pipecat's context window to alert Gemini of hardware pause/resume.",
+        "operationId": "update_camera_state_api_v1_sessions__room_name__camera_state_post",
+        "parameters": [
+          {
+            "name": "room_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Room Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CameraStateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_dict_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/agent/webhook": {
       "post": {
         "tags": [
@@ -283,6 +379,19 @@
   },
   "components": {
     "schemas": {
+      "CameraStateRequest": {
+        "properties": {
+          "is_enabled": {
+            "type": "boolean",
+            "title": "Is Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_enabled"
+        ],
+        "title": "CameraStateRequest"
+      },
       "CreateSessionRequest": {
         "properties": {
           "identity": {
@@ -708,6 +817,19 @@
             ],
             "title": "Session Id",
             "description": "Target room name"
+          },
+          "pipeline_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline Type",
+            "description": "Type of pipecat pipeline to run: 'concierge' or 'sentiment'",
+            "default": "concierge"
           }
         },
         "type": "object",

@@ -72,7 +72,7 @@ AGENT_DIR="$(dirname "${SCRIPT_DIR}")"
 
 if [[ -f "${AGENT_DIR}/pyproject.toml" ]]; then
     echo "  Installing agent dependencies via uv..."
-    cd "${AGENT_DIR}" && python3 -m uv sync --quiet 2>&1 | tail -1
+    cd "${AGENT_DIR}" && uv sync --quiet 2>&1 | tail -1
     echo "  ✓ Agent dependencies installed"
 fi
 
@@ -92,9 +92,6 @@ GCP_REGION="${GCP_REGION:-us-central1}"
 
 read -rp "$(echo -e "${YELLOW}Enter your FastAPI backend URL [http://localhost:8000]:${NC} ")" FASTAPI_BACKEND_URL
 FASTAPI_BACKEND_URL="${FASTAPI_BACKEND_URL:-http://localhost:8000}"
-
-    exit 1
-fi
 
 echo ""
 echo -e "${CYAN}Deployment Plan:${NC}"
@@ -141,7 +138,7 @@ GECX_TMPFILE=$(mktemp)
 PROJECT_ROOT="$(cd "${AGENT_DIR}/.." && pwd)"
 
 set +e
-cd "${PROJECT_ROOT}" && python3 -m uv run --directory agent python3 scripts/bootstrap_gecx.py \
+cd "${PROJECT_ROOT}" && uv run --directory gecx_agent python scripts/bootstrap_gecx.py \
     --webhook-url "${FASTAPI_BACKEND_URL}" 2>&1 | tee "${GECX_TMPFILE}"
 GECX_EXIT=${PIPESTATUS[0]}
 set -e

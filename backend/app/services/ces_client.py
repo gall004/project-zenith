@@ -105,6 +105,48 @@ class CESClient:
 
         return self._parse_response(data)
 
+    async def send_event(
+        self,
+        session_id: str,
+        event_name: str,
+        variables: dict | None = None,
+    ) -> dict:
+        """Send a structured event to the CES agent via RunSession.
+
+        Uses the SessionInput `event` field (not `text`) per architecture
+        guardrail: never send raw text to GECX for state transitions.
+
+        Args:
+            session_id: Unique session identifier (maps to room_name).
+            event_name: The event name that triggers a CES agent handler.
+            variables: Optional session parameters passed alongside the event
+                       (e.g., {"vision_summary": "..."}).
+
+        Returns:
+            Parsed response dict with text, end_session, and tool_calls.
+        """
+        session_path = self._build_session_path(session_id)
+        url = f"{_CES_API_BASE}/{session_path}:runSession"
+
+        request_body: dict = {
+            "inputs": [{"event": {"event": event_name}}],
+        }
+        if variables:
+            request_body["sessionParameters"] = variables
+
+        token = await self._get_access_token()
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(url, json=request_body, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+
+        return self._parse_response(data)
+
     def _parse_response(self, data: dict) -> dict:
         """Extract agent text, tool calls, and end_session from RunSessionResponse."""
         result = {

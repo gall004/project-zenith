@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Feature `feature/sentiment-avatar`: Added a dedicated Emotionally Intelligent Companion (`sentiment_system.xml`) intended for facial expression analysis and emotional support demos.
+- Feature `feature/sentiment-avatar`: Added the `SENTIMENT_ANALYSIS_NEEDED` intent routing into GECX orchestration, keeping the original Universal Technical Concierge intact.
+- Feature `feature/sentiment-avatar`: Introduced `OrbAvatar` visualizer component via `@livekit/components-react`, syncing an absolute-positioned sleek glowing orb to real-time `isSpeaking` states for immersive "conversational presence".
+- Refactor `feature/sentiment-avatar`: Reused the existing `request_visual_context` OpenAPI tool pipeline by introducing an optional `pipeline_type` argument, avoiding unnecessary endpoint bloat.
 
 ## [v1.6.0] - 2026-04-19
 ### Added

@@ -78,6 +78,13 @@ components:
             Optional LiveKit room session ID for targeting a specific
             participant. If omitted, targets the active session.
           nullable: true
+        pipeline_type:
+          type: string
+          description: >
+            Optional parameter to change the underlying Pipecat session
+            persona. Provide "sentiment" to trigger the Emotionally
+            Intelligent demo. Omit for the standard Concierge.
+          nullable: true
 
     VisualContextResponse:
       type: object

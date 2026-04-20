@@ -19,6 +19,7 @@ build/
 venv/
 .venv/
 env/
+uv.lock
 
 # --- Environment ---
 # Root .env is the single source of truth (gitignored — contains secrets)

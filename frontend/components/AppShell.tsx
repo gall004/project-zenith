@@ -31,7 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/#features" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Features</Link>
             <Link href="/#architecture" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Architecture</Link>
             <Link href="/#costs" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Costs</Link>
-            <Link href="/walkthrough" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Interactive Demo</Link>
+            <Link href="/walkthrough" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Walkthroughs</Link>
           </nav>
           <Button
             onClick={() => setIsDrawerOpen(true)}

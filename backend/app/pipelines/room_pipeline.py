@@ -8,7 +8,7 @@ from pipecat.transports.livekit.transport import LiveKitTransport, LiveKitParams
 from pipecat.services.google.gemini_live.llm import GeminiLiveLLMService
 from pipecat.processors.frame_processor import FrameProcessor, FrameDirection
 from pipecat.processors.aggregators.llm_context import LLMContext
-from pipecat.frames.frames import Frame, LLMFullResponseEndFrame, LLMTextFrame, LLMContextFrame, TranscriptionFrame
+from pipecat.frames.frames import Frame, LLMFullResponseStartFrame, LLMFullResponseEndFrame, LLMTextFrame, LLMContextFrame, TranscriptionFrame
 from livekit import api
 import pathlib
 
@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 # Cache of active pipelines by session/room ID
 ACTIVE_PIPELINES: Dict[str, PipelineTask] = {}
+
+# Store full multimodal transcripts to pass back to GECX un-summarized
+SESSION_TRANSCRIPTS: Dict[str, list[str]] = {}
 
 class EventBusProcessor(FrameProcessor):
     """Intercepts DOWNSTREAM LLM text frames and relays them to the chat UI.
@@ -38,10 +41,22 @@ class EventBusProcessor(FrameProcessor):
         if direction == FrameDirection.DOWNSTREAM:
             if isinstance(frame, LLMTextFrame):
                 self._text_buffer += frame.text
+            elif isinstance(frame, LLMFullResponseStartFrame):
+                # Reset buffer at start of each new response to prevent
+                # collapsing multiple turns into a single chat message.
+                self._text_buffer = ""
             elif isinstance(frame, LLMFullResponseEndFrame):
                 if self._text_buffer.strip():
-                    logger.info(f"Intercepted LLM block: {self._text_buffer}")
-                    await self.connection_manager.send_to_room_agent_message(self.room_name, self._text_buffer.strip())
+                    buffer_text = self._text_buffer.strip()
+                    logger.info(f"Intercepted LLM block: {buffer_text}")
+                    
+                    if self.room_name not in SESSION_TRANSCRIPTS:
+                        SESSION_TRANSCRIPTS[self.room_name] = []
+                    
+                    if buffer_text:
+                        SESSION_TRANSCRIPTS[self.room_name].append(f"Visual Agent: {buffer_text}")
+                        await self.connection_manager.send_to_room_agent_message(self.room_name, buffer_text)
+                    
                     self._text_buffer = ""
                 
         await self.push_frame(frame, direction)
@@ -64,6 +79,11 @@ class TranscriptionInterceptor(FrameProcessor):
         if direction == FrameDirection.UPSTREAM and isinstance(frame, TranscriptionFrame):
             if frame.text and frame.text.strip():
                 logger.info(f"User transcription: {frame.text}")
+                
+                if self.room_name not in SESSION_TRANSCRIPTS:
+                    SESSION_TRANSCRIPTS[self.room_name] = []
+                SESSION_TRANSCRIPTS[self.room_name].append(f"User: {frame.text.strip()}")
+                
                 await self.connection_manager.send_to_room_user_transcription(
                     self.room_name, frame.text.strip()
                 )
@@ -71,7 +91,7 @@ class TranscriptionInterceptor(FrameProcessor):
         await self.push_frame(frame, direction)
 
 
-async def create_and_run_pipeline(room_name: str, connection_manager: Any, reason: str = None):
+async def create_and_run_pipeline(room_name: str, connection_manager: Any, reason: str = None, pipeline_type: str = "concierge"):
     """
     US-01, US-02: Creates a Pipecat pipeline using LiveKitTransport and GeminiLiveLLMService.
     """
@@ -97,11 +117,12 @@ async def create_and_run_pipeline(room_name: str, connection_manager: Any, reaso
     )
 
     # US-12: GECX Brain Injection. Load the canonical instruction to configure the persona.
-    prompt_path = pathlib.Path(__file__).parents[3] / "agent" / "gecx_agent" / "prompts" / "pipecat_system.xml"
+    prompt_filename = "sentiment_system.xml" if pipeline_type == "sentiment" else "pipecat_system.xml"
+    prompt_path = pathlib.Path(__file__).parent / "prompts" / prompt_filename
     if prompt_path.exists():
         system_instruction = prompt_path.read_text()
     else:
-        logger.warning("Pipecat pipecat_system.xml not found!")
+        logger.warning(f"Pipecat {prompt_filename} not found!")
         system_instruction = "You are Zenith, a helpful virtual assistant."
 
     # Prepend dynamic multimodal greeting context into the system instruction.
@@ -123,41 +144,63 @@ async def create_and_run_pipeline(room_name: str, connection_manager: Any, reaso
     system_instruction = f"{context_prefix}\n\n{system_instruction}"
     logger.info(f"System instruction prepared ({len(system_instruction)} chars) with greeting context")
 
+    end_session_tool = [{"function_declarations": [{
+        "name": "end_vision_session",
+        "description": "End the current live video session. You MUST call this explicitly when the user says goodbye or the conversation reaches a natural conclusion.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "summary": {
+                    "type": "string",
+                    "description": "Brief description of what was discussed."
+                }
+            },
+            "required": ["summary"]
+        }
+    }]}]
+
     llm = GeminiLiveLLMService(
         api_key=settings.GEMINI_API_KEY,
         system_instruction=system_instruction,
+        tools=end_session_tool,
     )
     logger.info(
         f">>> LLM created: vad_disabled={llm._vad_disabled}, "
         f"ready_for_realtime_input={llm._ready_for_realtime_input}, "
         f"inference_on_context_initialization={llm._inference_on_context_initialization}"
     )
-    
-    # We removed the local `@llm.register_function` intercepts for end_session and
-    # request_visual_context here because ADR-0002 shifted tool orchestration back 
-    async def handle_end_visual_session(function_name: str, tool_call_id: str, args: dict, llm_svc: Any, context: Any, result_callback: Any):
-        logger.info(f"Pipecat agent requested {function_name} with args: {args}")
-        await result_callback({"status": "success"})
+
+    async def handle_end_vision_session(params):
+        """Pipecat 1.0.0 callback: receives a single FunctionCallParams object."""
+        logger.info(f"Pipecat agent requested end_vision_session with args: {params.arguments}")
+        await params.result_callback({"status": "success"})
         
         async def close_pipeline_delayed():
-            summary = args.get("summary", "The multimodal session concluded successfully.")
-            await connection_manager.trigger_multimodal_end(room_name)
+            summary = params.arguments.get("summary", "The multimodal session concluded successfully.")
             
+            # Send structured CES event while WebSocket is still alive.
+            # Uses event-based input (not text) per architecture guardrail.
             try:
                 ces_client = CESClient()
-                ces_msg = f"[SYSTEM: The live multimodal session has concluded. Briefly acknowledge you are back in text mode and ask the user if they need any more help. Visual Session Summary: {summary}]"
-                ces_response = await ces_client.send_text(session_id=room_name, text=ces_msg)
+                ces_response = await ces_client.send_event(
+                    session_id=room_name,
+                    event_name="vision_session_complete",
+                    variables={"vision_summary": summary},
+                )
                 if ces_response and ces_response.get("text"):
                     await connection_manager.send_to_room_agent_message(room_name, ces_response["text"])
             except Exception as e:
-                logger.error(f"Failed to handoff context via CES: {e}")
+                logger.error(f"Failed to handoff context via CES event: {e}")
+            
+            # Close the multimodal UI
+            await connection_manager.trigger_multimodal_end(room_name)
                 
             await asyncio.sleep(4)
             await stop_pipeline(room_name)
         asyncio.create_task(close_pipeline_delayed())
     
-    llm.register_function("end_visual_session", handle_end_visual_session)
-    
+    llm.register_function("end_vision_session", handle_end_vision_session)
+
     event_bus_processor = EventBusProcessor(connection_manager, room_name)
     transcription_interceptor = TranscriptionInterceptor(connection_manager, room_name)
 
@@ -224,6 +267,7 @@ async def create_and_run_pipeline(room_name: str, connection_manager: Any, reaso
         logger.error(f"Error in pipeline task {room_name}: {e}")
     finally:
         ACTIVE_PIPELINES.pop(room_name, None)
+        SESSION_TRANSCRIPTS.pop(room_name, None)
         logger.info(f"Pipeline task for room {room_name} finished")
 
 async def stop_pipeline(room_name: str):
@@ -241,11 +285,15 @@ def has_active_pipeline(room_name: str) -> bool:
 
 
 async def inject_text_to_pipeline(room_name: str, text: str, attachments: list[Attachment] | None = None) -> bool:
-    """Inject a typed chat message (and optional image attachments) into the active pipeline.
+    """Inject a typed chat message into the active Gemini Live pipeline.
     
-    Pushes an LLMMessagesAppendFrame which triggers _create_single_response
-    on GeminiLiveLLMService. This generates a voice+text response from Gemini,
-    making it feel like the user spoke the text.
+    Uses TranscriptionFrame to route text through send_realtime_input,
+    which places it in the same realtime stream as audio and video.
+    This ensures Gemini considers the current camera feed when responding
+    to typed text, preventing hallucinations from text-only inference.
+    
+    NOTE: Image attachments cannot be injected via the realtime path and
+    are logged as a warning. Use the camera feed for visual input.
     
     Returns True if the message was injected, False if no active pipeline.
     """
@@ -253,29 +301,17 @@ async def inject_text_to_pipeline(room_name: str, text: str, attachments: list[A
     if not task:
         return False
     
-    from pipecat.frames.frames import LLMMessagesAppendFrame
-    from openai.types.chat import ChatCompletionUserMessageParam
-
-    content_parts = []
-    if text:
-        content_parts.append({"type": "text", "text": text})
-        
     if attachments:
-        for att in attachments:
-            # Reconstruct the Data URI for Pipecat's OpenAI-compatible schema decoder
-            # Note: Do not use VisionImageRawFrame per architectural constraint.
-            content_parts.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:{att.mime_type};base64,{att.data}"}
-            })
-            
-    # Default to empty string if no text and no valid attachment parts
-    content = content_parts if content_parts else text
-
-    messages: list[ChatCompletionUserMessageParam] = [
-        {"role": "user", "content": content}
-    ]
-    frame = LLMMessagesAppendFrame(messages=messages)
-    await task.queue_frame(frame)
-    logger.info(f"Injected text into Gemini Live pipeline for room {room_name}: {text[:80]}")
+        logger.warning(
+            f"Image attachments cannot be injected into realtime pipeline for room {room_name}; "
+            "only camera feed is supported during live sessions."
+        )
+    
+    if text:
+        from pipecat.frames.frames import TranscriptionFrame
+        frame = TranscriptionFrame(text=text, user_id=room_name, timestamp="")
+        await task.queue_frame(frame)
+        logger.info(f"Injected text as realtime input for room {room_name}: {text[:80]}")
+    
     return True
+

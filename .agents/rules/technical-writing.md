@@ -26,6 +26,11 @@ The root `README.md` must contain the following sections, kept current with each
 - **Local Development Setup:** Step-by-step instructions for bootstrapping both frontend and backend environments, including prerequisite tooling.
 - **Environment Variables:** A table listing every required environment variable, its purpose, which stack consumes it (`frontend` / `backend`), and whether it has a default value.
 
+### Domain READMEs (frontend/, backend/, gecx_agent/)
+The root README is supported by localized domain READMEs. 
+- **MANDATORY:** Each macro-folder (`frontend/`, `backend/`, `gecx_agent/`) must contain an accurate `README.md` describing its specific execution environment and framework topography (e.g., Shadcn routing, Pipecat WebSocket schemas).
+- **FORBIDDEN:** Standard boilerplate text (e.g., `create-next-app` instructions, default FastAPI examples) is considered technical debt and is absolutely forbidden. Domain READMEs must be customized to explain *Project Zenith's* architecture.
+
 ### CHANGELOG.md (Root)
 - **MANDATORY:** Maintain a `CHANGELOG.md` following the [Keep a Changelog](https://keepachangelog.com/) format.
 - **Update Cadence:** Every feature merge to `main` must include a corresponding CHANGELOG entry under the `[Unreleased]` section, categorized as `Added`, `Changed`, `Fixed`, or `Removed`.
