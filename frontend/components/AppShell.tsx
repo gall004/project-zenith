@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ZenithDrawer } from "@/components/ZenithDrawer";
+import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -17,7 +18,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 text-on-surface">
+      <header className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 text-on-surface transition-all duration-300 ease-in-out",
+        isDrawerOpen ? "lg:pr-[28rem]" : "pr-0"
+      )}>
         <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2 text-primary group">
             <span className="material-symbols-outlined text-2xl group-hover:rotate-12 transition-transform duration-300">
@@ -65,7 +69,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {children}
+      <div className={cn(
+        "transition-all duration-300 ease-in-out",
+        isDrawerOpen ? "lg:pr-[28rem]" : "pr-0"
+      )}>
+        {children}
+      </div>
 
       <ZenithDrawer 
         open={isDrawerOpen} 

@@ -11,10 +11,11 @@ interface ZenithDrawerProps {
 
 export function ZenithDrawer({ open, onOpenChange, onSessionStateChange }: ZenithDrawerProps): React.JSX.Element {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={false} disablePointerDismissal={true}>
       <SheetContent
+        hasOverlay={false}
         keepMounted={true}
-        className="!w-full sm:!max-w-md sm:!w-full border-l border-white/10 shadow-2xl p-0 flex flex-col bg-[#2c3134] text-white"
+        className="!w-full !max-w-full lg:!max-w-md border-l border-white/10 shadow-2xl p-0 flex flex-col bg-[#2c3134] text-white"
       >
         {/* Header from Google Stitch styling */}
         <SheetHeader className="p-6 pb-2 text-left shrink-0">
