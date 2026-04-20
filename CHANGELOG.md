@@ -6,11 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v1.7.0] - 2026-04-20
 ### Added
 - Feature `feature/sentiment-avatar`: Added a dedicated Emotionally Intelligent Companion (`sentiment_system.xml`) intended for facial expression analysis and emotional support demos.
 - Feature `feature/sentiment-avatar`: Added the `SENTIMENT_ANALYSIS_NEEDED` intent routing into GECX orchestration, keeping the original Universal Technical Concierge intact.
 - Feature `feature/sentiment-avatar`: Introduced `OrbAvatar` visualizer component via `@livekit/components-react`, syncing an absolute-positioned sleek glowing orb to real-time `isSpeaking` states for immersive "conversational presence".
+
+### Changed
 - Refactor `feature/sentiment-avatar`: Reused the existing `request_visual_context` OpenAPI tool pipeline by introducing an optional `pipeline_type` argument, avoiding unnecessary endpoint bloat.
+- Refactor `feature/sentiment-avatar`: Rewrote the `ChatContainer.tsx` to an enterprise-grade UI featuring message grouping, fixed timestamps, hover-to-copy, and sender avatars matching the drawer styling.
+- Refactor `feature/sentiment-avatar`: Restructured `pipecat_system.xml` and `sentiment_system.xml` conversational flows for clear, natural progression and strict control of turn cuing.
+- Refactor `feature/sentiment-avatar`: Replaced manual "speak goodbye" behavior with a silent `end_vision_session` handoff, relying on the GECX agent to naturally resume the text flow.
+
+### Fixed
+- Bug `feature/sentiment-avatar`: Standardized the `end_vision_session` tool schema to use `function_declarations` ensuring compatibility with the Pipecat 1.0.0 Google implementation.
+- Bug `feature/sentiment-avatar`: Fixed silent unhandled callbacks by correctly typing the function arguments required by Pipecat`s `register_function`.
+- Bug `feature/sentiment-avatar`: Prevented Pipecat Gemini hallucination during text chat injection by adopting `TranscriptionFrame` routing into the realtime stream over isolated content appends.
 
 ## [v1.6.0] - 2026-04-19
 ### Added
