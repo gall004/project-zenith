@@ -43,9 +43,11 @@ app = FastAPI(
 )
 
 # Canonical Order 1: CORS outermost middleware
+# CORS_ORIGINS is a comma-separated string set by deploy.sh in production.
+_cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.NEXT_PUBLIC_API_BASE_URL, "http://localhost:3000"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

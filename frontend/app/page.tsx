@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { ZenithDrawer } from "@/components/ZenithDrawer";
 import { Button } from "@/components/ui/button";
+import dynamic from 'next/dynamic';
+
+const Mermaid = dynamic(() => import('@/components/Mermaid'), { ssr: false });
 
 export default function LandingPage() {
   return (
@@ -138,6 +141,47 @@ function ArchitectureSection() {
               Direct frontend SDKs rely on standard WebSockets (TCP), which suffer from packet-loss and stuttering during media streaming. A proper enterprise architecture routes user audio and video through a dedicated WebRTC server, where a backend process orchestrates the AI logic before connecting to the LLM.
             </p>
           </div>
+
+          <Mermaid chart={`graph TB
+    subgraph "Google Cloud Platform"
+        subgraph "Cloud Run"
+            FE["Web Frontend"]
+            BE_API["FastAPI Backend<br/>(CX Orchestrator)"]
+            BE_MEDIA["Pipecat Backend<br/>(Media Pipeline)"]
+        end
+        
+        subgraph "Managed Services"
+            MS["Memorystore"]
+            SM["Secret Manager"]
+        end
+        
+        subgraph "Networking"
+            VPC["Serverless VPC Connector"]
+        end
+        
+        BE_API -->|Private IP| VPC
+        BE_MEDIA -->|Private IP| VPC
+        VPC -->|VPC Peering| MS
+        BE_API -.->|Mounted Secrets| SM
+    end
+    
+    subgraph "WebRTC Transport"
+        LK["LiveKit Cloud"]
+    end
+    
+    subgraph "Google AI Edge"
+        CX["Gemini Enterprise for CX"]
+        GL["Gemini Multimodal Live API"]
+    end
+    
+    User["Web Browser"] -->|HTTPS| FE
+    User -->|WSS Control| BE_API
+    BE_API -->|REST or Webhooks| CX
+    
+    User <-->|UDP WebRTC Media| LK
+    LK <-->|Server to Server WebRTC| BE_MEDIA
+    BE_MEDIA <-->|Realtime Streaming| GL
+`} />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-surface p-6 rounded-2xl border border-outline-variant hover:border-primary/50 transition-colors">

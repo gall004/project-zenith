@@ -2,8 +2,9 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   turbopack: {
-    root: path.join(__dirname, ".."),
+    root: process.env.NODE_ENV === "development" ? path.join(__dirname, "..") : undefined,
   },
 };
 

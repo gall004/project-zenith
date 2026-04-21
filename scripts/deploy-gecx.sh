@@ -68,7 +68,8 @@ echo "  ✓ Application Default Credentials found"
 
 # Ensure agent venv has dependencies
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENT_DIR="$(dirname "${SCRIPT_DIR}")"
+PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
+AGENT_DIR="${PROJECT_ROOT}/gecx_agent"
 
 if [[ -f "${AGENT_DIR}/pyproject.toml" ]]; then
     echo "  Installing agent dependencies via uv..."
@@ -135,10 +136,9 @@ echo -e "${GREEN}[2/3] Bootstrapping GECX Frontend Orchestrator...${NC}"
 echo ""
 
 GECX_TMPFILE=$(mktemp)
-PROJECT_ROOT="$(cd "${AGENT_DIR}/.." && pwd)"
 
 set +e
-cd "${PROJECT_ROOT}" && uv run --directory gecx_agent python scripts/bootstrap_gecx.py \
+cd "${PROJECT_ROOT}" && uv run --directory gecx_agent python ../scripts/bootstrap_gecx.py \
     --webhook-url "${FASTAPI_BACKEND_URL}" 2>&1 | tee "${GECX_TMPFILE}"
 GECX_EXIT=${PIPESTATUS[0]}
 set -e

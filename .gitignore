@@ -34,6 +34,10 @@ frontend/.env*
 backend/.env*
 # .env.example IS committed (contains no secrets)
 
+# --- Infrastructure ---
+# deploy-app.env contains project-specific config. deploy-app.env.example IS committed.
+scripts/deploy-app.env
+
 # --- Next.js ---
 .next/
 out/

@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.git/
+*.md
+.lint-output.txt
+vitest.config.ts
+vitest.setup.ts
+tsconfig.tsbuildinfo
+test-lk.js

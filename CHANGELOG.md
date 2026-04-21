@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Feature `feature/cloud-run-production-deploy`: Idempotent `deploy.sh` and `teardown.sh` scripts for full GCP production deployment. Reads all config from `infra/deploy.env` — zero interactive prompts.
+- Feature `feature/cloud-run-production-deploy`: Backend Dockerfile (multi-stage uv + Python 3.12) and Frontend Dockerfile (multi-stage Node 22 + Next.js standalone output).
+- Feature `feature/cloud-run-production-deploy`: Provisions Memorystore (Redis 7), Serverless VPC Access connector, Artifact Registry, Secret Manager secrets, and dedicated service account with least-privilege IAM roles.
+- Feature `feature/cloud-run-production-deploy`: Cloud Run backend configured for WebSocket support: HTTP/1.1 (no HTTP/2), session affinity, 3600s timeout, min 1 instance.
+- ADR `0003-cloud-run-production-deployment.md`: Documenting the decision to use Cloud Run over GKE/App Engine, and idempotent scripts over Terraform.
+
+### Changed
+- Refactor `feature/cloud-run-production-deploy`: CORS origins now dynamically configured via `CORS_ORIGINS` env var (comma-separated) instead of hardcoded localhost. Production values set by the deploy script.
+- Refactor `feature/cloud-run-production-deploy`: Next.js config updated with `output: 'standalone'` for optimized Docker builds.
 
 ## [v1.7.3] - 2026-04-20
 ### Fixed

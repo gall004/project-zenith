@@ -124,7 +124,7 @@ fi
 echo -e "${GREEN}[2/3] Cleaning local state...${NC}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ENV_FILE="${PROJECT_ROOT}/.env"
 
 if [[ -f "${ENV_FILE}" ]] && grep -q "GECX_AGENT_ID=" "${ENV_FILE}"; then
@@ -145,4 +145,4 @@ echo -e "${GREEN} GECX Agent Teardown Complete               ${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
 echo "All GECX CES resources have been removed."
-echo "Run 'bash gecx_agent/scripts/deploy.sh' to re-provision from scratch."
+echo "Run 'bash scripts/deploy-gecx.sh' to re-provision from scratch."
