@@ -179,7 +179,7 @@ describe("US-12: Connection Status Indicator", () => {
     mockSocketReturn.lastMessage = null;
   });
 
-  it("should display 'Secure Connection Active' status when connected", () => {
+  it("should hide the status indicator to reduce clutter when connected", () => {
     // Arrange
     mockSocketReturn.connectionStatus = "connected";
 
@@ -187,7 +187,7 @@ describe("US-12: Connection Status Indicator", () => {
     render(<ChatContainer roomName="test-room" />);
 
     // Assert
-    expect(screen.getByText("Secure Connection Active")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("should display 'Link Severed' status when disconnected", () => {
@@ -217,9 +217,9 @@ describe("US-12: Connection Status Indicator", () => {
     ).toBeInTheDocument();
   });
 
-  it("should use role='status' and aria-live='polite' on indicator", () => {
+  it("should use role='status' and aria-live='polite' on indicator when visible", () => {
     // Arrange
-    mockSocketReturn.connectionStatus = "connected";
+    mockSocketReturn.connectionStatus = "disconnected";
 
     // Act
     render(<ChatContainer roomName="test-room" />);

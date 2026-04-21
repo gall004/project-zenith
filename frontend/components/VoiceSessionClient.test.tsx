@@ -11,7 +11,7 @@ vi.mock("./ChatContainer", () => ({
 }));
 
 vi.mock("./LiveKitSession", () => ({
-  LiveKitSession: () => <div data-testid="mock-livekit-session" />,
+  LiveKitSession: (props: any) => <div data-testid="mock-livekit-session" data-isopen={props.isOpen?.toString()} />,
 }));
 
 // Mock the session API client
@@ -111,5 +111,36 @@ describe("VoiceSessionClient (Backend Session Hydration)", () => {
 
     expect(mockHydrateSession).toHaveBeenCalledWith("expired-room");
     expect(mockCreateSession).toHaveBeenCalledOnce();
+  });
+
+  it("should maintain LiveKit connection (decoupled) even if drawer closes after initialization", async () => {
+    mockGetSessionCookie.mockReturnValue("test-room-decoupled");
+    mockHydrateSession.mockResolvedValue({
+      room_name: "test-room-decoupled",
+      identity: "user",
+      status: "active",
+      multimodal_event: null,
+      escalation_data: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    const { rerender } = render(<VoiceSessionClient isOpen={false} />);
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-livekit-session")).toBeInTheDocument();
+    });
+
+    // Verify it starts false
+    expect(screen.getByTestId("mock-livekit-session")).toHaveAttribute("data-isopen", "false");
+
+    // Act: User opens the drawer
+    rerender(<VoiceSessionClient isOpen={true} />);
+    expect(screen.getByTestId("mock-livekit-session")).toHaveAttribute("data-isopen", "true");
+
+    // Act: User closes the drawer
+    rerender(<VoiceSessionClient isOpen={false} />);
+
+    // Assert: LiveKitSession must REMAIN open to preserve media streams
+    expect(screen.getByTestId("mock-livekit-session")).toHaveAttribute("data-isopen", "true");
   });
 });
