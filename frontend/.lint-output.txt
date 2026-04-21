@@ -1,0 +1,120 @@
+
+> frontend@0.1.0 lint
+> eslint
+
+
+/Users/nathan.galloway/Code/project-zenith/frontend/app/page.tsx
+  3:10  warning  'useState' is defined but never used      @typescript-eslint/no-unused-vars
+  4:10  warning  'ZenithDrawer' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/nathan.galloway/Code/project-zenith/frontend/app/walkthrough/page.tsx
+    3:8    warning  'Link' is defined but never used                                 @typescript-eslint/no-unused-vars
+    4:10   warning  'Button' is defined but never used                               @typescript-eslint/no-unused-vars
+    7:9    warning  'handleOpenZenith' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   26:78   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   51:79   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  100:81   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  112:23   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  112:51   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  112:103  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  150:23   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  150:48   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  150:57   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  165:23   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  165:46   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  165:81   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  199:23   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  199:28   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  199:69   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  210:203  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  210:247  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  234:77   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  246:24   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  246:26   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  246:64   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  246:126  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  246:143  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  250:166  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  274:113  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  274:117  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  274:139  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  274:144  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  284:24   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  284:45   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  293:150  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  324:23   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  324:28   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  324:53   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  335:184  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  335:228  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/Users/nathan.galloway/Code/project-zenith/frontend/components/ChatContainer.test.tsx
+  192:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  216:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/nathan.galloway/Code/project-zenith/frontend/components/ChatContainer.tsx
+  227:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  381:6   warning  React Hook useEffect has a missing dependency: 'onUserInteraction'. Either include it or remove the dependency array. If 'onUserInteraction' changes too often, find the parent component that defines it and wrap that definition in useCallback                                        react-hooks/exhaustive-deps
+  483:6   warning  React Hook useEffect has a missing dependency: 'onUserInteraction'. Either include it or remove the dependency array. If 'onUserInteraction' changes too often, find the parent component that defines it and wrap that definition in useCallback                                        react-hooks/exhaustive-deps
+  600:6   warning  React Hook useCallback has missing dependencies: 'onUserInteraction' and 'removeFile'. Either include them or remove the dependency array. If 'onUserInteraction' changes too often, find the parent component that defines it and wrap that definition in useCallback                   react-hooks/exhaustive-deps
+  819:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/nathan.galloway/Code/project-zenith/frontend/components/LiveKitSession.tsx
+  154:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/nathan.galloway/Code/project-zenith/frontend/components/LiveKitSession.tsx:154:5
+  152 |
+  153 |   useEffect(() => {
+> 154 |     setMounted(true);
+      |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  155 |   }, []);
+  156 |
+  157 |   // Reset handing off state if the modal closes/changes         react-hooks/set-state-in-effect
+  160:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/nathan.galloway/Code/project-zenith/frontend/components/LiveKitSession.tsx:160:7
+  158 |   useEffect(() => {
+  159 |     if (!multimodalEvent) {
+> 160 |       setIsHandingOff(false);
+      |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  161 |     }
+  162 |   }, [multimodalEvent]);
+  163 |  react-hooks/set-state-in-effect
+  380:58  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+
+/Users/nathan.galloway/Code/project-zenith/frontend/components/VoiceSessionClient.test.tsx
+  14:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/nathan.galloway/Code/project-zenith/frontend/components/VoiceSessionClient.tsx
+   47:7  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/nathan.galloway/Code/project-zenith/frontend/components/VoiceSessionClient.tsx:47:7
+  45 |   useEffect(() => {
+  46 |     if (isOpen && !hasOpened) {
+> 47 |       setHasOpened(true);
+     |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  48 |     }
+  49 |   }, [isOpen, hasOpened]);
+  50 |  react-hooks/set-state-in-effect
+  113:6  warning  React Hook useEffect has a missing dependency: 'onSessionStateChange'. Either include it or remove the dependency array. If 'onSessionStateChange' changes too often, find the parent component that defines it and wrap that definition in useCallback                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+
+✖ 54 problems (43 errors, 11 warnings)
+

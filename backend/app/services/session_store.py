@@ -101,7 +101,7 @@ async def update_session(room_name: str, **fields: object) -> SessionState | Non
     if session is None:
         return None
 
-    update_data = {k: v for k, v in fields.items() if v is not None}
+    update_data = {k: v for k, v in fields.items()}
     update_data["updated_at"] = _now_iso()
     updated = session.model_copy(update=update_data)
 

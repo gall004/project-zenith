@@ -1,9 +1,18 @@
+import logging
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import health, rooms, ws, agent, sessions
 from app.core.config import settings
+
+# Configure root logger so all app.* loggers output at INFO level.
+# Without this, Python defaults to WARNING and silently drops INFO/DEBUG.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s | %(name)s | %(message)s",
+)
 
 
 @asynccontextmanager

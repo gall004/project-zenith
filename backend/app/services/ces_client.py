@@ -149,6 +149,8 @@ class CESClient:
 
     def _parse_response(self, data: dict) -> dict:
         """Extract agent text, tool calls, and end_session from RunSessionResponse."""
+        logger.debug("CES raw response: %s", data)
+
         result = {
             "text": "",
             "end_session": False,
@@ -168,4 +170,6 @@ class CESClient:
                 result["tool_calls"].extend(tool_calls)
 
         result["text"] = " ".join(text_parts)
+        logger.debug("CES parsed: text=%r, end_session=%s, tool_calls=%d",
+                     result["text"], result["end_session"], len(result["tool_calls"]))
         return result

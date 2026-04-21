@@ -76,10 +76,16 @@ function groupMessages(messages: ChatMessage[]): MessageGroup[] {
 function ConnectionStatusBadge({
   status,
   attempt,
+  isFinished,
 }: {
   status: ConnectionStatus;
   attempt: number;
-}): React.JSX.Element {
+  isFinished: boolean;
+}): React.JSX.Element | null {
+  if (isFinished) {
+    return null;
+  }
+
   const statusConfig: Record<
     ConnectionStatus,
     { dotColor: string; label: string }
@@ -370,6 +376,7 @@ export function ChatContainer({
   const [isDragging, setIsDragging] = useState(false);
   const [copiedTranscript, setCopiedTranscript] = useState(false);
   const [exportedTranscript, setExportedTranscript] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
 
   const messageListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -428,14 +435,40 @@ export function ChatContainer({
 
     if (lastMessage.type === "user_transcription") {
       const transcription = lastMessage as { type: string; payload: { text: string }; timestamp: string };
-      const userMessage: ChatMessage = {
-        id: generateMessageId(),
-        text: `🎙️ ${transcription.payload.text}`,
-        sender: "user",
-        timestamp: transcription.timestamp,
-      };
-      // removed redundant eslint directive
-      setMessages((prev) => [...prev, userMessage]);
+      const MERGE_WINDOW_MS = 4000; // merge fragments within 4 seconds
+
+      setMessages((prev) => {
+        const lastMsg = prev.length > 0 ? prev[prev.length - 1] : null;
+        const isRecentVoice =
+          lastMsg &&
+          lastMsg.sender === "user" &&
+          lastMsg.text.startsWith("🎙️") &&
+          new Date(transcription.timestamp).getTime() -
+            new Date(lastMsg.timestamp).getTime() <
+            MERGE_WINDOW_MS;
+
+        if (isRecentVoice && lastMsg) {
+          // Append to the existing voice bubble
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            ...lastMsg,
+            text: `${lastMsg.text} ${transcription.payload.text}`,
+            timestamp: transcription.timestamp,
+          };
+          return updated;
+        }
+
+        // First voice fragment — create a new bubble
+        return [
+          ...prev,
+          {
+            id: generateMessageId(),
+            text: `🎙️ ${transcription.payload.text}`,
+            sender: "user" as const,
+            timestamp: transcription.timestamp,
+          },
+        ];
+      });
       onUserInteraction?.();
     }
 
@@ -448,8 +481,18 @@ export function ChatContainer({
       );
     }
 
-    if (lastMessage.type === "session_event" && onSessionEvent) {
-      onSessionEvent(lastMessage as SessionEvent);
+    if (lastMessage.type === "error") {
+      setIsAwaitingResponse(false);
+    }
+
+    if (lastMessage.type === "session_event") {
+      const payload = (lastMessage as SessionEvent).payload;
+      if (payload.event === "ended") {
+        setIsFinished(true);
+      }
+      if (onSessionEvent) {
+        onSessionEvent(lastMessage as SessionEvent);
+      }
     }
   }, [lastMessage, generateMessageId, onMultimodalIntercept, onSessionEvent]);
 
@@ -626,6 +669,7 @@ export function ChatContainer({
           <ConnectionStatusBadge
             status={connectionStatus}
             attempt={reconnectAttempt}
+            isFinished={isFinished}
           />
         </div>
         
@@ -654,39 +698,51 @@ export function ChatContainer({
             {onEndSession && (
               <>
                 <div className="hidden sm:block w-px h-5 bg-outline-variant mx-0.5 shrink-0" />
-                <AlertDialog>
-                  <AlertDialogTrigger
-                    render={
-                      <button
-                        className="px-3 py-2 rounded-[10px] bg-error/10 hover:bg-error text-error hover:text-on-error flex items-center justify-center gap-1.5 transition-all duration-300 shrink-0 cursor-pointer"
-                        aria-label="End current session"
-                        title="End Session"
-                      >
-                        <span className="material-symbols-outlined text-[16px] leading-[0]">power_settings_new</span>
-                        <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">End Session</span>
-                      </button>
-                    }
-                  />
-            <AlertDialogContent className="bg-surface-container-low text-on-surface border border-outline shadow-[0_0_50px_rgba(0,0,0,0.15)] sm:max-w-[425px]">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="font-headline text-lg">End Session?</AlertDialogTitle>
-                <AlertDialogDescription className="text-secondary text-base">
-                  Are you sure you want to end your session with Zenith? This will clear your chat history and sever the secure connection.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter className="mt-6 flex gap-3 sm:gap-0">
-                <AlertDialogCancel className="bg-transparent border-outline-variant text-on-surface hover:bg-surface-container sm:mr-2">
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={onEndSession}
-                  className="bg-error hover:bg-error/90 text-on-error border-none"
-                >
-                  End Session
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-              </AlertDialog>
+                {isFinished ? (
+                  <button
+                    onClick={onEndSession}
+                    className="px-3 py-2 rounded-[10px] bg-error/10 hover:bg-error text-error hover:text-on-error flex items-center justify-center gap-1.5 transition-all duration-300 shrink-0 cursor-pointer"
+                    aria-label="Clear session history"
+                    title="Clear Session"
+                  >
+                    <span className="material-symbols-outlined text-[16px] leading-[0]">delete</span>
+                    <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">Clear Session</span>
+                  </button>
+                ) : (
+                  <AlertDialog>
+                    <AlertDialogTrigger
+                      render={
+                        <button
+                          className="px-3 py-2 rounded-[10px] bg-error/10 hover:bg-error text-error hover:text-on-error flex items-center justify-center gap-1.5 transition-all duration-300 shrink-0 cursor-pointer"
+                          aria-label="End current session"
+                          title="End Session"
+                        >
+                          <span className="material-symbols-outlined text-[16px] leading-[0]">power_settings_new</span>
+                          <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">End Session</span>
+                        </button>
+                      }
+                    />
+                    <AlertDialogContent className="bg-surface-container-low text-on-surface border border-outline shadow-[0_0_50px_rgba(0,0,0,0.15)] sm:max-w-[425px]">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="font-headline text-lg">End Session?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-secondary text-base">
+                          Are you sure you want to end your session with Zenith? This will clear your chat history and sever the secure connection.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className="mt-6 flex gap-3 sm:gap-0">
+                        <AlertDialogCancel className="bg-transparent border-outline-variant text-on-surface hover:bg-surface-container sm:mr-2">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={onEndSession}
+                          className="bg-error hover:bg-error/90 text-on-error border-none"
+                        >
+                          End Session
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </>
             )}
           </div>
@@ -735,7 +791,15 @@ export function ChatContainer({
             ))}
           </div>
         )}
-        {isAwaitingResponse && <TypingIndicator />}
+        {isAwaitingResponse && !isFinished && <TypingIndicator />}
+        {isFinished && (
+          <div className="mt-4 mb-2 flex justify-center w-full items-center animate-in fade-in zoom-in duration-300">
+            <div className="inline-flex items-center justify-center gap-2 text-xs text-secondary font-label tracking-widest uppercase py-1.5 px-4 rounded-full bg-surface-container-low border border-outline-variant/50 shadow-sm">
+              <span className="material-symbols-outlined text-[14px]">lock</span>
+              <span>Secure Session Concluded</span>
+            </div>
+          </div>
+        )}
         
         {/* Render LiveKitSession or escalation state inline here so it appears beneath/inside the chat flow */}
         {children}
@@ -761,11 +825,13 @@ export function ChatContainer({
       {/* Input area */}
       <div className="mt-4 pb-2 shrink-0">
         <form
+          className={`relative flex flex-col bg-surface border border-outline-variant rounded-2xl p-2 transition-all shadow-sm ${
+            isFinished ? "opacity-70 grayscale pointer-events-none" : "focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20"
+          }`}
           onSubmit={(e) => {
             e.preventDefault();
             handleSubmit();
           }}
-          className={`relative flex flex-col bg-surface border border-outline-variant rounded-2xl p-2 transition-all shadow-sm ${!isConnected ? "opacity-70 grayscale pointer-events-none" : "focus-within:border-primary focus-within:ring-1 focus-within:ring-primary"}`}
         >
           {fileError && (
             <div className="text-error text-xs px-2 pb-2 font-medium" role="alert">
@@ -805,7 +871,7 @@ export function ChatContainer({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               aria-label="Attach file"
-              disabled={!isConnected}
+              disabled={isFinished || !isConnected}
               className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mr-2 bg-transparent text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
             >
               <span className="material-symbols-outlined text-[24px]">attach_file</span>
@@ -822,15 +888,15 @@ export function ChatContainer({
               className="flex-1 bg-transparent border-none text-on-surface placeholder-secondary outline-none ring-0 focus:ring-0 px-2 h-10 text-sm disabled:cursor-not-allowed"
               aria-label="Chat message input"
               autoComplete="off"
-              disabled={!isConnected}
+              disabled={isFinished || !isConnected}
             />
             
             <button 
               type="submit"
               aria-label="Send message"
               id="chat-submit"
-              disabled={(inputValue.trim().length === 0 && !selectedFile) || !isConnected}
-              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${!isConnected || (inputValue.trim().length === 0 && !selectedFile) ? "bg-surface-container text-secondary" : "bg-primary text-on-primary hover:bg-primary/90 shadow-md"}`}
+              disabled={isFinished || (inputValue.trim().length === 0 && !selectedFile) || !isConnected}
+              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${isFinished || !isConnected || (inputValue.trim().length === 0 && !selectedFile) ? "bg-surface-container text-secondary" : "bg-primary text-on-primary hover:bg-primary/90 shadow-md"}`}
             >
               <span className="material-symbols-outlined text-xl" style={{fontVariationSettings: "'FILL' 1"}}>arrow_upward</span>
             </button>

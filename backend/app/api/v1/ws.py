@@ -123,9 +123,11 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                             attachments=chat_payload.attachments,
                         )
                         logger.info("ces_response_received", extra={"response": ces_response})
-                        await manager.send_to_room_agent_message(
-                            room_name, ces_response["text"]
-                        )
+                        
+                        if ces_response["text"] and len(ces_response["text"].strip()) > 0:
+                            await manager.send_to_room_agent_message(
+                                room_name, ces_response["text"]
+                            )
 
                         # Handle end_session signal from CES agent
                         if ces_response.get("end_session"):
@@ -135,6 +137,16 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                             logger.info(
                                 "ces_end_session",
                                 extra={"room_name": room_name},
+                            )
+                            
+                            import datetime
+                            end_event = WebSocketEvent(
+                                type=WebSocketEventType.SESSION_EVENT,
+                                payload={"event": "ended"},
+                                timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat()
+                            )
+                            await manager.send_to_room_event(
+                                room_name, end_event.model_dump()
                             )
 
                     except Exception as ces_error:

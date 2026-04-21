@@ -399,6 +399,9 @@ def _provision_agent(
         "displayName": display_name,
         "instruction": instruction,
         "description": description,
+        "tools": [
+            f"{app_name}/tools/end_session"
+        ]
     }
     if toolsets:
         body["toolsets"] = toolsets
@@ -408,6 +411,19 @@ def _provision_agent(
     if existing:
         agent_name = existing["name"]
         logger.info("CES agent already exists — syncing: %s", display_name)
+        
+        # Merge existing toolsets so we don't strip manually attached system tools (like end_session)
+        if "toolsets" in existing and toolsets:
+            existing_toolsets = existing.get("toolsets", [])
+            merged_toolsets_dict = {}
+            for t in existing_toolsets:
+                merged_toolsets_dict[t["toolset"]] = set(t.get("toolIds", []))
+            for t in toolsets:
+                if t["toolset"] not in merged_toolsets_dict:
+                    merged_toolsets_dict[t["toolset"]] = set()
+                merged_toolsets_dict[t["toolset"]].update(t.get("toolIds", []))
+            body["toolsets"] = [{"toolset": k, "toolIds": list(v)} for k, v in merged_toolsets_dict.items()]
+
         url = f"{_CES_API_BASE}/{agent_name}"
         try:
             resp = httpx.patch(url, headers=headers, json=body, timeout=60)

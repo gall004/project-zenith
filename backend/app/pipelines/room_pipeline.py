@@ -172,7 +172,7 @@ async def create_and_run_pipeline(room_name: str, connection_manager: Any, reaso
 
     async def handle_end_vision_session(params):
         """Pipecat 1.0.0 callback: receives a single FunctionCallParams object."""
-        logger.info(f"Pipecat agent requested end_vision_session with args: {params.arguments}")
+        logger.info(f"end_vision_session called with args: {params.arguments}")
         await params.result_callback({"status": "success"})
         
         async def close_pipeline_delayed():
@@ -182,20 +182,30 @@ async def create_and_run_pipeline(room_name: str, connection_manager: Any, reaso
             # Uses event-based input (not text) per architecture guardrail.
             try:
                 ces_client = CESClient()
+                logger.info(f"Sending vision_session_complete event to GECX for room {room_name}")
                 ces_response = await ces_client.send_event(
                     session_id=room_name,
                     event_name="vision_session_complete",
                     variables={"vision_summary": summary},
                 )
+                logger.info(f"GECX response: text={ces_response.get('text')!r}, end_session={ces_response.get('end_session')}")
+
+                # Forward GECX's response text to the frontend
                 if ces_response and ces_response.get("text"):
                     await connection_manager.send_to_room_agent_message(room_name, ces_response["text"])
+                else:
+                    logger.warning("GECX returned no text for vision_session_complete")
+
             except Exception as e:
-                logger.error(f"Failed to handoff context via CES event: {e}")
+                logger.error(f"Failed to handoff context via CES event: {e}", exc_info=True)
             
             # Close the multimodal UI
             await connection_manager.trigger_multimodal_end(room_name)
-                
-            await asyncio.sleep(4)
+            
+            # Clear multimodal state from redis so refresh doesn't pop video up again
+            from app.services import session_store
+            await session_store.update_session(room_name, multimodal_event=None)
+            
             await stop_pipeline(room_name)
         asyncio.create_task(close_pipeline_delayed())
     

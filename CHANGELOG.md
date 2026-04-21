@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Fixed an infinite UI spinning loop caused by unhandled GECX textless `endSession` system flags failing to propagate to the frontend socket.
+- Fixed a persistent Redis state poison bug in `session_store.py` that forced the Gemini Live multmodal camera widget to instantly reopen and reconnect after page reloads.
 
 ## [v1.7.2] - 2026-04-20
 

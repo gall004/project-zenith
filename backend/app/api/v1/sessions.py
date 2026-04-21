@@ -147,7 +147,7 @@ async def handoff_session(room_name: str):
             summary = (
                 f"Live video session transcript ({len(transcript_lines)} turns)."
                 if transcript_lines
-                else "The multimodal session was ended manually by the user."
+                else "Live video session concluded."
             )
             ces_client = CESClient()
             ces_response = await ces_client.send_event(
@@ -157,10 +157,23 @@ async def handoff_session(room_name: str):
             )
             
             if ces_response and ces_response.get("text"):
-                # Sleep briefly to ensure the frontend WebSocket is fully stable
-                # and ready to receive messages after tearing down the video components.
-                await asyncio.sleep(2)
                 await manager.send_to_room_agent_message(room_name, ces_response["text"])
+            
+            if ces_response and ces_response.get("end_session"):
+                await session_store.update_session(room_name, status="ended")
+                import datetime
+                from app.models.websocket import WebSocketEvent, WebSocketEventType
+                end_event = WebSocketEvent(
+                    type=WebSocketEventType.SESSION_EVENT,
+                    payload={"event": "ended"},
+                    timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat()
+                )
+                await manager.send_to_room_event(room_name, end_event.model_dump())
+
+            # Explicitly clear multimodal state from redis so refresh doesn't pop video up again
+            from app.services import session_store
+            await session_store.update_session(room_name, multimodal_event=None)
+
         except Exception as e:
             logger.error(f"Failed to handoff context via CES event: {e}")
             

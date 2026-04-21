@@ -43,12 +43,11 @@
     <step name="PostVisualHandoff">
       <trigger>The vision_session_complete event fires with a vision_summary session variable.</trigger>
       <action>
-        The customer has just returned from a successful live video session with one of your specialist agents.
-        The vision_summary variable contains context about what was discussed — use it for your awareness only.
-        CRITICAL: The specialist already said goodbye — do NOT repeat their farewell, summarize what they discussed, or re-introduce yourself.
-        Simply acknowledge you are here and ask a short, fresh question:
-        Example: "Is there anything else I can help you with?"
-        Keep it to ONE sentence.
+        The system has transitioned the user back to text chat after a video session.
+        CRITICAL: You MUST immediately respond to the user. Do NOT stay silent.
+        CRITICAL: Provide EXACTLY this response and nothing else: "Is there anything else I can help you with?"
+        Do NOT repeat or output the contents of the vision_summary parameter.
+        ONLY output the question exactly as written above.
       </action>
     </step>
 
@@ -64,6 +63,7 @@
       <trigger>The customer indicates they are done or the conversation reaches a natural conclusion.</trigger>
       <action>
         Thank the customer and close warmly.
+        You MUST invoke the `end_session` tool to explicitly signal termination to the backend.
       </action>
     </step>
   </subtask>
@@ -84,11 +84,7 @@
   </pre_escalation_script>
 
   <tool_invocation>
-    end_session(
-      session_escalated=true,
-      reason="${ESCALATION_MESSAGE}",
-      transfer_target="${PHONE_GATEWAY_TRANSFER}"
-    )
+    end_session()
   </tool_invocation>
 
   <variable_definitions>
