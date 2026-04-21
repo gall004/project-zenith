@@ -159,12 +159,12 @@ export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: Voi
     return (
       <div className="flex flex-col items-center justify-center py-8 flex-1 text-center p-4">
         <span
-          className="material-symbols-outlined text-4xl text-[#00D4FF] mb-2 motion-safe:animate-pulse"
+          className="material-symbols-outlined text-4xl text-primary mb-2 motion-safe:animate-pulse"
           style={{ fontVariationSettings: "'FILL' 0" }}
         >
           cloud_sync
         </span>
-        <p className="text-sm text-slate-400 font-body">
+        <p className="text-sm text-secondary font-body">
           Restoring session...
         </p>
       </div>
@@ -175,17 +175,17 @@ export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: Voi
     return (
       <div className="flex flex-col items-center justify-center py-8 flex-1 text-center p-4">
         <span
-          className="material-symbols-outlined text-4xl text-red-400 mb-2"
+          className="material-symbols-outlined text-4xl text-error mb-2"
           style={{ fontVariationSettings: "'FILL' 0" }}
         >
           cloud_off
         </span>
-        <p className="text-sm text-red-400 font-body">
+        <p className="text-sm text-error font-body">
           Unable to connect to session service. Please try again.
         </p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-3 text-xs bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full transition-colors"
+          className="mt-3 text-xs bg-error-container text-on-error-container hover:opacity-90 px-4 py-2 rounded-full transition-opacity"
         >
           Retry
         </button>
@@ -206,15 +206,15 @@ export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: Voi
         {/* Render escalation payload OR the live kit video session inside the chat trace */}
         <div className="mt-4 shrink-0">
           {escalationData ? (
-            <div className="flex flex-col items-center justify-center p-6 border rounded-xl bg-red-500/10 border-red-500/20 w-full shadow-sm text-center space-y-3">
-              <h2 className="text-sm font-bold text-red-400">Session Escalated</h2>
-              <p className="text-white max-w-sm font-medium text-xs">
+            <div className="flex flex-col items-center justify-center p-6 border rounded-xl bg-error-container/30 border-error-container w-full shadow-sm text-center space-y-3">
+              <h2 className="text-sm font-bold text-error">Session Escalated</h2>
+              <p className="text-on-surface max-w-sm font-medium text-xs">
                 {escalationData.escalation_message || "Live communication has been paused. A human agent will contact you shortly."}
               </p>
               {escalationData.phone_transfer && (
                 <a 
                   href={`tel:${escalationData.phone_transfer}`}
-                  className="mt-2 inline-flex items-center justify-center rounded-md bg-red-500 text-white h-8 px-4 text-xs font-medium transition-colors hover:bg-red-600"
+                  className="mt-2 inline-flex items-center justify-center rounded-md bg-primary text-on-primary h-8 px-4 text-xs font-medium transition-colors hover:opacity-90"
                 >
                   Call Support: {escalationData.phone_transfer}
                 </a>

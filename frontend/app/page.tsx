@@ -47,10 +47,10 @@ function HeroSection() {
             onClick={handleOpenZenith}
             size="lg"
             data-slot="button"
-            className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-on-primary rounded-full font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 flex items-center justify-center space-x-2 group h-14"
+            className="w-full sm:w-auto bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-lg font-bold text-lg hover:shadow-[0_8px_32px_rgba(0,84,214,0.3)] transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center space-x-3 group h-14 px-8"
           >
-            <span>Ask Zenith (Agent)</span>
-            <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble</span>
+            <span>Ask Zenith</span>
           </Button>
           <a href="https://ai.google.dev/gemini-api/docs" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto bg-surface-container hover:bg-surface-container-high text-on-surface px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 border border-outline-variant hover:border-outline flex items-center justify-center space-x-2 text-center h-14">
             <span>Gemini API Docs</span>
@@ -103,15 +103,15 @@ function FeaturesSection() {
 
 function Footer() {
   return (
-    <footer className="bg-inverse-surface text-inverse-on-surface py-12 border-t border-outline">
-      <div className="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between">
+    <footer className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white w-full border-t border-slate-200 dark:border-slate-800">
+      <div className="container mx-auto px-4 md:px-6 py-10 flex flex-col md:flex-row items-center justify-between">
         <div className="flex items-center space-x-2 mb-4 md:mb-0">
           <span className="material-symbols-outlined text-2xl text-primary">radar</span>
-          <span className="font-headline font-bold text-xl tracking-tight">
+          <span className="font-headline font-black text-xl tracking-tight">
             Project <span className="text-primary">Zenith</span>
           </span>
         </div>
-        <div className="text-sm text-outline-variant">
+        <div className="text-sm text-outline-variant font-label">
           &copy; {new Date().getFullYear()} TTEC Digital. All systems operational.
         </div>
       </div>

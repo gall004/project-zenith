@@ -85,7 +85,7 @@ function ConnectionStatusBadge({
     { dotColor: string; label: string }
   > = {
     connected: {
-      dotColor: "bg-[#00D4FF]",
+      dotColor: "bg-primary",
       label: "Secure Connection Active",
     },
     reconnecting: {
@@ -100,14 +100,16 @@ function ConnectionStatusBadge({
 
   const { dotColor, label } = statusConfig[status];
 
+  if (status === "connected") return null;
+
   return (
     <div
-      className="inline-flex items-center gap-2 text-xs text-slate-400 font-label tracking-wide uppercase"
+      className="inline-flex items-center gap-2 text-xs text-secondary font-label tracking-wide uppercase bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant"
       role="status"
       aria-live="polite"
     >
       <span
-        className={`inline-block h-2 w-2 rounded-full ${dotColor} ${status === 'connected' ? 'animate-pulse shadow-[0_0_8px_#00D4FF]' : ''}`}
+        className={`inline-block h-2 w-2 rounded-full ${dotColor} shadow-sm`}
         aria-hidden="true"
       />
       <span>{label}</span>
@@ -129,9 +131,9 @@ function SenderAvatar({ sender }: { sender: "user" | "agent" }): React.JSX.Eleme
     );
   }
   return (
-    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
+    <div className="w-8 h-8 rounded-full bg-surface-container border border-outline-variant flex items-center justify-center shrink-0 shadow-sm">
       <span
-        className="material-symbols-outlined text-[16px] text-slate-400"
+        className="material-symbols-outlined text-[16px] text-secondary"
         style={{ fontVariationSettings: "'FILL' 1" }}
       >
         person
@@ -156,7 +158,7 @@ function CopyButton({ text }: { text: string }): React.JSX.Element {
   return (
     <button
       onClick={handleCopy}
-      className="opacity-0 group-hover/msg:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-white/10 text-slate-500 hover:text-slate-300"
+      className={`opacity-0 group-hover/msg:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-surface-container text-secondary hover:text-primary cursor-pointer ${copied ? "text-green-600 hover:text-green-600" : ""}`}
       aria-label="Copy message"
       title="Copy to clipboard"
     >
@@ -186,16 +188,16 @@ function MessageBubble({
   return (
     <div className={`group/msg relative ${isFirst ? "" : "mt-1"}`}>
       <div
-        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
           isUser
-            ? `bg-[#00D4FF]/8 text-[#c0efff] border border-[#00D4FF]/15 ${isFirst ? "rounded-tr-2xl" : "rounded-tr-lg"} ${isLast ? "rounded-br-sm" : "rounded-br-lg"}`
-            : `bg-white/[0.04] text-slate-300 border border-white/[0.06] ${isFirst ? "rounded-tl-2xl" : "rounded-tl-lg"} ${isLast ? "rounded-bl-sm" : "rounded-bl-lg"}`
+            ? `bg-sky-50 text-sky-900 border border-sky-200/60 ${isFirst ? "rounded-tr-2xl" : "rounded-tr-lg"} ${isLast ? "rounded-br-sm" : "rounded-br-lg"}`
+            : `bg-surface-container border border-outline-variant text-on-surface ${isFirst ? "rounded-tl-2xl" : "rounded-tl-lg"} ${isLast ? "rounded-bl-sm" : "rounded-bl-lg"}`
         }`}
       >
         {isVoice && (
-          <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 font-medium uppercase tracking-wider mr-2 align-middle">
+          <span className="inline-flex items-center gap-1 text-[11px] text-sky-600 font-bold uppercase tracking-wider mr-2 align-middle">
             <span
-              className="material-symbols-outlined text-[13px] text-[#00D4FF]/60"
+              className="material-symbols-outlined text-[13px] text-sky-500"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               mic
@@ -215,11 +217,11 @@ function MessageBubble({
       </div>
 
       {/* Footer: timestamp on last msg, copy on every agent msg */}
-      <div className={`flex items-center gap-2 mt-0.5 min-h-[18px] ${
+      <div className={`flex items-center gap-2 mt-1 min-h-[18px] ${
         isUser ? "justify-end" : "justify-start"
       }`}>
         {isLast && (
-          <span className="text-[10px] text-slate-600 font-mono tracking-tight">
+          <span className="text-[10px] text-secondary font-mono tracking-tight">
             {formatTimestamp(message.timestamp)}
           </span>
         )}
@@ -242,8 +244,8 @@ function MessageGroupView({
     <div className="mb-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* Sender label — sits above the avatar+bubbles row */}
       <div className={`mb-1.5 ${isUser ? "text-right pr-11" : "pl-11"}`}>
-        <span className={`text-[11px] font-semibold uppercase tracking-wider ${
-          isUser ? "text-[#00D4FF]/50" : "text-slate-500"
+        <span className={`text-[11px] font-bold uppercase tracking-wider ${
+          isUser ? "text-sky-600" : "text-secondary"
         }`}>
           {isUser ? "You" : "Zenith"}
         </span>
@@ -276,7 +278,7 @@ function TypingIndicator(): React.JSX.Element {
   return (
     <div className="mb-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="mb-1.5 pl-11">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
           Zenith
         </span>
       </div>
@@ -284,12 +286,12 @@ function TypingIndicator(): React.JSX.Element {
         <div className="shrink-0">
           <SenderAvatar sender="agent" />
         </div>
-        <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl rounded-tl-lg rounded-bl-sm px-4 py-3">
+        <div className="bg-surface-container border border-outline-variant shadow-sm rounded-2xl rounded-tl-lg rounded-bl-sm px-4 py-3">
           <div className="flex gap-1.5" aria-label="Agent is typing">
             {[0, 1, 2].map((dotIndex) => (
               <span
                 key={dotIndex}
-                className="inline-block h-1.5 w-1.5 rounded-full bg-[#00D4FF]/50 motion-safe:animate-bounce"
+                className="inline-block h-1.5 w-1.5 rounded-full bg-secondary motion-safe:animate-bounce"
                 style={{
                   animationDelay: `${dotIndex * 150}ms`,
                   animationDuration: "1s",
@@ -366,6 +368,8 @@ export function ChatContainer({
   const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  const [copiedTranscript, setCopiedTranscript] = useState(false);
+  const [exportedTranscript, setExportedTranscript] = useState(false);
 
   const messageListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -587,45 +591,105 @@ export function ChatContainer({
     sendMessage(event);
   }, [isConnected, sendMessage, generateMessageId, onUserInteraction]);
 
+  const handleCopyTranscript = useCallback(() => {
+    try {
+      const text = messages.map(m => `[${formatTimestamp(m.timestamp)}] ${m.sender === "user" ? "You" : "Zenith"}: ${m.text.replace(/^🎙️\s*/, "")}`).join("\n");
+      navigator.clipboard.writeText(text);
+      setCopiedTranscript(true);
+      setTimeout(() => setCopiedTranscript(false), 2000);
+    } catch {
+      // Ignore clipboard failure silently
+    }
+  }, [messages]);
+
+  const handleExportTranscript = useCallback(() => {
+    try {
+      const text = messages.map(m => `[${formatTimestamp(m.timestamp)}] ${m.sender === "user" ? "You" : "Zenith"}: ${m.text.replace(/^🎙️\s*/, "")}`).join("\n");
+      const blob = new Blob([text], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `zenith-transcript-${new Date().toISOString().split("T")[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setExportedTranscript(true);
+      setTimeout(() => setExportedTranscript(false), 2000);
+    } catch {
+      // Ignore fallback issues silently
+    }
+  }, [messages]);
+
   return (
     <div className="flex flex-col h-full w-full" aria-label="Chat">
-      <div className="px-2 flex justify-between items-center mb-4">
-        <ConnectionStatusBadge
-          status={connectionStatus}
-          attempt={reconnectAttempt}
-        />
-        {onEndSession && messages.length > 0 && (
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <button
-                  className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-full font-medium transition-colors border border-red-500/20"
-                  aria-label="End current session"
-                >
-                  End Session
-                </button>
-              }
-            />
-            <AlertDialogContent className="bg-[#2c3134] text-white border-white/10 sm:max-w-[425px]">
+      <div className="flex w-full justify-between items-center mb-4 min-h-[32px] px-2">
+        <div className="shrink-0 flex items-center pl-1">
+          <ConnectionStatusBadge
+            status={connectionStatus}
+            attempt={reconnectAttempt}
+          />
+        </div>
+        
+        {messages.length > 0 && (
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar justify-end flex-wrap sm:flex-nowrap bg-surface border border-outline shadow-sm rounded-2xl p-1.5">
+            <button
+               onClick={handleCopyTranscript}
+               title="Copy Transcript to Clipboard"
+               className={`px-3 py-2 rounded-[10px] transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer ${copiedTranscript ? 'bg-green-500/10 text-green-700' : 'text-secondary hover:text-on-surface hover:bg-surface-container-low'}`}
+               aria-label="Copy Transcript"
+            >
+              <span className="material-symbols-outlined text-[16px] leading-[0]">{copiedTranscript ? "check" : "content_copy"}</span>
+              <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">Copy</span>
+            </button>
+            <div className="hidden sm:block w-px h-5 bg-outline-variant mx-0.5 shrink-0" />
+            <button
+               onClick={handleExportTranscript}
+               title="Download Transcript File"
+               className={`px-3 py-2 rounded-[10px] transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer ${exportedTranscript ? 'bg-green-500/10 text-green-700' : 'text-secondary hover:text-on-surface hover:bg-surface-container-low'}`}
+               aria-label="Export Transcript"
+            >
+              <span className="material-symbols-outlined text-[16px] leading-[0]">{exportedTranscript ? "check" : "download"}</span>
+              <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">Export</span>
+            </button>
+
+            {onEndSession && (
+              <>
+                <div className="hidden sm:block w-px h-5 bg-outline-variant mx-0.5 shrink-0" />
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    render={
+                      <button
+                        className="px-3 py-2 rounded-[10px] bg-error/10 hover:bg-error text-error hover:text-on-error flex items-center justify-center gap-1.5 transition-all duration-300 shrink-0 cursor-pointer"
+                        aria-label="End current session"
+                        title="End Session"
+                      >
+                        <span className="material-symbols-outlined text-[16px] leading-[0]">power_settings_new</span>
+                        <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">End Session</span>
+                      </button>
+                    }
+                  />
+            <AlertDialogContent className="bg-surface-container-low text-on-surface border border-outline shadow-[0_0_50px_rgba(0,0,0,0.15)] sm:max-w-[425px]">
               <AlertDialogHeader>
                 <AlertDialogTitle className="font-headline text-lg">End Session?</AlertDialogTitle>
-                <AlertDialogDescription className="text-slate-400 text-base">
+                <AlertDialogDescription className="text-secondary text-base">
                   Are you sure you want to end your session with Zenith? This will clear your chat history and sever the secure connection.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="mt-6 flex gap-3 sm:gap-0">
-                <AlertDialogCancel className="bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white sm:mr-2">
+                <AlertDialogCancel className="bg-transparent border-outline-variant text-on-surface hover:bg-surface-container sm:mr-2">
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={onEndSession}
-                  className="bg-red-500 hover:bg-red-600 text-white border-none"
+                  className="bg-error hover:bg-error/90 text-on-error border-none"
                 >
                   End Session
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
-          </AlertDialog>
+              </AlertDialog>
+              </>
+            )}
+          </div>
         )}
       </div>
 
@@ -644,22 +708,22 @@ export function ChatContainer({
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center pt-8 pb-4 flex-1 text-center px-4 w-full h-full min-h-[min(50vh,300px)]">
-            <span className="material-symbols-outlined text-4xl text-slate-600 mb-2" style={{fontVariationSettings: "'FILL' 0"}}>forum</span>
-            <p className="text-sm text-slate-400 font-body mb-4">How can I assist you today?</p>
+            <span className="material-symbols-outlined text-4xl text-primary mb-2" style={{fontVariationSettings: "'FILL' 0"}}>forum</span>
+            <p className="text-sm text-secondary font-body mb-4">How can I assist you today?</p>
             
             <div className="w-full flex flex-wrap justify-center gap-2 mt-2 max-w-[95%] mx-auto">
               <button 
                 onClick={() => handleSuggestedAction("I have an object here but I'm not sure what it is. Can you help me identify it?")}
-                className="px-3 py-1.5 bg-[#3f465c]/40 hover:bg-[#3f465c]/80 border border-white/5 hover:border-[#00D4FF]/30 rounded-full transition-all duration-200 text-xs text-slate-300 flex items-center gap-1.5 group hover:text-white hover:shadow-[0_0_10px_rgba(0,212,255,0.1)]"
+                className="px-4 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary rounded-full transition-all duration-200 text-xs text-on-surface flex items-center gap-1.5 group font-medium"
               >
-                <span className="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-[#00D4FF] transition-colors">visibility</span>
+                <span className="material-symbols-outlined text-[14px] text-primary group-hover:scale-110 transition-transform">visibility</span>
                 Visual Context Demo
               </button>
               <button 
                 onClick={() => handleSuggestedAction("I've been feeling a bit off today and I'm not sure why. Could you take a look at me and tell me how I'm coming across?")}
-                className="px-3 py-1.5 bg-[#3f465c]/40 hover:bg-[#3f465c]/80 border border-white/5 hover:border-[#00D4FF]/30 rounded-full transition-all duration-200 text-xs text-slate-300 flex items-center gap-1.5 group hover:text-white hover:shadow-[0_0_10px_rgba(0,212,255,0.1)]"
+                className="px-4 py-2 bg-surface-container hover:bg-surface-container-high border border-outline-variant hover:border-primary rounded-full transition-all duration-200 text-xs text-on-surface flex items-center gap-1.5 group font-medium"
               >
-                <span className="material-symbols-outlined text-[14px] text-slate-400 group-hover:text-[#00D4FF] transition-colors">mood</span>
+                <span className="material-symbols-outlined text-[14px] text-primary group-hover:scale-110 transition-transform">mood</span>
                 Sentiment Analysis
               </button>
             </div>
@@ -686,7 +750,7 @@ export function ChatContainer({
                 container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
               }
             }}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 p-2 bg-[#2c3134] hover:bg-[#3f465c] text-white rounded-full shadow-xl border border-white/10 transition-all z-20 animate-in fade-in slide-in-from-bottom-2 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 h-10 w-10 flex items-center justify-center bg-surface hover:bg-surface-container-low text-on-surface rounded-full shadow-xl border border-outline transition-all z-20 animate-in fade-in slide-in-from-bottom-2 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
             aria-label="Scroll to bottom"
           >
             <span className="material-symbols-outlined text-[20px] leading-none block" style={{fontVariationSettings: "'wght' 300"}}>arrow_downward</span>
@@ -701,22 +765,22 @@ export function ChatContainer({
             e.preventDefault();
             handleSubmit();
           }}
-          className={`relative flex flex-col bg-[#1c2022] border-2 border-white/10 rounded-2xl p-2 transition-all shadow-md ${!isConnected ? "opacity-70 grayscale pointer-events-none" : "focus-within:border-[#00D4FF]/70 focus-within:shadow-[0_0_15px_rgba(0,212,255,0.2)]"}`}
+          className={`relative flex flex-col bg-surface border border-outline-variant rounded-2xl p-2 transition-all shadow-sm ${!isConnected ? "opacity-70 grayscale pointer-events-none" : "focus-within:border-primary focus-within:ring-1 focus-within:ring-primary"}`}
         >
           {fileError && (
-            <div className="text-red-400 text-xs px-2 pb-2 font-medium" role="alert">
+            <div className="text-error text-xs px-2 pb-2 font-medium" role="alert">
               <span className="material-symbols-outlined text-[14px] align-text-bottom mr-1">error</span>
               {fileError}
             </div>
           )}
 
           {filePreview && (
-            <div className="relative inline-block w-24 h-24 mx-2 mb-2 overflow-hidden bg-black rounded-lg border border-white/10 shrink-0">
+            <div className="relative inline-block w-24 h-24 mx-2 mb-2 overflow-hidden bg-surface-container rounded-lg border border-outline-variant shrink-0">
               <button
                 type="button"
                 aria-label="Remove attachment"
                 onClick={removeFile}
-                className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white p-0 shadow-lg z-10"
+                className="absolute top-1 right-1 w-6 h-6 bg-error rounded-full flex items-center justify-center text-on-error p-0 shadow-sm z-10"
               >
                 <span className="material-symbols-outlined text-[14px]">close</span>
               </button>
@@ -742,7 +806,7 @@ export function ChatContainer({
               onClick={() => fileInputRef.current?.click()}
               aria-label="Attach file"
               disabled={!isConnected}
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mr-2 bg-transparent text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mr-2 bg-transparent text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
             >
               <span className="material-symbols-outlined text-[24px]">attach_file</span>
             </button>
@@ -755,7 +819,7 @@ export function ChatContainer({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onPaste={handlePaste}
-              className="flex-1 bg-transparent border-none text-white placeholder-slate-400 outline-none ring-0 focus:ring-0 px-2 h-10 text-sm disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent border-none text-on-surface placeholder-secondary outline-none ring-0 focus:ring-0 px-2 h-10 text-sm disabled:cursor-not-allowed"
               aria-label="Chat message input"
               autoComplete="off"
               disabled={!isConnected}
@@ -766,7 +830,7 @@ export function ChatContainer({
               aria-label="Send message"
               id="chat-submit"
               disabled={(inputValue.trim().length === 0 && !selectedFile) || !isConnected}
-              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${!isConnected || (inputValue.trim().length === 0 && !selectedFile) ? "bg-white/10 text-white/30" : "bg-[#00D4FF] text-black hover:bg-[#00D4FF]/90 shadow-[0_0_10px_rgba(0,212,255,0.4)]"}`}
+              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${!isConnected || (inputValue.trim().length === 0 && !selectedFile) ? "bg-surface-container text-secondary" : "bg-primary text-on-primary hover:bg-primary/90 shadow-md"}`}
             >
               <span className="material-symbols-outlined text-xl" style={{fontVariationSettings: "'FILL' 1"}}>arrow_upward</span>
             </button>

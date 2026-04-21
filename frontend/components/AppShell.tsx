@@ -20,7 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <header className={cn(
-        "fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 text-on-surface transition-all duration-300 ease-in-out",
+        "fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm text-slate-900 dark:text-white transition-all duration-300 ease-in-out",
         isDrawerOpen ? "lg:pr-[28rem]" : "pr-0"
       )}>
         <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
@@ -28,29 +28,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="material-symbols-outlined text-2xl group-hover:rotate-12 transition-transform duration-300">
               radar
             </span>
-            <span className="font-headline font-bold text-xl tracking-tight text-on-surface whitespace-nowrap hidden sm:inline">
+            <span className="font-headline font-black text-xl tracking-tighter text-slate-900 dark:text-white whitespace-nowrap hidden sm:inline">
               Project <span className="text-primary">Zenith</span>
             </span>
           </Link>
           <nav className="hidden lg:flex space-x-8 items-center shrink-0">
-            <Link href="/#features" className="text-secondary hover:text-primary transition-colors text-sm font-medium flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">star</span><span>Features</span></Link>
-            <Link href="/#architecture" className="text-secondary hover:text-primary transition-colors text-sm font-medium flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">account_tree</span><span>Architecture</span></Link>
-            <Link href="/#costs" className="text-secondary hover:text-primary transition-colors text-sm font-medium flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">payments</span><span>Costs</span></Link>
-            <Link href="/walkthrough" className="text-secondary hover:text-primary transition-colors text-sm font-medium flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">explore</span><span>Walkthroughs</span></Link>
+            <Link href="/#features" className="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-500 dark:hover:text-blue-300 transition-colors active:scale-95 duration-200 text-sm flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">star</span><span>Features</span></Link>
+            <Link href="/#architecture" className="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-500 dark:hover:text-blue-300 transition-colors active:scale-95 duration-200 text-sm flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">account_tree</span><span>Architecture</span></Link>
+            <Link href="/#costs" className="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-500 dark:hover:text-blue-300 transition-colors active:scale-95 duration-200 text-sm flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">payments</span><span>Costs</span></Link>
+            <Link href="/walkthrough" className="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-500 dark:hover:text-blue-300 transition-colors active:scale-95 duration-200 text-sm flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">explore</span><span>Walkthroughs</span></Link>
           </nav>
           <div className="flex items-center space-x-2 md:space-x-4 shrink-0">
-            <Button
-              onClick={() => setIsDrawerOpen(true)}
-              data-slot="button"
-              className="bg-primary hover:bg-primary/90 text-on-primary rounded-full font-medium transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-2 px-3 sm:px-4"
-            >
-              <span className="hidden sm:inline whitespace-nowrap">Ask Zenith</span>
-              <span className="material-symbols-outlined text-[18px] sm:text-sm">chat_spark</span>
-            </Button>
+            {!isDrawerOpen && (
+              <Button
+                onClick={() => setIsDrawerOpen(true)}
+                data-slot="button"
+                className="bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-lg font-bold transition-all transform hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(0,84,214,0.3)] flex items-center space-x-2 px-4 sm:px-6 py-2 shadow-sm"
+              >
+                <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble</span>
+                <span className="hidden sm:inline whitespace-nowrap">Ask Zenith</span>
+              </Button>
+            )}
             
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-on-surface hover:text-primary transition-colors focus:outline-hidden flex items-center justify-center"
+              className="lg:hidden p-2 text-slate-600 hover:text-blue-600 transition-colors focus:outline-hidden flex items-center justify-center"
             >
               <span className="material-symbols-outlined text-2xl">
                 {isMobileMenuOpen ? "close" : "menu"}
@@ -61,12 +63,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Dropdown Navigation */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden absolute top-16 left-0 right-0 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-lg animate-in slide-in-from-top-2 fade-in duration-200">
+          <div className="lg:hidden absolute top-16 left-0 right-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-lg animate-in slide-in-from-top-2 fade-in duration-200">
             <nav className="flex flex-col p-4 space-y-2">
-              <Link href="/#features" onClick={() => setIsMobileMenuOpen(false)} className="text-secondary hover:text-primary transition-colors text-base font-medium px-4 py-3 hover:bg-white/5 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">star</span><span>Features</span></Link>
-              <Link href="/#architecture" onClick={() => setIsMobileMenuOpen(false)} className="text-secondary hover:text-primary transition-colors text-base font-medium px-4 py-3 hover:bg-white/5 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">account_tree</span><span>Architecture</span></Link>
-              <Link href="/#costs" onClick={() => setIsMobileMenuOpen(false)} className="text-secondary hover:text-primary transition-colors text-base font-medium px-4 py-3 hover:bg-white/5 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">payments</span><span>Costs</span></Link>
-              <Link href="/walkthrough" onClick={() => setIsMobileMenuOpen(false)} className="text-secondary hover:text-primary transition-colors text-base font-medium px-4 py-3 hover:bg-white/5 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">explore</span><span>Walkthroughs</span></Link>
+              <Link href="/#features" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-base font-medium px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">star</span><span>Features</span></Link>
+              <Link href="/#architecture" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-base font-medium px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">account_tree</span><span>Architecture</span></Link>
+              <Link href="/#costs" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-base font-medium px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">payments</span><span>Costs</span></Link>
+              <Link href="/walkthrough" onClick={() => setIsMobileMenuOpen(false)} className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-base font-medium px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">explore</span><span>Walkthroughs</span></Link>
             </nav>
           </div>
         )}

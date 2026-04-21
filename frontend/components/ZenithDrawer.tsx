@@ -15,7 +15,7 @@ export function ZenithDrawer({ open, onOpenChange, onSessionStateChange }: Zenit
       <SheetContent
         hasOverlay={false}
         keepMounted={true}
-        className="!w-full !max-w-full lg:!max-w-md border-l border-white/10 shadow-2xl p-0 flex flex-col bg-[#2c3134] text-white"
+        className="!w-full !max-w-full lg:!max-w-md bg-surface text-on-surface shadow-2xl border-l border-outline-variant/50 flex flex-col p-0"
       >
         {/* Header from Google Stitch styling */}
         <SheetHeader className="p-6 pb-2 text-left shrink-0">
@@ -30,8 +30,8 @@ export function ZenithDrawer({ open, onOpenChange, onSessionStateChange }: Zenit
               />
             </div>
             <div>
-              <h3 className="text-white font-headline text-base leading-tight">Zenith Support Agent</h3>
-              <p className="text-slate-400 text-xs font-label">TTEC Digital</p>
+              <h3 className="text-on-surface font-headline font-bold text-base leading-tight">Zenith Support Agent</h3>
+              <p className="text-secondary text-xs font-label">TTEC Digital</p>
             </div>
           </div>
         </SheetHeader>
