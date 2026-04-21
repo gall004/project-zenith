@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.7.2] - 2026-04-20
+
 ### Fixed
 - Bug `fix/livekit-drawer-coupling`: Refactored `VoiceSessionClient` to employ an internal latching boolean (`hasOpened`) that decouples the underlying LiveKit WebRTC connection from the `ZenithDrawer` visibility state. This ensures that closing the side panel after initial activation no longer terminates the session or drops the multi-modal camera feed.
 
