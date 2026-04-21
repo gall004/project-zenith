@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleOpen = () => setIsDrawerOpen(true);
@@ -23,29 +24,52 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         isDrawerOpen ? "lg:pr-[28rem]" : "pr-0"
       )}>
         <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2 text-primary group">
+          <Link href="/" className="flex items-center space-x-2 text-primary group shrink-0">
             <span className="material-symbols-outlined text-2xl group-hover:rotate-12 transition-transform duration-300">
               radar
             </span>
-            <span className="font-headline font-bold text-xl tracking-tight text-on-surface">
+            <span className="font-headline font-bold text-xl tracking-tight text-on-surface whitespace-nowrap hidden sm:inline">
               Project <span className="text-primary">Zenith</span>
             </span>
           </Link>
-          <nav className="hidden md:flex space-x-8 items-center">
-            <Link href="/#features" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Features</Link>
-            <Link href="/#architecture" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Architecture</Link>
-            <Link href="/#costs" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Costs</Link>
-            <Link href="/walkthrough" className="text-secondary hover:text-primary transition-colors text-sm font-medium">Walkthroughs</Link>
+          <nav className="hidden lg:flex space-x-8 items-center shrink-0">
+            <Link href="/#features" className="text-secondary hover:text-primary transition-colors text-sm font-medium flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">star</span><span>Features</span></Link>
+            <Link href="/#architecture" className="text-secondary hover:text-primary transition-colors text-sm font-medium flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">account_tree</span><span>Architecture</span></Link>
+            <Link href="/#costs" className="text-secondary hover:text-primary transition-colors text-sm font-medium flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">payments</span><span>Costs</span></Link>
+            <Link href="/walkthrough" className="text-secondary hover:text-primary transition-colors text-sm font-medium flex items-center space-x-1.5"><span className="material-symbols-outlined text-[18px]">explore</span><span>Walkthroughs</span></Link>
           </nav>
-          <Button
-            onClick={() => setIsDrawerOpen(true)}
-            data-slot="button"
-            className="bg-primary hover:bg-primary/90 text-on-primary rounded-full font-medium transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-2"
-          >
-            <span>Ask Zenith</span>
-            <span className="material-symbols-outlined text-sm">chat_spark</span>
-          </Button>
+          <div className="flex items-center space-x-2 md:space-x-4 shrink-0">
+            <Button
+              onClick={() => setIsDrawerOpen(true)}
+              data-slot="button"
+              className="bg-primary hover:bg-primary/90 text-on-primary rounded-full font-medium transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-2 px-3 sm:px-4"
+            >
+              <span className="hidden sm:inline whitespace-nowrap">Ask Zenith</span>
+              <span className="material-symbols-outlined text-[18px] sm:text-sm">chat_spark</span>
+            </Button>
+            
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 text-on-surface hover:text-primary transition-colors focus:outline-hidden flex items-center justify-center"
+            >
+              <span className="material-symbols-outlined text-2xl">
+                {isMobileMenuOpen ? "close" : "menu"}
+              </span>
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Dropdown Navigation */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden absolute top-16 left-0 right-0 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-lg animate-in slide-in-from-top-2 fade-in duration-200">
+            <nav className="flex flex-col p-4 space-y-2">
+              <Link href="/#features" onClick={() => setIsMobileMenuOpen(false)} className="text-secondary hover:text-primary transition-colors text-base font-medium px-4 py-3 hover:bg-white/5 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">star</span><span>Features</span></Link>
+              <Link href="/#architecture" onClick={() => setIsMobileMenuOpen(false)} className="text-secondary hover:text-primary transition-colors text-base font-medium px-4 py-3 hover:bg-white/5 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">account_tree</span><span>Architecture</span></Link>
+              <Link href="/#costs" onClick={() => setIsMobileMenuOpen(false)} className="text-secondary hover:text-primary transition-colors text-base font-medium px-4 py-3 hover:bg-white/5 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">payments</span><span>Costs</span></Link>
+              <Link href="/walkthrough" onClick={() => setIsMobileMenuOpen(false)} className="text-secondary hover:text-primary transition-colors text-base font-medium px-4 py-3 hover:bg-white/5 rounded-md flex items-center space-x-3"><span className="material-symbols-outlined text-xl">explore</span><span>Walkthroughs</span></Link>
+            </nav>
+          </div>
+        )}
       </header>
 
       {isSessionActive && !isDrawerOpen && (

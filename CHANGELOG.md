@@ -8,10 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Refactor `chore/theme-refactor`: Refactored `globals.css` base-nova OKLCH theme configuration to explicitly adopt the designated light-mode Tailwind color palette (`bg-surface`, `text-on-surface`, `surface-container`, etc.) mapping to the new Precision Void design iteration. Stripped the hardcoded `dark` enforcement from the Next.js `RootLayout` component, seamlessly reverting the entire application to the targeted crisp daylight technical UI.
+
 - Refactor `chore/drawer-scrollable-refactor`: Refactored ZenithDrawer into a non-modal persistent side panel on desktop by enabling `modal={false}` and `hasOverlay={false}`. The user can now seamlessly scroll and interact with the main page behind the agent drawer while maintaining a full-view overlay on mobile.
 - Refactor `chore/refactor-architecture-section`: Overhauled the UI Architecture and Cost section. Removed the "Google-Native vs Portable Middleware" comparison to focus purely on the required Portable Middleware stack (Pipecat + LiveKit or Stream), as direct WebSockets are necessary to enable function calling and enterprise-grade multi-agent orchestration.
 
 ### Fixed
+- Bug `fix/mobile-menu-hamburger`: Introduced an animated mobile dropdown header (`isMobileMenuOpen`) activated by a responsive hamburger icon. Elevated the inline horizontal navigation breakpoints from `md` to `lg` to prevent squishing and overlap on tablet and mobile viewports, assuring the `Ask Zenith` primary action button is always persistently accessible in the upper right. Additionally, replaced the Next.js generic browser favicon with the unified `radar` material symbol encoded natively as an SVG, and hid the full "Project Zenith" masthead text entirely on ultra-mobile screens to aggressively save space.
+
 - Bug `fix/audiocontext-resumption`: Fixed bug where LiveKit eagerly initialized WebSockets in the background, violating Chrome's strict AudioContext autoplay policies and rendering redundant permissions warnings. Connection logic is now explicitly deferred to the "Ask Zenith" explicit user gesture window by passing `<LiveKitRoom connect={isOpen} />`.
 ## [v1.7.0] - 2026-04-20
 ### Added

@@ -43,15 +43,15 @@ describe("US-07: Root Layout and Metadata", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("should include the dark class on <html> in layout.tsx source", () => {
+  it("should NOT include the dark class on <html> in layout.tsx source", () => {
     // Arrange
     const layoutSource = fs.readFileSync(
       path.join(ROOT, "app", "layout.tsx"),
       "utf-8"
     );
 
-    // Act & Assert — US-10: dark mode default
-    expect(layoutSource).toContain("dark");
+    // Act & Assert — Light mode default
+    expect(layoutSource).not.toContain("dark");
   });
 });
 
