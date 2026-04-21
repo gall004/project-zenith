@@ -20,10 +20,12 @@ export function LiveKitSession({
   roomName,
   identity,
   multimodalEvent,
+  isOpen = true,
 }: {
   roomName: string;
   identity: string;
   multimodalEvent: EnableMultimodalInputEvent | null;
+  isOpen?: boolean;
 }): React.JSX.Element {
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,8 +59,8 @@ export function LiveKitSession({
 
 
 
-  // Loading State (Skeleton)
-  if (isLoading) {
+  // Loading State (Skeleton) - Only show if drawer is actually open
+  if (isLoading && isOpen) {
     return (
       <div className="flex items-center justify-center h-[300px] w-full bg-muted rounded-xl motion-safe:animate-pulse shadow-sm">
         <p className="text-muted-foreground font-medium flex items-center gap-2">
@@ -72,8 +74,8 @@ export function LiveKitSession({
     );
   }
 
-  // Error State
-  if (error) {
+  // Error State - Only show if drawer is open
+  if (error && isOpen) {
     return (
       <div className="flex flex-col items-center justify-center h-[300px] w-full border-destructive/50 border-2 rounded-xl bg-destructive/10 p-6 space-y-4 shadow-sm">
         <h3 className="text-xl font-bold text-destructive">
@@ -101,7 +103,7 @@ export function LiveKitSession({
       serverUrl={
         process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880"
       }
-      connect={true}
+      connect={isOpen}
       className="contents"
     >
       <RoomAudioRenderer />

@@ -27,9 +27,10 @@ type HydrationPhase = "loading" | "ready" | "error";
 
 export interface VoiceSessionClientProps {
   onSessionStateChange?: (isActive: boolean) => void;
+  isOpen?: boolean;
 }
 
-export function VoiceSessionClient({ onSessionStateChange }: VoiceSessionClientProps): React.JSX.Element {
+export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: VoiceSessionClientProps): React.JSX.Element {
   const [identity, setIdentity] = useState<string>("");
   const [roomName, setRoomName] = useState<string>("");
   const [hydrationPhase, setHydrationPhase] = useState<HydrationPhase>("loading");
@@ -224,6 +225,7 @@ export function VoiceSessionClient({ onSessionStateChange }: VoiceSessionClientP
               roomName={roomName}
               identity={identity}
               multimodalEvent={multimodalEvent}
+              isOpen={isOpen}
             />
           )}
         </div>

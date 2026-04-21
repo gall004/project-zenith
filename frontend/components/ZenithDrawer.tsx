@@ -39,7 +39,7 @@ export function ZenithDrawer({ open, onOpenChange, onSessionStateChange }: Zenit
         {/* Payload Space for dual-channel interface */}
         <div className="flex-1 flex flex-col h-full overflow-hidden p-6 pt-2">
           {/* Unconditional mount with keepMounted Sheet ensures we do not disconnect on close */}
-          <VoiceSessionClient onSessionStateChange={onSessionStateChange} />
+          <VoiceSessionClient onSessionStateChange={onSessionStateChange} isOpen={open} />
         </div>
       </SheetContent>
     </Sheet>

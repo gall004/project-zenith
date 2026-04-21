@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Refactor `chore/drawer-scrollable-refactor`: Refactored ZenithDrawer into a non-modal persistent side panel on desktop by enabling `modal={false}` and `hasOverlay={false}`. The user can now seamlessly scroll and interact with the main page behind the agent drawer while maintaining a full-view overlay on mobile.
 - Refactor `chore/refactor-architecture-section`: Overhauled the UI Architecture and Cost section. Removed the "Google-Native vs Portable Middleware" comparison to focus purely on the required Portable Middleware stack (Pipecat + LiveKit or Stream), as direct WebSockets are necessary to enable function calling and enterprise-grade multi-agent orchestration.
+
+### Fixed
+- Bug `fix/audiocontext-resumption`: Fixed bug where LiveKit eagerly initialized WebSockets in the background, violating Chrome's strict AudioContext autoplay policies and rendering redundant permissions warnings. Connection logic is now explicitly deferred to the "Ask Zenith" explicit user gesture window by passing `<LiveKitRoom connect={isOpen} />`.
 ## [v1.7.0] - 2026-04-20
 ### Added
 - Feature `feature/sentiment-avatar`: Added a dedicated Emotionally Intelligent Companion (`sentiment_system.xml`) intended for facial expression analysis and emotional support demos.
