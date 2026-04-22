@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v1.8.0] - 2026-04-22
 ### Added
 - Feature `feature/mobile-camera-flip`: Added mobile camera flip capabilities to the LiveKit video feed. The initial camera orientation now dynamically routes to front-facing (`user`) for the sentiment demo and rear-facing (`environment`) for the default visual context demo, driven by the `pipeline_type` injected into the websocket payload.
 - Feature `feature/cloud-run-production-deploy`: Idempotent `deploy.sh` and `teardown.sh` scripts for full GCP production deployment. Reads all config from `infra/deploy.env` — zero interactive prompts.
