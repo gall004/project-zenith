@@ -88,8 +88,21 @@ class CESClient:
                     }
                 })
 
+        import secrets
+        webhook_token = secrets.token_hex(16)
+        
+        from app.services.redis_client import get_redis
+        redis = await get_redis()
+        # Token expires in 5 minutes (300 seconds)
+        await redis.set(f"webhook_token:{webhook_token}", session_id, ex=300)
+
+        # Inject token as a system metadata input before the user's message.
+        # CX Agent Studio does not resolve sessionParameters into {variable_name}
+        # template variables, so we pass the token inline for the agent to extract.
+        inputs_list.insert(0, {"text": f"<system_metadata>webhook_token={webhook_token}</system_metadata>"})
+
         request_body = {
-            "inputs": inputs_list
+            "inputs": inputs_list,
         }
 
         token = await self._get_access_token()

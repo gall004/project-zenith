@@ -129,6 +129,40 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                                 room_name, ces_response["text"]
                             )
 
+                        # Handle client-side tool calls from CES agent
+                        tool_calls = ces_response.get("tool_calls", [])
+                        for tool_call in tool_calls:
+                            action_name = tool_call.get("action", "")
+                            if action_name == "request_visual_context" or "request_visual_context" in tool_call.get("tool", ""):
+                                args = tool_call.get("inputActionParameters", {})
+                                pipeline_type = args.get("pipeline_type", "concierge")
+                                reason = args.get("reason", "")
+                                
+                                logger.info(
+                                    "Intercepted request_visual_context tool call",
+                                    extra={"room_name": room_name, "pipeline": pipeline_type}
+                                )
+                                
+                                import asyncio
+                                from app.pipelines.room_pipeline import create_and_run_pipeline
+                                multimodal_payload = {
+                                    "reason": reason,
+                                    "camera_requested": True,
+                                    "microphone_requested": True,
+                                    "pipeline_type": pipeline_type,
+                                }
+                                await session_store.update_session(
+                                    room_name,
+                                    multimodal_event=multimodal_payload,
+                                )
+                                
+                                asyncio.create_task(
+                                    create_and_run_pipeline(
+                                        room_name, manager, reason=reason, pipeline_type=pipeline_type
+                                    )
+                                )
+                                await manager.trigger_multimodal_intercept(room_name)
+
                         # Handle end_session signal from CES agent
                         if ces_response.get("end_session"):
                             await session_store.update_session(
@@ -143,7 +177,7 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                             end_event = WebSocketEvent(
                                 type=WebSocketEventType.SESSION_EVENT,
                                 payload={"event": "ended"},
-                                timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat()
+                                timestamp=datetime.datetime.now(datetime.UTC).isoformat()
                             )
                             await manager.send_to_room_event(
                                 room_name, end_event.model_dump()

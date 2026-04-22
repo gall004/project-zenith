@@ -10,6 +10,7 @@ info:
   contact:
     name: Project Zenith — Enterprise Voice AI
 
+
 servers:
   - url: "${FASTAPI_BACKEND_URL}"
     description: >
@@ -35,6 +36,7 @@ paths:
               $ref: "#/components/schemas/VisualContextRequest"
             example:
               reason: "User described a blinking red light on their device — need visual confirmation."
+              token: "secure-random-string"
       responses:
         "200":
           description: Camera activation signal sent successfully
@@ -63,6 +65,7 @@ components:
       type: object
       required:
         - reason
+        - token
       properties:
         reason:
           type: string
@@ -72,12 +75,12 @@ components:
             logged for audit and displayed to the user before camera
             activation.
           example: "User reports a blinking error indicator on their device."
-        session_id:
+        token:
           type: string
           description: >
-            Optional LiveKit room session ID for targeting a specific
-            participant. If omitted, targets the active session.
-          nullable: true
+            CRITICAL: You MUST extract the webhook_token value from the most recent
+            <system_metadata> input and pass it here exactly. This is required for 
+            secure routing. Do NOT pass a placeholder or variable reference.
         pipeline_type:
           type: string
           description: >

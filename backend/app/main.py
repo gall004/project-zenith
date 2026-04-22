@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import health, rooms, ws, agent, sessions
+from app.api.v1 import health, rooms, ws, sessions, agent
 from app.core.config import settings
 
 # Configure root logger so all app.* loggers output at INFO level.

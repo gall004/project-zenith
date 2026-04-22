@@ -171,7 +171,6 @@ async def handoff_session(room_name: str):
                 await manager.send_to_room_event(room_name, end_event.model_dump())
 
             # Explicitly clear multimodal state from redis so refresh doesn't pop video up again
-            from app.services import session_store
             await session_store.update_session(room_name, multimodal_event=None)
 
         except Exception as e:

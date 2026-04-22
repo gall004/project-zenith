@@ -248,8 +248,11 @@ def _provision_toolset(
             },
         }
         resp = httpx.patch(url, headers=headers, json=body, timeout=60)
-        resp.raise_for_status()
-        logger.info("Updated toolset: %s", ts_name)
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPError as e:
+            logger.error("Toolset update failed with 400: %s", resp.text)
+            raise e
         return ts_name
 
     # Create new toolset
@@ -335,10 +338,56 @@ def _resolve_lro_response(resp_json: dict, headers: dict) -> dict:
     return resp_json
 
 
+def _register_app_variables(
+    app_name: str, headers: dict
+) -> None:
+    """Register dynamic session variables on the CES app.
+
+    CX Agent Studio requires variables to be explicitly declared at the
+    app level before ``{variable_name}`` references in agent prompts
+    are resolved at runtime.  The ``system_webhook_token`` variable is
+    injected via ``sessionParameters`` in each RunSession call and used
+    by sub-agents to authenticate webhook tool calls.
+
+    Args:
+        app_name: Full resource name of the CES app.
+        headers: Authenticated request headers.
+    """
+    url = f"{_CES_API_BASE}/{app_name}"
+
+    # CES PATCH requires displayName alongside variableDeclarations
+    try:
+        get_resp = httpx.get(url, headers=headers, timeout=30)
+        get_resp.raise_for_status()
+        display_name = get_resp.json().get("displayName", "")
+    except httpx.HTTPError:
+        logger.warning("Could not fetch app displayName for variable registration")
+        return
+
+    body = {
+        "displayName": display_name,
+        "variableDeclarations": [
+            {
+                "name": "system_webhook_token",
+                "description": (
+                    "Cryptographically secure token for webhook routing. "
+                    "Injected via sessionParameters on each RunSession call."
+                ),
+                "schema": {"type": "STRING"},
+            }
+        ],
+    }
+    try:
+        resp = httpx.patch(url, headers=headers, json=body, timeout=30)
+        resp.raise_for_status()
+        logger.info("Registered app variables: system_webhook_token")
+    except httpx.HTTPError as e:
+        logger.warning("Failed to register app variables (non-fatal): %s", e)
+
+
 # ===================================================================
 # Agent Provisioning
 # ===================================================================
-
 
 def _set_root_agent(
     app_name: str, agent_name: str, headers: dict
@@ -489,6 +538,9 @@ def provision_gecx_agent(
         app = _resolve_lro_response(raw, headers)
         app_name = app["name"]
         logger.info("CES app created: %s", app_name)
+
+    # --- Register session variables on the app ---
+    _register_app_variables(app_name, headers)
 
     # --- Provision toolset ---
     toolset_name = _provision_toolset(app_name, tool_schema, headers)
