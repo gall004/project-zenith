@@ -17,11 +17,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("open-zenith", handleOpen);
   }, []);
 
+  // Lock body scroll on mobile when drawer is open to prevent
+  // background page content from being visible/scrollable.
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    if (isDrawerOpen) {
+      html.style.overflow = "hidden";
+      body.style.overflow = "hidden";
+    } else {
+      html.style.overflow = "";
+      body.style.overflow = "";
+    }
+    return () => {
+      html.style.overflow = "";
+      body.style.overflow = "";
+    };
+  }, [isDrawerOpen]);
+
   return (
     <>
       <header className={cn(
         "fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm text-slate-900 dark:text-white transition-all duration-300 ease-in-out",
-        isDrawerOpen ? "lg:pr-[28rem]" : "pr-0"
+        isDrawerOpen ? "lg:pr-[28rem]" : "pr-0",
+        isDrawerOpen ? "hidden lg:block" : ""
       )}>
         <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2 text-primary group shrink-0">
@@ -97,7 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className={cn(
         "transition-all duration-300 ease-in-out",
-        isDrawerOpen ? "lg:pr-[28rem]" : "pr-0"
+        isDrawerOpen ? "lg:pr-[28rem] hidden lg:block" : "pr-0"
       )}>
         {children}
       </div>

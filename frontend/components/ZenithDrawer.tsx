@@ -15,7 +15,8 @@ export function ZenithDrawer({ open, onOpenChange, onSessionStateChange }: Zenit
       <SheetContent
         hasOverlay={false}
         keepMounted={true}
-        className="!w-full !max-w-full lg:!max-w-md bg-surface text-on-surface shadow-2xl border-l border-outline-variant/50 flex flex-col p-0"
+        className="!w-full !max-w-full lg:!max-w-md bg-surface text-on-surface shadow-2xl border-l border-outline-variant/50 flex flex-col p-0 sheet-mobile-height"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         {/* Header from Google Stitch styling */}
         <SheetHeader className="p-6 pb-2 text-left shrink-0">

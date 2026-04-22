@@ -156,3 +156,13 @@
     background: var(--color-outline);
   }
 }
+
+/* ── Mobile Sheet Height ────────────────────────────────────── */
+/* Use dvh so the sheet fills the *visual* viewport on mobile,
+   accounting for the collapsing Safari/Chrome URL bar. */
+@supports (height: 100dvh) {
+  .sheet-mobile-height {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+}

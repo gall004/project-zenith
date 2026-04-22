@@ -379,10 +379,41 @@ export function ChatContainer({
   const [isFinished, setIsFinished] = useState(false);
 
   const messageListRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const generateMessageId = useCallback((): string => {
     return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  }, []);
+
+  // Track mobile virtual keyboard via VisualViewport API
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const handleResize = () => {
+      // The difference between window.innerHeight and visualViewport.height
+      // is the space consumed by the virtual keyboard.
+      const kbHeight = window.innerHeight - vv.height;
+      setKeyboardHeight(kbHeight > 50 ? kbHeight : 0);
+
+      // Scroll chat to bottom when keyboard opens
+      if (kbHeight > 50 && messageListRef.current) {
+        requestAnimationFrame(() => {
+          const container = messageListRef.current;
+          if (container) {
+            container.scrollTop = container.scrollHeight;
+          }
+        });
+      }
+    };
+
+    vv.addEventListener("resize", handleResize);
+    vv.addEventListener("scroll", handleResize);
+    return () => {
+      vv.removeEventListener("resize", handleResize);
+      vv.removeEventListener("scroll", handleResize);
+    };
   }, []);
 
   // Compute grouped messages for rendering
@@ -607,9 +638,12 @@ export function ChatContainer({
     };
     sendMessage(event);
 
-    // Clear input and retain focus
+    // Clear input, reset textarea height, and retain focus
     setInputValue("");
     removeFile();
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
     inputRef.current?.focus();
   }, [inputValue, selectedFile, filePreview, isConnected, sendMessage, generateMessageId]);
 
@@ -822,8 +856,8 @@ export function ChatContainer({
         )}
       </div>
 
-      {/* Input area */}
-      <div className="mt-4 pb-2 shrink-0">
+      {/* Input area — sticks to bottom, adjusts for mobile keyboard */}
+      <div className="mt-2 shrink-0" style={{ paddingBottom: keyboardHeight > 0 ? `${keyboardHeight}px` : undefined }}>
         <form
           className={`relative flex flex-col bg-surface border border-outline-variant rounded-2xl p-2 transition-all shadow-sm ${
             isFinished ? "opacity-70 grayscale pointer-events-none" : "focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20"
@@ -858,7 +892,7 @@ export function ChatContainer({
             </div>
           )}
 
-          <div className="flex items-center w-full">
+          <div className="flex items-end w-full">
             <input
               type="file"
               ref={fileInputRef}
@@ -872,20 +906,37 @@ export function ChatContainer({
               onClick={() => fileInputRef.current?.click()}
               aria-label="Attach file"
               disabled={isFinished || !isConnected}
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mr-2 bg-transparent text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
+              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mr-2 mb-0.5 bg-transparent text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
             >
               <span className="material-symbols-outlined text-[24px]">attach_file</span>
             </button>
 
-            <input
+            <textarea
               ref={inputRef}
               id="chat-input"
-              type="text"
-              placeholder="Type a message or paste an image..."
+              placeholder="Type a message..."
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                // Auto-resize: reset height then set to scrollHeight, capped at ~5 lines
+                e.target.style.height = "auto";
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+              }}
+              onKeyDown={(e) => {
+                // Desktop: Enter sends, Shift+Enter inserts newline
+                // Mobile:  Enter always inserts newline, user taps send button
+                if (e.key === "Enter" && !e.shiftKey) {
+                  const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+                  if (!isTouchDevice) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }
+              }}
               onPaste={handlePaste}
-              className="flex-1 bg-transparent border-none text-on-surface placeholder-secondary outline-none ring-0 focus:ring-0 px-2 h-10 text-sm disabled:cursor-not-allowed"
+              rows={1}
+              className="flex-1 bg-transparent border-none text-on-surface placeholder-secondary outline-none ring-0 focus:ring-0 px-2 py-2.5 text-sm disabled:cursor-not-allowed resize-none leading-snug"
+              style={{ minHeight: "40px", maxHeight: "120px" }}
               aria-label="Chat message input"
               autoComplete="off"
               disabled={isFinished || !isConnected}
@@ -896,7 +947,7 @@ export function ChatContainer({
               aria-label="Send message"
               id="chat-submit"
               disabled={isFinished || (inputValue.trim().length === 0 && !selectedFile) || !isConnected}
-              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${isFinished || !isConnected || (inputValue.trim().length === 0 && !selectedFile) ? "bg-surface-container text-secondary" : "bg-primary text-on-primary hover:bg-primary/90 shadow-md"}`}
+              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 mb-0.5 transition-all ${isFinished || !isConnected || (inputValue.trim().length === 0 && !selectedFile) ? "bg-surface-container text-secondary" : "bg-primary text-on-primary hover:bg-primary/90 shadow-md"}`}
             >
               <span className="material-symbols-outlined text-xl" style={{fontVariationSettings: "'FILL' 1"}}>arrow_upward</span>
             </button>
