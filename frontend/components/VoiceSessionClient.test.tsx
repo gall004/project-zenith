@@ -140,7 +140,7 @@ describe("VoiceSessionClient (Backend Session Hydration)", () => {
     // Act: User closes the drawer
     rerender(<VoiceSessionClient isOpen={false} />);
 
-    // Assert: LiveKitSession must REMAIN open to preserve media streams
-    expect(screen.getByTestId("mock-livekit-session")).toHaveAttribute("data-isopen", "true");
+    // Assert: LiveKitSession disconnects when drawer closes to stop billing
+    expect(screen.getByTestId("mock-livekit-session")).toHaveAttribute("data-isopen", "false");
   });
 });

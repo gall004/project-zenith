@@ -20,9 +20,9 @@ vi.mock("@/lib/api/livekit", () => ({
 }));
 
 describe("LiveKitSession", () => {
-  it("automatically initializes the connection and requests a token upon mounting", async () => {
+  it("automatically initializes the connection and requests a token when multimodal event fires", async () => {
     // Arrange & Act
-    render(<LiveKitSession roomName="test" identity="user" multimodalEvent={null} isOpen={true} />);
+    render(<LiveKitSession roomName="test" identity="user" multimodalEvent={{ type: "enable_multimodal_input", payload: { pipeline_type: "concierge" } }} isOpen={true} />);
     
     // Assert - State immediately transitions to loading/connecting
     expect(screen.getByText(/Negotiating secure connection/i)).toBeInTheDocument();

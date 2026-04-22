@@ -49,12 +49,13 @@ export function LiveKitSession({
     }
   }, [roomName, identity]);
 
+  // Only fetch the LiveKit token when multimodal escalation is triggered.
+  // This prevents LiveKit room creation (and billing) during text-only chat.
   useEffect(() => {
-    if (!token && !isLoading && !error) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (multimodalEvent && !token && !isLoading && !error) {
       loadToken();
     }
-  }, [loadToken, token, isLoading, error]);
+  }, [multimodalEvent, loadToken, token, isLoading, error]);
 
 
 
@@ -99,12 +100,12 @@ export function LiveKitSession({
   // Active State
   return (
     <LiveKitRoom
-      audio={true}
+      audio={false}
       token={token}
       serverUrl={
         process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880"
       }
-      connect={isOpen}
+      connect={!!multimodalEvent && isOpen}
       className="contents"
       options={{
         audioCaptureDefaults: {
@@ -153,7 +154,7 @@ function MultimodalInterceptHandler({
   const [mounted, setMounted] = useState(false);
   const [corner, setCorner] = useState<"top-left" | "top-right" | "bottom-left" | "bottom-right">("bottom-right");
 
-  const [isMicEnabled, setIsMicEnabled] = useState(true);
+  const [isMicEnabled, setIsMicEnabled] = useState(false);
   const [isCamEnabled, setIsCamEnabled] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHandingOff, setIsHandingOff] = useState(false);
@@ -291,7 +292,12 @@ function MultimodalInterceptHandler({
 
         const initialMode = multimodalEvent?.payload.pipeline_type === "sentiment" ? "user" : "environment";
 
-        // 1. Enable camera for LiveKit (sends video to the server/Gemini)
+        // 1. Enable microphone for LiveKit (deferred from room connect)
+        await room.localParticipant.setMicrophoneEnabled(true);
+        setIsMicEnabled(true);
+        console.log(`[Viewfinder] LiveKit microphone enabled`);
+
+        // 2. Enable camera for LiveKit (sends video to the server/Gemini)
         await room.localParticipant.setCameraEnabled(true, { facingMode: initialMode });
         console.log(`[Viewfinder] LiveKit camera enabled (${initialMode})`);
 

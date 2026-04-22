@@ -41,13 +41,7 @@ export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: Voi
 
   const [escalationData, setEscalationData] = useState<SessionEventPayload | null>(null);
 
-  // Decoupled connection latch logic
-  const [hasOpened, setHasOpened] = useState(false);
-  useEffect(() => {
-    if (isOpen && !hasOpened) {
-      setHasOpened(true);
-    }
-  }, [isOpen, hasOpened]);
+
 
   // ──────────────────────────────────────────────
   // Hydrate session from backend on mount
@@ -236,7 +230,7 @@ export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: Voi
               roomName={roomName}
               identity={identity || ""}
               multimodalEvent={multimodalEvent}
-              isOpen={hasOpened || isOpen}
+              isOpen={isOpen}
             />
           )}
         </div>
