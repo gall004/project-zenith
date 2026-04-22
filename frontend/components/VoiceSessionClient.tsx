@@ -31,8 +31,9 @@ export interface VoiceSessionClientProps {
 }
 
 export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: VoiceSessionClientProps): React.JSX.Element {
-  const [identity, setIdentity] = useState<string>("");
+  const [identity, setIdentity] = useState<string | null>(null);
   const [roomName, setRoomName] = useState<string>("");
+  const [sessionStatus, setSessionStatus] = useState<"active" | "escalated" | "ended">("active");
   const [hydrationPhase, setHydrationPhase] = useState<HydrationPhase>("loading");
 
   const [multimodalEvent, setMultimodalEvent] =
@@ -65,6 +66,7 @@ export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: Voi
             if (!cancelled) {
               setRoomName(session.room_name);
               setIdentity(session.identity);
+              setSessionStatus(session.status);
 
               // Restore multimodal and escalation state from backend
               if (session.multimodal_event) {
@@ -210,6 +212,7 @@ export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: Voi
         onSessionEvent={handleSessionEvent}
         onEndSession={handleEndSession}
         onUserInteraction={markSessionActive}
+        isInitialEnded={sessionStatus === "ended"}
       >
         {/* Render escalation payload OR the live kit video session inside the chat trace */}
         <div className="mt-4 shrink-0">
@@ -231,7 +234,7 @@ export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: Voi
           ) : (
             <LiveKitSession
               roomName={roomName}
-              identity={identity}
+              identity={identity || ""}
               multimodalEvent={multimodalEvent}
               isOpen={hasOpened || isOpen}
             />

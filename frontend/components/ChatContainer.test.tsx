@@ -60,7 +60,19 @@ describe("US-07: ChatContainer Component", () => {
     // Assert
     const input = screen.getByLabelText("Chat message input");
     expect(input).toBeInTheDocument();
-    expect(input).toHaveAttribute("type", "text");
+    expect(input.tagName).toBe("TEXTAREA");
+  });
+
+  it("should permanently disable the chat input on initial render if isInitialEnded is true", () => {
+    render(<ChatContainer roomName="test-room" isInitialEnded={true} />);
+    
+    // 1. Textarea should be disabled
+    const textarea = screen.getByLabelText("Chat message input");
+    expect(textarea).toBeDisabled();
+
+    // 2. Submit button should be disabled
+    const button = screen.getByRole("button", { name: "Send message" });
+    expect(button).toBeDisabled();
   });
 
   it("should render a submit button", () => {

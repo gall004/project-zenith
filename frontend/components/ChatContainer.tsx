@@ -322,6 +322,7 @@ export interface ChatContainerProps {
   children?: React.ReactNode;
   maxAttachmentSizeMB?: number;
   allowedAttachmentTypes?: string[];
+  isInitialEnded?: boolean;
 }
 
 export function ChatContainer({
@@ -333,6 +334,7 @@ export function ChatContainer({
   children,
   maxAttachmentSizeMB = process.env.NEXT_PUBLIC_MAX_ATTACHMENT_SIZE_MB ? Number(process.env.NEXT_PUBLIC_MAX_ATTACHMENT_SIZE_MB) : 5,
   allowedAttachmentTypes = process.env.NEXT_PUBLIC_ALLOWED_ATTACHMENT_TYPES ? process.env.NEXT_PUBLIC_ALLOWED_ATTACHMENT_TYPES.split(",") : ["image/jpeg", "image/png", "image/webp", "image/gif"],
+  isInitialEnded = false,
 }: ChatContainerProps): React.JSX.Element {
   const {
     isConnected,
@@ -376,7 +378,7 @@ export function ChatContainer({
   const [isDragging, setIsDragging] = useState(false);
   const [copiedTranscript, setCopiedTranscript] = useState(false);
   const [exportedTranscript, setExportedTranscript] = useState(false);
-  const [isFinished, setIsFinished] = useState(false);
+  const [isFinished, setIsFinished] = useState(isInitialEnded);
 
   const messageListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);

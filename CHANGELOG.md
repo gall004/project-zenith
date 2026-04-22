@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor `chore/gecx-multi-env`: Decoupled GECX agent provisioning into dev and prod environments by introducing `GECX_APP_NAME` via environment files. Updated `deploy-prod.sh` and `deploy-dev.sh` to correctly isolate updates and automatically inject `CES_APP_ID`. Additionally, removed interactive prompts from `deploy-dev.sh` to rely fully on `.env` and renamed deployment scripts for clarity (e.g. `deploy-app.sh` -> `deploy-prod.sh`).
 
 ### Fixed
+- Bug `fix/session-conclude-reload`: Fixed an issue where reloading the page after a session concludes would incorrectly render the session as active by restoring the "ended" status from the backend to the chat interface.
 - Bug `fix/ces-403-forbidden`: Granted `roles/ces.client` to `zenith-backend-sa` in `deploy-app.sh` to resolve `403 Forbidden` API crashes when the deployed backend attempts to invoke the CES `runSession` endpoint.
 - Bug `fix/gecx-provisioning-paths`: Fixed `gecx_agent` prompt path resolution in `scripts/bootstrap_gecx.py` failing during GECX agent provisioning due to script relocation.
 - Bug `fix/mobile-drawer-ux`: Fixed mobile chat drawer allowing background page scroll-through and input bar floating awkwardly above the virtual keyboard. Applied `100dvh` sheet height, body scroll lock on mobile, `VisualViewport` API keyboard tracking, and `safe-area-inset-bottom` padding for notched devices.
