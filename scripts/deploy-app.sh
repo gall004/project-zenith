@@ -78,7 +78,7 @@ else
 fi
 
 # Grant required roles (idempotent)
-for role in roles/secretmanager.secretAccessor roles/vpcaccess.user; do
+for role in roles/secretmanager.secretAccessor roles/vpcaccess.user roles/ces.client; do
   gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="${role}" \

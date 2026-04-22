@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor `feature/cloud-run-production-deploy`: CORS origins now dynamically configured via `CORS_ORIGINS` env var (comma-separated) instead of hardcoded localhost. Production values set by the deploy script.
 - Refactor `feature/cloud-run-production-deploy`: Next.js config updated with `output: 'standalone'` for optimized Docker builds.
 
+### Fixed
+- Bug `fix/ces-403-forbidden`: Granted `roles/ces.client` to `zenith-backend-sa` in `deploy-app.sh` to resolve `403 Forbidden` API crashes when the deployed backend attempts to invoke the CES `runSession` endpoint.
+- Bug `fix/gecx-provisioning-paths`: Fixed `gecx_agent` prompt path resolution in `scripts/bootstrap_gecx.py` failing during GECX agent provisioning due to script relocation.
+
 ## [v1.7.3] - 2026-04-20
 ### Fixed
 - Fixed an infinite UI spinning loop caused by unhandled GECX textless `endSession` system flags failing to propagate to the frontend socket.

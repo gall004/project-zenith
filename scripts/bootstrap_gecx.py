@@ -626,7 +626,7 @@ def main() -> int:
         )
         return 1
 
-    project_root = Path(__file__).resolve().parent.parent.parent
+    project_root = Path(__file__).resolve().parent.parent
 
     logger.info("=== Provisioning GECX on CX Agent Studio ===")
     logger.info("Webhook URL: %s", webhook_url)
