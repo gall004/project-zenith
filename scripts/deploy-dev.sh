@@ -70,6 +70,14 @@ echo "  ✓ Application Default Credentials found"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
 AGENT_DIR="${PROJECT_ROOT}/gecx_agent"
+ENV_FILE="${PROJECT_ROOT}/.env"
+
+if [[ -f "${ENV_FILE}" ]]; then
+    # Load .env to get GECX_APP_NAME
+    set -a
+    source "${ENV_FILE}"
+    set +a
+fi
 
 if [[ -f "${AGENT_DIR}/pyproject.toml" ]]; then
     echo "  Installing agent dependencies via uv..."
@@ -82,17 +90,19 @@ echo ""
 # ---------------------------------------------------------------------------
 # Step 1: Collect configuration
 # ---------------------------------------------------------------------------
-read -rp "$(echo -e "${YELLOW}Enter your GCP Project ID:${NC} ")" GCP_PROJECT_ID
-if [[ -z "${GCP_PROJECT_ID}" ]]; then
-    echo -e "${RED}Error: GCP Project ID cannot be empty.${NC}"
+if [[ -z "${GCP_PROJECT_ID:-}" ]]; then
+    echo -e "${RED}Error: GCP_PROJECT_ID is not set in .env.${NC}"
     exit 1
 fi
 
-read -rp "$(echo -e "${YELLOW}Enter your GCP Region [us-central1]:${NC} ")" GCP_REGION
 GCP_REGION="${GCP_REGION:-us-central1}"
 
-read -rp "$(echo -e "${YELLOW}Enter your FastAPI backend URL [http://localhost:8000]:${NC} ")" FASTAPI_BACKEND_URL
-FASTAPI_BACKEND_URL="${FASTAPI_BACKEND_URL:-http://localhost:8000}"
+if [[ -z "${FASTAPI_BACKEND_URL:-}" ]]; then
+    echo -e "${RED}Error: FASTAPI_BACKEND_URL is not set in .env.${NC}"
+    exit 1
+fi
+
+APP_NAME="${GECX_APP_NAME:-zenith-gecx-orchestrator-dev}"
 
 echo ""
 echo -e "${CYAN}Deployment Plan:${NC}"
@@ -103,15 +113,10 @@ echo "  Auth:           ${ACTIVE_ACCOUNT}"
 echo ""
 echo -e "${CYAN}Resources to create/update:${NC}"
 echo "  • Enable CES API (ces.googleapis.com)"
-echo "  • CES App: zenith-gecx-orchestrator"
-echo "  • CES Agent: zenith-gecx-root-agent"
+echo "  • CES App: ${APP_NAME}"
+echo "  • CES Agent: ${APP_NAME}-root-agent"
 echo "  • CES Toolset: request_visual_context"
 echo ""
-read -rp "$(echo -e "${YELLOW}Proceed with deployment? [y/N]:${NC} ")" CONFIRM
-if [[ "${CONFIRM}" != "y" && "${CONFIRM}" != "Y" ]]; then
-    echo -e "${YELLOW}Deployment cancelled.${NC}"
-    exit 0
-fi
 
 # ---------------------------------------------------------------------------
 # Export environment variables for Python bootstrap
@@ -139,7 +144,8 @@ GECX_TMPFILE=$(mktemp)
 
 set +e
 cd "${PROJECT_ROOT}" && uv run --directory gecx_agent python ../scripts/bootstrap_gecx.py \
-    --webhook-url "${FASTAPI_BACKEND_URL}" 2>&1 | tee "${GECX_TMPFILE}"
+    --webhook-url "${FASTAPI_BACKEND_URL}" \
+    --app-name "${GECX_APP_NAME:-zenith-gecx-orchestrator-dev}" 2>&1 | tee "${GECX_TMPFILE}"
 GECX_EXIT=${PIPESTATUS[0]}
 set -e
 
@@ -164,9 +170,9 @@ echo -e "${GREEN} GECX Agent Deployment Complete             ${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
 echo -e "${CYAN}Provisioned Resources:${NC}"
-echo "  CES App:        zenith-gecx-orchestrator"
+echo "  CES App:        ${APP_NAME}"
 echo "  CES App ID:     ${CES_APP_ID:-<see .env>}"
-echo "  GECX Agent:     zenith-gecx-root-agent"
+echo "  GECX Agent:     ${APP_NAME}-root-agent"
 echo "  GECX Agent ID:  ${GECX_AGENT_ID:-<see .env>}"
 echo "  Backend URL:    ${FASTAPI_BACKEND_URL}"
 echo ""

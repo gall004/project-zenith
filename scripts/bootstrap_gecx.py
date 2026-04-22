@@ -29,8 +29,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-_APP_DISPLAY_NAME = "zenith-gecx-orchestrator"
-_AGENT_DISPLAY_NAME = "zenith-gecx-root-agent"
 _CES_API_BASE = "https://ces.googleapis.com/v1beta"
 
 # Paths relative to project root
@@ -450,6 +448,8 @@ def provision_gecx_agent(
     region: str,
     project_root: Path,
     webhook_url: str,
+    app_display_name: str,
+    agent_display_name: str,
 ) -> tuple[str, str]:
     """Create or update the GECX Orchestrator on CX Agent Studio.
 
@@ -472,15 +472,15 @@ def provision_gecx_agent(
     headers = _get_auth_headers()
 
     # --- Create or find app ---
-    app = _find_existing_app(project_id, region, _APP_DISPLAY_NAME, headers)
+    app = _find_existing_app(project_id, region, app_display_name, headers)
     if app:
         app_name = app["name"]
         logger.info("CES app already exists: %s", app_name)
     else:
-        logger.info("Creating CES app: %s", _APP_DISPLAY_NAME)
+        logger.info("Creating CES app: %s", app_display_name)
         url = _ces_url(project_id, region, "/apps")
         body = {
-            "displayName": _APP_DISPLAY_NAME,
+            "displayName": app_display_name,
         }
         resp = httpx.post(url, headers=headers, json=body, timeout=60)
         resp.raise_for_status()
@@ -517,7 +517,7 @@ def provision_gecx_agent(
     # --- Provision Root Agent ---
     root_agent_name = _provision_agent(
         app_name=app_name,
-        display_name=_AGENT_DISPLAY_NAME,
+        display_name=agent_display_name,
         instruction=root_instruction,
         description="Customer-facing GECX root router. Triages and delegates to child agents.",
         headers=headers,
@@ -549,7 +549,7 @@ def _upsert_env_var(lines: list[str], key: str, value: str) -> list[str]:
 
 
 def export_to_env(
-    agent_id: str, app_id: str, project_root: Path
+    agent_id: str, app_id: str, project_root: Path, env_file_path: str = ".env"
 ) -> None:
     """Write CES_APP_ID and GECX_AGENT_ID to the local .env file.
 
@@ -563,7 +563,7 @@ def export_to_env(
         app_id: The CES App resource ID (used in RunSession path).
         project_root: Absolute path to the project root.
     """
-    env_path = project_root / _ENV_FILE_PATH
+    env_path = project_root / env_file_path
     lines: list[str] = []
 
     if env_path.exists():
@@ -599,6 +599,16 @@ def main() -> int:
         default=os.environ.get("FASTAPI_BACKEND_URL", ""),
         help="Deployed FastAPI backend webhook URL",
     )
+    parser.add_argument(
+        "--app-name",
+        default=os.environ.get("GECX_APP_NAME", "zenith-gecx-orchestrator"),
+        help="Display name for the GECX App",
+    )
+    parser.add_argument(
+        "--env-file",
+        default=".env",
+        help="Path to the env file to write CES_APP_ID and GECX_AGENT_ID",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -633,13 +643,15 @@ def main() -> int:
     logger.info("CES Region: %s", ces_region)
     try:
         agent_id, app_id = provision_gecx_agent(
-            project_id, ces_region, project_root, webhook_url
+            project_id, ces_region, project_root, webhook_url,
+            app_display_name=args.app_name,
+            agent_display_name=f"{args.app_name}-root-agent"
         )
     except Exception as e:
         logger.error("GECX agent provisioning failed: %s", e)
         return 1
 
-    export_to_env(agent_id, app_id, project_root)
+    export_to_env(agent_id, app_id, project_root, args.env_file)
     logger.info("CES_APP_ID=%s", app_id)
     logger.info("GECX_AGENT_ID=%s", agent_id)
     logger.info("=== GECX Bootstrap Complete ===")

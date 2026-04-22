@@ -3,19 +3,19 @@
 # Project Zenith — Production Teardown
 # ==================================================================
 # Destroys all GCP resources created by deploy.sh.
-# Reads config from deploy-app.env. Confirms before destructive actions.
-# Usage: ./scripts/teardown-app.sh
+# Reads config from deploy-prod.env. Confirms before destructive actions.
+# Usage: ./scripts/teardown-prod.sh
 # ==================================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # ── Load config ───────────────────────────────────────────────────
-if [ ! -f "${SCRIPT_DIR}/deploy-app.env" ]; then
-  echo "ERROR: ${SCRIPT_DIR}/deploy-app.env not found."
+if [ ! -f "${SCRIPT_DIR}/deploy-prod.env" ]; then
+  echo "ERROR: ${SCRIPT_DIR}/deploy-prod.env not found."
   exit 1
 fi
-source "${SCRIPT_DIR}/deploy-app.env"
+source "${SCRIPT_DIR}/deploy-prod.env"
 
 # ── Output helpers ────────────────────────────────────────────────
 RED='\033[0;31m'

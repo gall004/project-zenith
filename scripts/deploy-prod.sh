@@ -2,8 +2,8 @@
 # ==================================================================
 # Project Zenith — Idempotent Production Deploy
 # ==================================================================
-# Reads all config from deploy-app.env. Safe to re-run at any time.
-# Usage: ./scripts/deploy-app.sh
+# Reads all config from deploy-prod.env. Safe to re-run at any time.
+# Usage: ./scripts/deploy-prod.sh
 # ==================================================================
 set -euo pipefail
 
@@ -11,12 +11,12 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # ── Load config ───────────────────────────────────────────────────
-if [ ! -f "${SCRIPT_DIR}/deploy-app.env" ]; then
-  echo "ERROR: ${SCRIPT_DIR}/deploy-app.env not found. Copy deploy-app.env.example and fill in your values."
+if [ ! -f "${SCRIPT_DIR}/deploy-prod.env" ]; then
+  echo "ERROR: ${SCRIPT_DIR}/deploy-prod.env not found. Copy deploy-prod.env.example and fill in your values."
   exit 1
 fi
-# shellcheck source=deploy-app.env
-source "${SCRIPT_DIR}/deploy-app.env"
+# shellcheck source=deploy-prod.env
+source "${SCRIPT_DIR}/deploy-prod.env"
 
 # ── Output helpers ────────────────────────────────────────────────
 GREEN='\033[0;32m'
@@ -115,7 +115,7 @@ create_or_update_secret "${SECRET_GEMINI_API_KEY}" "${GEMINI_API_KEY:-}"
 
 if [ "${SECRETS_MISSING}" = true ]; then
   warn "Some secrets have no values. Deploy will continue, but the backend will fail at runtime."
-  warn "Populate secrets manually or add them to deploy-app.env and re-run this script."
+  warn "Populate secrets manually or add them to deploy-prod.env and re-run this script."
 fi
 
 # ── Step 5: VPC Connector ────────────────────────────────────────
@@ -206,11 +206,32 @@ if [ -n "${BACKEND_DOMAIN:-}" ]; then
   log "Using custom backend domain: ${BACKEND_URL}"
 fi
 
-# Update backend with self-referencing URLs and CORS origins
+# Provision GECX Agent for Production
+log "Bootstrapping GECX Orchestrator for Production..."
+GECX_TMPFILE=$(mktemp)
+export GCP_PROJECT_ID="${PROJECT_ID}"
+export GCP_REGION="${REGION}"
+export CES_REGION="${CES_REGION}"
+cd "${PROJECT_ROOT}" && uv run --directory gecx_agent python ../scripts/bootstrap_gecx.py \
+    --webhook-url "${BACKEND_URL}" \
+    --app-name "${GECX_APP_NAME:-zenith-gecx-orchestrator-prod}" \
+    --env-file scripts/deploy-prod.env 2>&1 | tee "${GECX_TMPFILE}"
+
+NEW_CES_APP_ID=$(grep "CES_APP_ID=" "${GECX_TMPFILE}" | tail -1 | cut -d= -f2)
+rm -f "${GECX_TMPFILE}"
+
 CORS_ORIGINS="https://${FRONTEND_DOMAIN:-localhost},http://localhost:3000"
+UPDATE_ENV_VARS="^@^FASTAPI_BACKEND_URL=${BACKEND_URL}@CORS_ORIGINS=${CORS_ORIGINS}"
+if [ -n "${NEW_CES_APP_ID}" ] && [ "${NEW_CES_APP_ID}" != "${CES_APP_ID}" ]; then
+    log "Captured new CES_APP_ID: ${NEW_CES_APP_ID}"
+    UPDATE_ENV_VARS="${UPDATE_ENV_VARS}@CES_APP_ID=${NEW_CES_APP_ID}"
+fi
+
+# Update backend with self-referencing URLs, CORS origins, and new CES_APP_ID
+log "Updating Cloud Run backend environment variables..."
 gcloud run services update "${BACKEND_SERVICE}" \
   --region="${REGION}" \
-  --update-env-vars="^@^FASTAPI_BACKEND_URL=${BACKEND_URL}@CORS_ORIGINS=${CORS_ORIGINS}" \
+  --update-env-vars="${UPDATE_ENV_VARS}" \
   --quiet
 
 # Build frontend with the backend URL baked in
