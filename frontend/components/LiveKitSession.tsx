@@ -9,10 +9,10 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { LiveKitRoom, useRoomContext, RoomAudioRenderer, StartAudio, useRemoteParticipants, useIsSpeaking } from "@livekit/components-react";
+import { LiveKitRoom, useRoomContext, RoomAudioRenderer, StartAudio, useRemoteParticipants, useIsSpeaking, useConnectionState } from "@livekit/components-react";
 import { fetchLiveKitToken } from "@/lib/api/livekit";
 import { handoffSession, updateCameraState } from "@/lib/api/sessions";
-import { Track } from "livekit-client";
+import { Track, ConnectionState } from "livekit-client";
 import { Button } from "@/components/ui/button";
 import type { EnableMultimodalInputEvent } from "@/types/websocket";
 import "@livekit/components-styles";
@@ -100,7 +100,7 @@ export function LiveKitSession({
   // Active State
   return (
     <LiveKitRoom
-      audio={false}
+      audio={!!multimodalEvent}
       token={token}
       serverUrl={
         process.env.NEXT_PUBLIC_LIVEKIT_URL || "ws://localhost:7880"
@@ -147,6 +147,7 @@ function MultimodalInterceptHandler({
   multimodalEvent: EnableMultimodalInputEvent | null;
 }): React.JSX.Element | null {
   const room = useRoomContext();
+  const connectionState = useConnectionState();
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -279,12 +280,11 @@ function MultimodalInterceptHandler({
     }
   };
 
-  // Enable LiveKit camera + acquire separate preview stream
+  // Enable LiveKit camera + acquire preview stream
   useEffect(() => {
     if (multimodalEvent === null) return;
     if (!room?.localParticipant) return;
-
-    let localPreviewStream: MediaStream | null = null;
+    if (connectionState !== ConnectionState.Connected) return;
 
     const enableCamera = async (): Promise<void> => {
       try {
@@ -292,24 +292,33 @@ function MultimodalInterceptHandler({
 
         const initialMode = multimodalEvent?.payload.pipeline_type === "sentiment" ? "user" : "environment";
 
-        // 1. Enable microphone for LiveKit (deferred from room connect)
-        await room.localParticipant.setMicrophoneEnabled(true);
+        // Note: Microphone is now handled automatically by LiveKitRoom's audio={!!multimodalEvent} prop
         setIsMicEnabled(true);
-        console.log(`[Viewfinder] LiveKit microphone enabled`);
 
-        // 2. Enable camera for LiveKit (sends video to the server/Gemini)
+        // 1. Enable camera for LiveKit (sends video to the server/Gemini)
         await room.localParticipant.setCameraEnabled(true, { facingMode: initialMode });
         console.log(`[Viewfinder] LiveKit camera enabled (${initialMode})`);
 
-        // 2. Get a separate camera stream for local preview
-        localPreviewStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: initialMode, width: 320, height: 240 },
-          audio: false,
-        });
-        setPreviewStream(localPreviewStream);
-        const actualFacingMode = localPreviewStream.getVideoTracks()[0]?.getSettings().facingMode;
-        setIsMirrored(actualFacingMode !== "environment");
-        console.log("[Viewfinder] ✅ Local preview stream acquired");
+        // 2. Derive preview from the published LiveKit track
+        //    This ensures preview and LiveKit use the same stream, avoiding
+        //    hardware lock race conditions on mobile devices.
+        const camTrack = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        const mediaStream = camTrack?.track?.mediaStream;
+        if (mediaStream) {
+          setPreviewStream(mediaStream);
+          const actualFacingMode = mediaStream.getVideoTracks()[0]?.getSettings().facingMode;
+          setIsMirrored(actualFacingMode !== "environment");
+          console.log("[Viewfinder] ✅ Local preview stream acquired from LiveKit");
+        } else {
+          // Fallback
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: initialMode, width: 320, height: 240 },
+            audio: false,
+          });
+          setPreviewStream(stream);
+          const actualFacingMode = stream.getVideoTracks()[0]?.getSettings().facingMode;
+          setIsMirrored(actualFacingMode !== "environment");
+        }
       } catch (err: unknown) {
         const errorMessage =
           err instanceof Error
@@ -321,15 +330,7 @@ function MultimodalInterceptHandler({
     };
 
     enableCamera();
-
-    return () => {
-      // Stop all tracks on the preview stream
-      if (localPreviewStream) {
-        localPreviewStream.getTracks().forEach((t) => t.stop());
-      }
-      setPreviewStream(null);
-    };
-  }, [multimodalEvent, room?.localParticipant]);
+  }, [multimodalEvent, room?.localParticipant, connectionState]);
 
   // Attach preview stream to video element
   useEffect(() => {
