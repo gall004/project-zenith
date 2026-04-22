@@ -40,6 +40,7 @@ class EnableMultimodalInputPayload(BaseModel):
     reason: str
     camera_requested: bool = True
     microphone_requested: bool = True
+    pipeline_type: Optional[str] = None
 
 
 class SessionEventPayload(BaseModel):

@@ -59,6 +59,7 @@ async def request_visual_context_endpoint(request: VisualContextRequest) -> Visu
         "reason": request.reason,
         "camera_requested": True,
         "microphone_requested": True,
+        "pipeline_type": request.pipeline_type,
     }
     await session_store.update_session(
         room,

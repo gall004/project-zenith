@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Feature `feature/mobile-camera-flip`: Added mobile camera flip capabilities to the LiveKit video feed. The initial camera orientation now dynamically routes to front-facing (`user`) for the sentiment demo and rear-facing (`environment`) for the default visual context demo, driven by the `pipeline_type` injected into the websocket payload.
 - Feature `feature/cloud-run-production-deploy`: Idempotent `deploy.sh` and `teardown.sh` scripts for full GCP production deployment. Reads all config from `infra/deploy.env` — zero interactive prompts.
 - Feature `feature/cloud-run-production-deploy`: Backend Dockerfile (multi-stage uv + Python 3.12) and Frontend Dockerfile (multi-stage Node 22 + Next.js standalone output).
 - Feature `feature/cloud-run-production-deploy`: Provisions Memorystore (Redis 7), Serverless VPC Access connector, Artifact Registry, Secret Manager secrets, and dedicated service account with least-privilege IAM roles.

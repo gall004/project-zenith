@@ -37,6 +37,7 @@ export interface EnableMultimodalInputPayload {
   reason: string;
   camera_requested: boolean;
   microphone_requested: boolean;
+  pipeline_type?: string;
 }
 
 /** Payload for session lifecycle events. */

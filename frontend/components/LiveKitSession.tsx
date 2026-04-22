@@ -156,6 +156,9 @@ function MultimodalInterceptHandler({
   const [isCamEnabled, setIsCamEnabled] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHandingOff, setIsHandingOff] = useState(false);
+  const [facingModeState, setFacingModeState] = useState<"user" | "environment" | null>(null);
+  const facingMode = facingModeState ?? (multimodalEvent?.payload.pipeline_type === "sentiment" ? "user" : "environment");
+  const [isMirrored, setIsMirrored] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -192,10 +195,12 @@ function MultimodalInterceptHandler({
     if (newState) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: 320, height: 240 },
+          video: { facingMode: facingMode, width: 320, height: 240 },
           audio: false,
         });
         setPreviewStream(stream);
+        const actualFacingMode = stream.getVideoTracks()[0]?.getSettings().facingMode;
+        setIsMirrored(actualFacingMode !== "environment");
       } catch (err) {
         setCameraError(err instanceof Error ? err.message : "Failed to resume camera");
       }
@@ -209,6 +214,36 @@ function MultimodalInterceptHandler({
     setIsCamEnabled(newState);
     if (room) {
       await updateCameraState(room.name, newState);
+    }
+  };
+
+  const flipCamera = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!room?.localParticipant) return;
+    
+    const newMode = facingMode === "user" ? "environment" : "user";
+    setFacingModeState(newMode);
+    
+    if (isCamEnabled) {
+      try {
+        // Restart local preview
+        if (previewStream) {
+          previewStream.getTracks().forEach(t => t.stop());
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: newMode, width: 320, height: 240 },
+          audio: false,
+        });
+        setPreviewStream(stream);
+        const actualFacingMode = stream.getVideoTracks()[0]?.getSettings().facingMode;
+        setIsMirrored(actualFacingMode !== "environment");
+
+        // Restart LiveKit
+        await room.localParticipant.setCameraEnabled(false);
+        await room.localParticipant.setCameraEnabled(true, { facingMode: newMode });
+      } catch (err) {
+        setCameraError(err instanceof Error ? err.message : "Failed to flip camera");
+      }
     }
   };
 
@@ -235,18 +270,20 @@ function MultimodalInterceptHandler({
       try {
         setCameraError(null);
 
+        const initialMode = multimodalEvent?.payload.pipeline_type === "sentiment" ? "user" : "environment";
+
         // 1. Enable camera for LiveKit (sends video to the server/Gemini)
-        await room.localParticipant.setCameraEnabled(true);
-        console.log("[Viewfinder] LiveKit camera enabled");
+        await room.localParticipant.setCameraEnabled(true, { facingMode: initialMode });
+        console.log(`[Viewfinder] LiveKit camera enabled (${initialMode})`);
 
         // 2. Get a separate camera stream for local preview
-        // This reuses the same physical camera (no extra permission prompt)
-        // but gives us an independent stream that renders locally
         localPreviewStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: 320, height: 240 },
+          video: { facingMode: initialMode, width: 320, height: 240 },
           audio: false,
         });
         setPreviewStream(localPreviewStream);
+        const actualFacingMode = localPreviewStream.getVideoTracks()[0]?.getSettings().facingMode;
+        setIsMirrored(actualFacingMode !== "environment");
         console.log("[Viewfinder] ✅ Local preview stream acquired");
       } catch (err: unknown) {
         const errorMessage =
@@ -306,7 +343,7 @@ function MultimodalInterceptHandler({
         className={`fixed z-[100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] animate-in fade-in zoom-in border border-white/20 group flex flex-col shadow-2xl bg-black rounded-xl ${
           isExpanded 
             ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,640px)] aspect-video" 
-            : `${cornerClasses[corner]} w-48 aspect-video cursor-pointer`
+            : `${cornerClasses[corner]} w-56 aspect-video cursor-pointer`
         }`}
         title={isExpanded ? undefined : "Tap to move video"}
       >
@@ -316,7 +353,7 @@ function MultimodalInterceptHandler({
             autoPlay
             playsInline
             muted
-            className="object-cover w-full h-full transform -scale-x-100 pointer-events-none"
+            className={`object-cover w-full h-full transform pointer-events-none ${isMirrored ? "-scale-x-100" : ""}`}
           />
           <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[10px] text-white font-medium flex items-center shadow-sm border border-white/10 pointer-events-none whitespace-nowrap">
             <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${previewStream ? (isCamEnabled ? "bg-green-400 animate-pulse" : "bg-amber-500") : "bg-amber-500"}`}></span>
@@ -326,7 +363,7 @@ function MultimodalInterceptHandler({
         </div>
 
         {/* Control Bar Overlay */}
-        <div className={`bg-black/90 backdrop-blur-md w-full rounded-b-xl flex items-center justify-between border-t border-white/10 ${isExpanded ? "h-12 px-4" : "h-10 px-3"}`}>
+        <div className={`bg-black/90 backdrop-blur-md w-full rounded-b-xl flex items-center justify-between border-t border-white/10 ${isExpanded ? "h-12 px-4" : "h-10 px-2"}`}>
           <div className="flex space-x-1">
             <button 
               onClick={toggleMic}
@@ -344,6 +381,15 @@ function MultimodalInterceptHandler({
             >
               <span className="material-symbols-outlined text-[16px]">
                 {isCamEnabled ? "videocam" : "videocam_off"}
+              </span>
+            </button>
+            <button 
+              onClick={flipCamera}
+              className="p-1.5 rounded-full text-white hover:bg-white/10 transition-colors flex items-center justify-center md:hidden"
+              title="Flip Camera"
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                cameraswitch
               </span>
             </button>
           </div>
