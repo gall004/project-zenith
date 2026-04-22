@@ -105,6 +105,13 @@ export function LiveKitSession({
       }
       connect={isOpen}
       className="contents"
+      options={{
+        audioCaptureDefaults: {
+          autoGainControl: true,
+          echoCancellation: true,
+          noiseSuppression: true,
+        }
+      }}
     >
       <RoomAudioRenderer />
       <div className="absolute bottom-6 right-6 z-50">
