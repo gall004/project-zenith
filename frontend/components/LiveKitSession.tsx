@@ -12,7 +12,7 @@ import { createPortal } from "react-dom";
 import { LiveKitRoom, useRoomContext, RoomAudioRenderer, StartAudio, useRemoteParticipants, useIsSpeaking, useConnectionState } from "@livekit/components-react";
 import { fetchLiveKitToken } from "@/lib/api/livekit";
 import { handoffSession, updateCameraState } from "@/lib/api/sessions";
-import { Track, ConnectionState } from "livekit-client";
+import { Track, ConnectionState, LocalVideoTrack } from "livekit-client";
 import { Button } from "@/components/ui/button";
 import type { EnableMultimodalInputEvent } from "@/types/websocket";
 import "@livekit/components-styles";
@@ -108,6 +108,9 @@ export function LiveKitSession({
       connect={!!multimodalEvent && isOpen}
       className="contents"
       options={{
+        videoCaptureDefaults: {
+          facingMode: multimodalEvent?.payload.pipeline_type === "sentiment" ? "user" : "environment",
+        },
         audioCaptureDefaults: {
           autoGainControl: true,
           echoCancellation: true,
@@ -228,36 +231,21 @@ function MultimodalInterceptHandler({
     
     if (isCamEnabled) {
       try {
-        // 1. Stop the existing preview stream
-        if (previewStream) {
-          previewStream.getTracks().forEach(t => t.stop());
-          setPreviewStream(null);
+        // 1. Hot-swap the underlying camera track via LiveKit
+        const videoTrack = room.localParticipant.getTrackPublication(Track.Source.Camera)?.track as LocalVideoTrack;
+        if (videoTrack) {
+          await videoTrack.restartTrack({ facingMode: newMode });
+        } else {
+          // If the track isn't published yet, publish it now with the new mode
+          await room.localParticipant.setCameraEnabled(true, { facingMode: newMode });
         }
 
-        // 2. Fully disable the old camera track before switching
-        //    This releases the hardware lock on the current camera.
-        await room.localParticipant.setCameraEnabled(false);
-
-        // 3. Re-enable with the new facing mode
-        await room.localParticipant.setCameraEnabled(true, { facingMode: newMode });
-
-        // 4. Derive preview from the published LiveKit track
-        //    This ensures preview and LiveKit use the same stream
-        //    (no aspect ratio mismatch → no black bars).
+        // 2. Derive preview from the newly published LiveKit track
         const camTrack = room.localParticipant.getTrackPublication(Track.Source.Camera);
         const mediaStream = camTrack?.track?.mediaStream;
         if (mediaStream) {
           setPreviewStream(mediaStream);
           const actualFacingMode = mediaStream.getVideoTracks()[0]?.getSettings().facingMode;
-          setIsMirrored(actualFacingMode !== "environment");
-        } else {
-          // Fallback: open a dedicated preview stream
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: newMode, width: 320, height: 240 },
-            audio: false,
-          });
-          setPreviewStream(stream);
-          const actualFacingMode = stream.getVideoTracks()[0]?.getSettings().facingMode;
           setIsMirrored(actualFacingMode !== "environment");
         }
       } catch (err) {

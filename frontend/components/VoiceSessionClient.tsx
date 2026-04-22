@@ -70,6 +70,7 @@ export function VoiceSessionClient({ onSessionStateChange, isOpen = false }: Voi
                     reason: session.multimodal_event.reason,
                     camera_requested: session.multimodal_event.camera_requested,
                     microphone_requested: session.multimodal_event.microphone_requested,
+                    pipeline_type: session.multimodal_event.pipeline_type,
                   },
                   timestamp: session.updated_at,
                 });

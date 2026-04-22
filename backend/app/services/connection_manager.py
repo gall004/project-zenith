@@ -131,13 +131,16 @@ class ConnectionManager:
         for stale_id in stale_ids:
             await self.disconnect(stale_id)
             
-    async def trigger_multimodal_intercept(self, room_name: str) -> None:
+    async def trigger_multimodal_intercept(self, room_name: str, payload: dict | None = None) -> None:
         """Helper to fire the explicit UI intercept"""
         import datetime
         from app.models.websocket import WebSocketEvent, WebSocketEventType
+        
+        event_payload = payload if payload is not None else {"reason": "visual_requested"}
+        
         event = WebSocketEvent(
             type=WebSocketEventType.ENABLE_MULTIMODAL_INPUT,
-            payload={"reason": "visual_requested"},
+            payload=event_payload,
             timestamp=datetime.datetime.now(datetime.UTC).isoformat()
         )
         await self.send_to_room_event(room_name, event.model_dump())

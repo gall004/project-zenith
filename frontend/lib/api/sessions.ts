@@ -19,6 +19,7 @@ export interface SessionState {
     reason: string;
     camera_requested: boolean;
     microphone_requested: boolean;
+    pipeline_type: string;
   } | null;
   escalation_data: {
     event: string;

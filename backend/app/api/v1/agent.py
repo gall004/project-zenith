@@ -74,7 +74,7 @@ async def request_visual_context_endpoint(request: VisualContextRequest) -> Visu
     # dynamically initialize the multimodal pipeline strictly on visual escalation
     asyncio.create_task(create_and_run_pipeline(room, manager, reason=request.reason, pipeline_type=request.pipeline_type))
 
-    await manager.trigger_multimodal_intercept(room)
+    await manager.trigger_multimodal_intercept(room, payload=multimodal_payload)
     return VisualContextResponse(
         status="success",
         message="Camera track enable signal dispatched to frontend.",

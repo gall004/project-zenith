@@ -161,7 +161,7 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str) -> None:
                                         room_name, manager, reason=reason, pipeline_type=pipeline_type
                                     )
                                 )
-                                await manager.trigger_multimodal_intercept(room_name)
+                                await manager.trigger_multimodal_intercept(room_name, payload=multimodal_payload)
 
                         # Handle end_session signal from CES agent
                         if ces_response.get("end_session"):
