@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 import { LiveKitRoom, useRoomContext, RoomAudioRenderer, StartAudio, useRemoteParticipants, useIsSpeaking } from "@livekit/components-react";
 import { fetchLiveKitToken } from "@/lib/api/livekit";
 import { handoffSession, updateCameraState } from "@/lib/api/sessions";
+import { Track } from "livekit-client";
 import { Button } from "@/components/ui/button";
 import type { EnableMultimodalInputEvent } from "@/types/websocket";
 import "@livekit/components-styles";
@@ -222,29 +223,47 @@ function MultimodalInterceptHandler({
     if (!room?.localParticipant) return;
     
     const newMode = facingMode === "user" ? "environment" : "user";
-    setFacingModeState(newMode);
     
     if (isCamEnabled) {
       try {
-        // Restart local preview
+        // 1. Stop the existing preview stream
         if (previewStream) {
           previewStream.getTracks().forEach(t => t.stop());
+          setPreviewStream(null);
         }
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: newMode, width: 320, height: 240 },
-          audio: false,
-        });
-        setPreviewStream(stream);
-        const actualFacingMode = stream.getVideoTracks()[0]?.getSettings().facingMode;
-        setIsMirrored(actualFacingMode !== "environment");
 
-        // Restart LiveKit
+        // 2. Fully disable the old camera track before switching
+        //    This releases the hardware lock on the current camera.
         await room.localParticipant.setCameraEnabled(false);
+
+        // 3. Re-enable with the new facing mode
         await room.localParticipant.setCameraEnabled(true, { facingMode: newMode });
+
+        // 4. Derive preview from the published LiveKit track
+        //    This ensures preview and LiveKit use the same stream
+        //    (no aspect ratio mismatch → no black bars).
+        const camTrack = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        const mediaStream = camTrack?.track?.mediaStream;
+        if (mediaStream) {
+          setPreviewStream(mediaStream);
+          const actualFacingMode = mediaStream.getVideoTracks()[0]?.getSettings().facingMode;
+          setIsMirrored(actualFacingMode !== "environment");
+        } else {
+          // Fallback: open a dedicated preview stream
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: newMode, width: 320, height: 240 },
+            audio: false,
+          });
+          setPreviewStream(stream);
+          const actualFacingMode = stream.getVideoTracks()[0]?.getSettings().facingMode;
+          setIsMirrored(actualFacingMode !== "environment");
+        }
       } catch (err) {
         setCameraError(err instanceof Error ? err.message : "Failed to flip camera");
       }
     }
+    
+    setFacingModeState(newMode);
   };
 
   const handleManualHandoff = async (e: React.MouseEvent) => {
