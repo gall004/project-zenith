@@ -37,6 +37,9 @@ backend/.env*
 # --- Infrastructure ---
 # deploy-app.env contains project-specific config. deploy-app.env.example IS committed.
 scripts/deploy-app.env
+scripts/deploy-prod.env
+scripts/deploy-dev.env
+scripts/deploy-*.env
 
 # --- Next.js ---
 .next/

@@ -37,7 +37,7 @@ The PM's `task.md` has all checkboxes explicitly marked complete.
 ## 6. Security Scan
 No credentials, secrets, or sensitive configuration have leaked into the codebase or Git staging area.
 - **Staged `.env` Check:** Run `git diff --cached --name-only | grep -E "\.env"` — output must be empty. Any `.env` variant in the staging area is an immediate gate failure.
-- **Hardcoded Secret Scan:** Run `grep -rn "LIVEKIT_API_SECRET\|GEMINI_API_KEY\|sk_live\|pk_live" frontend/ backend/app/ gecx_agent/ --exclude-dir={node_modules,.next,.venv}` — output must be empty. Any match indicates a hardcoded credential.
+- **Hardcoded Secret Scan:** Run `grep -rn "LIVEKIT_API_SECRET\|GEMINI_API_KEY\|sk_live\|pk_live" frontend/ backend/app/ gecx_agent/ scripts/ --exclude-dir={node_modules,.next,.venv}` — output must be empty. Any match indicates a hardcoded credential.
 - **`.gitignore` Validation:** Confirm that `.env`, `.env.local`, `.env.test`, and `.env.staging` entries exist in the root `.gitignore` file.
 
 ## 7. CHANGELOG Sync
