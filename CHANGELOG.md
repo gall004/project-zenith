@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Refactor `feature/cloud-run-production-deploy`: CORS origins now dynamically configured via `CORS_ORIGINS` env var (comma-separated) instead of hardcoded localhost. Production values set by the deploy script.
 - Refactor `feature/cloud-run-production-deploy`: Next.js config updated with `output: 'standalone'` for optimized Docker builds.
-### Changed
+- Refactor `chore/chat-actions-dropdown`: Restructured the chat input area to mimic the Gemini app's control layout. The input `textarea` now sits above a dedicated control row. The "Copy Transcript", "Export Transcript", and "End Session" actions have been moved out of the drawer header entirely and consolidated into a "More actions" (`+`) dropdown button within this new bottom control row alongside the attachment and send buttons. The drawer header now purely displays the Zenith Agent info and a dynamic minimize/close button.
 - Refactor `chore/gecx-multi-env`: Decoupled GECX agent provisioning into dev and prod environments by introducing `GECX_APP_NAME` via environment files. Updated `deploy-prod.sh` and `deploy-dev.sh` to correctly isolate updates and automatically inject `CES_APP_ID`. Additionally, removed interactive prompts from `deploy-dev.sh` to rely fully on `.env` and renamed deployment scripts for clarity (e.g. `deploy-app.sh` -> `deploy-prod.sh`).
 
 ### Fixed

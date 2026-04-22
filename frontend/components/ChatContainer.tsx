@@ -23,6 +23,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type {
   WebSocketEvent,
   AgentResponseEvent,
@@ -698,9 +705,74 @@ export function ChatContainer({
     }
   }, [messages]);
 
+  const inputActionsMenu = (
+    <AlertDialog>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-transparent text-secondary hover:text-on-surface hover:bg-surface-container transition-colors outline-none"
+          aria-label="More actions"
+          title="More actions"
+        >
+          <span className="material-symbols-outlined text-[24px]">add</span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48 bg-surface border border-outline shadow-md rounded-xl p-1.5 mb-2 ml-2">
+          <DropdownMenuItem onClick={handleCopyTranscript} className="gap-3 cursor-pointer text-sm font-medium rounded-[8px] hover:bg-surface-container-low focus:bg-surface-container-low py-2.5 px-3">
+            <span className="material-symbols-outlined text-[18px] leading-[0]">{copiedTranscript ? "check" : "content_copy"}</span>
+            Copy Transcript
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleExportTranscript} className="gap-3 cursor-pointer text-sm font-medium rounded-[8px] hover:bg-surface-container-low focus:bg-surface-container-low py-2.5 px-3 mt-0.5">
+            <span className="material-symbols-outlined text-[18px] leading-[0]">{exportedTranscript ? "check" : "download"}</span>
+            Export Transcript
+          </DropdownMenuItem>
+          
+          {onEndSession && (
+            <>
+              <DropdownMenuSeparator className="bg-outline-variant/50 my-1 mx-1" />
+              {isFinished ? (
+                <DropdownMenuItem onClick={onEndSession} className="gap-3 cursor-pointer text-sm font-medium text-error hover:text-error hover:bg-error/10 focus:text-error focus:bg-error/10 rounded-[8px] py-2.5 px-3">
+                  <span className="material-symbols-outlined text-[18px] leading-[0]">delete</span>
+                  Clear Session
+                </DropdownMenuItem>
+              ) : (
+                <AlertDialogTrigger render={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="gap-3 cursor-pointer text-sm font-medium text-error hover:text-error hover:bg-error/10 focus:text-error focus:bg-error/10 rounded-[8px] py-2.5 px-3">
+                    <span className="material-symbols-outlined text-[18px] leading-[0]">power_settings_new</span>
+                    End Session
+                  </DropdownMenuItem>
+                } />
+              )}
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {onEndSession && !isFinished && (
+        <AlertDialogContent className="bg-surface-container-low text-on-surface border border-outline shadow-[0_0_50px_rgba(0,0,0,0.15)] sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-headline text-lg">End Session?</AlertDialogTitle>
+            <AlertDialogDescription className="text-secondary text-base">
+              Are you sure you want to end your session with Zenith? This will clear your chat history and sever the secure connection.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6 flex gap-3 sm:gap-0">
+            <AlertDialogCancel className="bg-transparent border-outline-variant text-on-surface hover:bg-surface-container sm:mr-2">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onEndSession}
+              className="bg-error hover:bg-error/90 text-on-error border-none"
+            >
+              End Session
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      )}
+    </AlertDialog>
+  );
+
   return (
     <div className="flex flex-col h-full w-full" aria-label="Chat">
-      <div className="flex w-full justify-between items-center mb-4 min-h-[32px] px-2">
+      <div className="flex w-full justify-between items-center mb-1 px-2 shrink-0">
         <div className="shrink-0 flex items-center pl-1">
           <ConnectionStatusBadge
             status={connectionStatus}
@@ -708,81 +780,6 @@ export function ChatContainer({
             isFinished={isFinished}
           />
         </div>
-        
-        {messages.length > 0 && (
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar justify-end flex-wrap sm:flex-nowrap bg-surface border border-outline shadow-sm rounded-2xl p-1.5">
-            <button
-               onClick={handleCopyTranscript}
-               title="Copy Transcript to Clipboard"
-               className={`px-3 py-2 rounded-[10px] transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer ${copiedTranscript ? 'bg-green-500/10 text-green-700' : 'text-secondary hover:text-on-surface hover:bg-surface-container-low'}`}
-               aria-label="Copy Transcript"
-            >
-              <span className="material-symbols-outlined text-[16px] leading-[0]">{copiedTranscript ? "check" : "content_copy"}</span>
-              <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">Copy</span>
-            </button>
-            <div className="hidden sm:block w-px h-5 bg-outline-variant mx-0.5 shrink-0" />
-            <button
-               onClick={handleExportTranscript}
-               title="Download Transcript File"
-               className={`px-3 py-2 rounded-[10px] transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer ${exportedTranscript ? 'bg-green-500/10 text-green-700' : 'text-secondary hover:text-on-surface hover:bg-surface-container-low'}`}
-               aria-label="Export Transcript"
-            >
-              <span className="material-symbols-outlined text-[16px] leading-[0]">{exportedTranscript ? "check" : "download"}</span>
-              <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">Export</span>
-            </button>
-
-            {onEndSession && (
-              <>
-                <div className="hidden sm:block w-px h-5 bg-outline-variant mx-0.5 shrink-0" />
-                {isFinished ? (
-                  <button
-                    onClick={onEndSession}
-                    className="px-3 py-2 rounded-[10px] bg-error/10 hover:bg-error text-error hover:text-on-error flex items-center justify-center gap-1.5 transition-all duration-300 shrink-0 cursor-pointer"
-                    aria-label="Clear session history"
-                    title="Clear Session"
-                  >
-                    <span className="material-symbols-outlined text-[16px] leading-[0]">delete</span>
-                    <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">Clear Session</span>
-                  </button>
-                ) : (
-                  <AlertDialog>
-                    <AlertDialogTrigger
-                      render={
-                        <button
-                          className="px-3 py-2 rounded-[10px] bg-error/10 hover:bg-error text-error hover:text-on-error flex items-center justify-center gap-1.5 transition-all duration-300 shrink-0 cursor-pointer"
-                          aria-label="End current session"
-                          title="End Session"
-                        >
-                          <span className="material-symbols-outlined text-[16px] leading-[0]">power_settings_new</span>
-                          <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">End Session</span>
-                        </button>
-                      }
-                    />
-                    <AlertDialogContent className="bg-surface-container-low text-on-surface border border-outline shadow-[0_0_50px_rgba(0,0,0,0.15)] sm:max-w-[425px]">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="font-headline text-lg">End Session?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-secondary text-base">
-                          Are you sure you want to end your session with Zenith? This will clear your chat history and sever the secure connection.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter className="mt-6 flex gap-3 sm:gap-0">
-                        <AlertDialogCancel className="bg-transparent border-outline-variant text-on-surface hover:bg-surface-container sm:mr-2">
-                          Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={onEndSession}
-                          className="bg-error hover:bg-error/90 text-on-error border-none"
-                        >
-                          End Session
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-              </>
-            )}
-          </div>
-        )}
       </div>
 
       <div 
@@ -862,7 +859,7 @@ export function ChatContainer({
       <div className="mt-2 shrink-0" style={{ paddingBottom: keyboardHeight > 0 ? `${keyboardHeight}px` : undefined }}>
         <form
           className={`relative flex flex-col bg-surface border border-outline-variant rounded-2xl p-2 transition-all shadow-sm ${
-            isFinished ? "opacity-70 grayscale pointer-events-none" : "focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20"
+            isFinished ? "bg-surface-container-low" : "focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20"
           }`}
           onSubmit={(e) => {
             e.preventDefault();
@@ -877,7 +874,7 @@ export function ChatContainer({
           )}
 
           {filePreview && (
-            <div className="relative inline-block w-24 h-24 mx-2 mb-2 overflow-hidden bg-surface-container rounded-lg border border-outline-variant shrink-0">
+            <div className={`relative inline-block w-24 h-24 mx-2 mb-2 overflow-hidden bg-surface-container rounded-lg border border-outline-variant shrink-0 ${isFinished ? "opacity-50 grayscale" : ""}`}>
               <button
                 type="button"
                 aria-label="Remove attachment"
@@ -894,64 +891,68 @@ export function ChatContainer({
             </div>
           )}
 
-          <div className="flex items-end w-full">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              accept="image/*"
-              className="hidden"
-            />
-            
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Attach file"
-              disabled={isFinished || !isConnected}
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mr-2 mb-0.5 bg-transparent text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
-            >
-              <span className="material-symbols-outlined text-[24px]">attach_file</span>
-            </button>
-
-            <textarea
-              ref={inputRef}
-              id="chat-input"
-              placeholder="Type a message..."
-              value={inputValue}
-              onChange={(e) => {
-                setInputValue(e.target.value);
-                // Auto-resize: reset height then set to scrollHeight, capped at ~5 lines
-                e.target.style.height = "auto";
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-              }}
-              onKeyDown={(e) => {
-                // Desktop: Enter sends, Shift+Enter inserts newline
-                // Mobile:  Enter always inserts newline, user taps send button
-                if (e.key === "Enter" && !e.shiftKey) {
-                  const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
-                  if (!isTouchDevice) {
-                    e.preventDefault();
-                    handleSubmit();
-                  }
+          <textarea
+            ref={inputRef}
+            id="chat-input"
+            placeholder="Type a message..."
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+              // Auto-resize: reset height then set to scrollHeight, capped at ~5 lines
+              e.target.style.height = "auto";
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+            }}
+            onKeyDown={(e) => {
+              // Desktop: Enter sends, Shift+Enter inserts newline
+              // Mobile:  Enter always inserts newline, user taps send button
+              if (e.key === "Enter" && !e.shiftKey) {
+                const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+                if (!isTouchDevice) {
+                  e.preventDefault();
+                  handleSubmit();
                 }
-              }}
-              onPaste={handlePaste}
-              rows={1}
-              className="flex-1 bg-transparent border-none text-on-surface placeholder-secondary outline-none ring-0 focus:ring-0 px-2 py-2.5 text-sm disabled:cursor-not-allowed resize-none leading-snug"
-              style={{ minHeight: "40px", maxHeight: "120px" }}
-              aria-label="Chat message input"
-              autoComplete="off"
-              disabled={isFinished || !isConnected}
-            />
+              }
+            }}
+            onPaste={handlePaste}
+            rows={1}
+            className="w-full bg-transparent border-none text-on-surface placeholder-secondary outline-none ring-0 focus:ring-0 px-2 py-2 text-sm disabled:cursor-not-allowed resize-none leading-snug"
+            style={{ minHeight: "40px", maxHeight: "120px" }}
+            aria-label="Chat message input"
+            autoComplete="off"
+            disabled={isFinished || !isConnected}
+          />
+
+          <div className="flex items-center justify-between w-full mt-1">
+            <div className="flex items-center gap-1">
+              {inputActionsMenu}
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/*"
+                className="hidden"
+              />
+              
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Attach file"
+                disabled={isFinished || !isConnected}
+                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-transparent text-secondary hover:text-on-surface hover:bg-surface-container transition-colors"
+              >
+                <span className="material-symbols-outlined text-[24px]">image</span>
+              </button>
+            </div>
             
             <button 
               type="submit"
               aria-label="Send message"
               id="chat-submit"
               disabled={isFinished || (inputValue.trim().length === 0 && !selectedFile) || !isConnected}
-              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 mb-0.5 transition-all ${isFinished || !isConnected || (inputValue.trim().length === 0 && !selectedFile) ? "bg-surface-container text-secondary" : "bg-primary text-on-primary hover:bg-primary/90 shadow-md"}`}
+              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ml-2 transition-all ${isFinished || !isConnected || (inputValue.trim().length === 0 && !selectedFile) ? "bg-surface-container text-secondary" : "bg-primary text-on-primary hover:bg-primary/90 shadow-md"}`}
             >
-              <span className="material-symbols-outlined text-xl" style={{fontVariationSettings: "'FILL' 1"}}>arrow_upward</span>
+              <span className="material-symbols-outlined text-xl" style={{fontVariationSettings: "'FILL' 1"}}>send</span>
             </button>
           </div>
         </form>
