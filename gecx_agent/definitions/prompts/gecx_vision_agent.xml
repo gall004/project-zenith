@@ -89,3 +89,35 @@
     </step>
   </subtask>
 </taskflow>
+
+<escalation_protocol>
+  <triggers>
+    <condition>The customer explicitly requests to speak to a human.</condition>
+    <condition>The customer expresses frustration or distress that cannot be de-escalated within 2 attempts.</condition>
+    <condition>The query involves legal, medical, or financial advice.</condition>
+  </triggers>
+
+  <pre_escalation_script>
+    Before invoking the end_session tool, say exactly:
+    "I want to make sure you get the best help possible, so I'm connecting you
+    with a member of our team. They'll have the full context of our conversation.
+    One moment please."
+  </pre_escalation_script>
+
+  <tool_invocation>
+    end_session()
+  </tool_invocation>
+
+  <variable_definitions>
+    <var name="ESCALATION_MESSAGE">
+      A human-readable summary including: the customer's original intent,
+      actions already taken by the agent, and the specific trigger condition
+      that caused escalation.
+    </var>
+    <var name="PHONE_GATEWAY_TRANSFER">
+      The telephony transfer destination. Configured via the ESCALATION_PHONE_NUMBER
+      environment variable. Format: E.164 international (e.g., +18005551234).
+      NEVER hardcoded in this instruction file.
+    </var>
+  </variable_definitions>
+</escalation_protocol>

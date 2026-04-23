@@ -18,7 +18,7 @@ The `/backend` domain handles all deterministic code, integrations, and ultra-lo
 
 ### The "Dual-Brain" Paradigm & The Great Wall
 - **No Client Component execution:** The Python backend has zero awareness of React state. It treats the `frontend` only as a connected WebRTC peer that streams binary video/audio frames and listens for JSON DataChannel events.
-- **Pipecat vs GECX Isolation:** As documented in `gecx-engineering.md`, the Python backend serves internal tools to the edge-deployed Pipecat agent. It MUST NEVER embed Google Cloud Dialogflow parameters or intents directly inside its codebase. The backend handles the execution; Vertex/CX handles the intent mapping.
+- **Pipecat vs GECX Isolation:** As documented in `gecx-engineering.md`, the Python backend serves internal tools to the edge-deployed Pipecat agent. It MUST NEVER embed CX Agent Studio session parameters, tool schemas, or orchestration logic directly inside its codebase. The backend handles local edge execution; CX Agent Studio (via `ces.googleapis.com`) handles intent classification and tool routing.
 
 ## Development
 

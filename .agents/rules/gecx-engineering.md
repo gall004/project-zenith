@@ -113,3 +113,118 @@ All GECX agent tools must be defined as OpenAPI 3.0.3 YAML specifications stored
 - **Dynamic URL Injection:** Server URLs must use `${VARIABLE_NAME}` placeholders, never hardcoded URLs.
 - **Full Schema Coverage:** Every tool must define complete request and response schemas with proper types, descriptions, and examples.
 - **Versioning:** Tool schemas must include a `version` field in the `info` block. Breaking changes require a version bump.
+
+## 6. Platform Identity Firewall: CX Agent Studio ≠ Dialogflow
+
+> **CRITICAL GOVERNANCE RULE:** CX Agent Studio (formerly "Conversational Agents — Professional Services") and Dialogflow (CX and ES) are **entirely separate products** with incompatible APIs, data models, consoles, and documentation. Any conflation between them constitutes a **P0 governance violation** and must be corrected immediately.
+
+This section exists because AI coding assistants — including this one — have a demonstrated tendency to hallucinate Dialogflow concepts, API paths, and terminology when working on CX Agent Studio projects. This firewall is permanent and non-negotiable.
+
+### 6.1 Source of Truth
+
+The **only** valid documentation root for this project's GECX capabilities is:
+
+```
+https://docs.cloud.google.com/customer-engagement-ai/conversational-agents/ps/
+```
+
+Any URL that does **not** begin with this prefix is **not authoritative** for CX Agent Studio and must be verified independently before use.
+
+### 6.2 Correct Identifiers (CX Agent Studio)
+
+| Dimension               | CX Agent Studio (`/ps/`) Value                                          |
+|--------------------------|-------------------------------------------------------------------------|
+| **API Endpoint**         | `ces.googleapis.com/v1beta` (or `ces.googleapis.com/v1`)               |
+| **Resource Namespace**   | `google.cloud.ces`                                                      |
+| **Resource Path**        | `projects/{project}/locations/{location}/apps/{app}/sessions/{session}` |
+| **Console URL**          | `ces.cloud.google.com`                                                  |
+| **Python Package**       | `google-cloud-ces`                                                      |
+| **Session APIs**         | `runSession`, `streamRunSession`, `generateChatToken`                   |
+| **Top-Level Resource**   | `apps` (NOT `agents`, NOT `flows`, NOT `intents`)                       |
+| **Sub-Resources**        | `apps.agents`, `apps.tools`, `apps.toolsets`, `apps.guardrails`, `apps.examples`, `apps.deployments`, `apps.versions` |
+| **Tool Abstraction**     | `apps.tools` + `apps.toolsets` (OpenAPI, Python, MCP, Data store, Agent-as-tool, Client function) |
+| **Model Selection**      | `gemini-3.1-flash-live` (for multimodal streaming via CX Agent Studio) |
+
+### 6.3 Banned Terminology (Dialogflow Concepts)
+
+The following identifiers belong to **Dialogflow CX/ES** and must **never** appear in GECX code, prompts, governance, or architecture documents:
+
+| BANNED Term                  | Correct CX Agent Studio Equivalent    |
+|------------------------------|---------------------------------------|
+| `dialogflow.googleapis.com`  | `ces.googleapis.com`                  |
+| `google.cloud.dialogflow`    | `google.cloud.ces`                    |
+| `Flow`                       | `Agent` (sub-agent hierarchy)         |
+| `Page`                       | `Subtask` (within `<taskflow>`)       |
+| `Intent`                     | Intent classification is Gemini-native; no standalone `Intent` resource exists |
+| `EntityType`                 | Tool input schemas (OpenAPI)          |
+| `Fulfillment`                | `Callback` (lifecycle hooks)          |
+| `TransitionRoute`            | `Agent Transfer` (CES type)           |
+| `Webhook` (DF-style)         | OpenAPI Tool or Python Code Tool      |
+| `detectIntent`               | `runSession` / `streamRunSession`     |
+| `SessionsClient` (DF SDK)    | `CESClient` (custom REST client)      |
+| `cx.cloud.google.com`        | `ces.cloud.google.com`               |
+
+### 6.4 Enforcement Protocol
+
+1. **Code Review Gate:** Any PR that introduces a Dialogflow-namespaced import (`google.cloud.dialogflow.*`), a Dialogflow API endpoint, or a Dialogflow console URL must be **rejected** with a reference to this section.
+2. **Prompt Review Gate:** Any system instruction (PIF XML) that references `Flows`, `Pages`, `Intents`, `EntityTypes`, `Fulfillments`, or `TransitionRoutes` as CX Agent Studio concepts must be **rejected**.
+3. **Documentation Gate:** Any architecture document, ADR, or comment that cites a URL outside the `/ps/` documentation tree as authoritative for GECX must be **flagged** for correction.
+4. **Agent Self-Check:** When generating code or architecture for the GECX tier, the coding agent must verify that:
+   - All API calls target `ces.googleapis.com`, not `dialogflow.googleapis.com`.
+   - All resource paths follow the `projects/.../apps/...` hierarchy, not `projects/.../agents/...` (Dialogflow CX style).
+   - All session management uses `runSession`/`streamRunSession`, not `detectIntent`/`streamingDetectIntent`.
+
+## 7. Agent Context Switch Protocol: GECX ≠ Pipecat
+
+> **CRITICAL GOVERNANCE RULE:** The GECX Orchestration Tier and the Pipecat Edge-Diagnostic Tier are **separate execution environments** with incompatible tool systems, prompt formats, API surfaces, and runtime constraints. Any code change that blurs this boundary constitutes a **P0 governance violation**.
+
+This section exists because AI coding assistants have a demonstrated tendency to apply GECX concepts (OpenAPI tools, CES session parameters, webhook routing) when modifying Pipecat code, and vice versa. This context switch protocol is permanent and non-negotiable.
+
+### 7.1 Tier Decision Matrix
+
+Before writing or modifying **any** code, the coding agent must determine which tier the target file belongs to using this matrix:
+
+| File Path Pattern                              | Tier                        | Runtime          | Tool System             |
+|------------------------------------------------|-----------------------------|------------------|-------------------------|
+| `gecx_agent/definitions/prompts/*.xml`         | **Orchestration (GECX)**    | CX Agent Studio  | OpenAPI / Agent-as-tool |
+| `gecx_agent/definitions/tools/*.yaml`          | **Orchestration (GECX)**    | CX Agent Studio  | OpenAPI 3.0.3 YAML      |
+| `gecx_agent/definitions/callbacks/*.py`        | **Orchestration (GECX)**    | CES Callbacks    | Python (stateless)      |
+| `backend/app/pipelines/**`                     | **Edge-Diagnostic (Pipecat)** | FastAPI / LiveKit | Native Python functions |
+| `backend/app/pipelines/prompts/*.xml`          | **Edge-Diagnostic (Pipecat)** | Gemini Live      | Pipecat function tools  |
+| `backend/app/services/ces_client.py`           | **Bridge** (Pipecat → GECX) | FastAPI           | HTTP REST to CES API    |
+| `backend/app/api/v1/agent.py`                  | **Bridge** (GECX → Pipecat) | FastAPI           | Webhook receiver        |
+
+### 7.2 Mandatory Context Check
+
+When a task touches files in **either** tier, the coding agent must execute this checklist before writing code:
+
+1. **Identify the Tier:** Use §7.1 to determine which tier the target file belongs to.
+2. **Load the Correct Governance:** If working in the GECX tier, apply all rules from §1–§6 of this document. If working in the Pipecat tier, apply `backend-engineering.md` rules exclusively.
+3. **Verify Tool System Isolation:**
+   - **GECX prompts** may only reference tools defined in `gecx_agent/definitions/tools/*.yaml` (OpenAPI schemas).
+   - **Pipecat prompts** may only reference tools registered via `llm.register_function()` in `room_pipeline.py` (native Python).
+   - **NEVER** reference a GECX OpenAPI tool name (e.g., `request_visual_context`) inside a Pipecat prompt.
+   - **NEVER** reference a Pipecat function tool name (e.g., `end_vision_session`) inside a GECX prompt.
+4. **Verify Session API Isolation:**
+   - **GECX session calls** use `runSession`/`streamRunSession` via `ces.googleapis.com`.
+   - **Pipecat session calls** use `LiveKitTransport` and `PipelineRunner`.
+   - The **only** bridge point is `CESClient.send_event()` (Pipecat → GECX) and the `/api/v1/agent/webhook` endpoint (GECX → Pipecat).
+
+### 7.3 Cross-Tier Change Protocol
+
+If a task requires modifications to **both** tiers simultaneously (e.g., adding a new tool), the coding agent must:
+
+1. **Start with the GECX tier:** Define the OpenAPI tool schema in `gecx_agent/definitions/tools/` and update the GECX prompt in `gecx_agent/definitions/prompts/`.
+2. **Then implement the bridge:** Add or modify the webhook handler in `backend/app/api/v1/agent.py`.
+3. **Then implement the Pipecat side:** Add any required pipeline logic in `backend/app/pipelines/`.
+4. **Never skip steps:** A GECX tool that references a webhook endpoint which does not yet exist is a build-time violation. The backend endpoint must be deployed before the GECX tool can be activated.
+
+### 7.4 Banned Cross-Contamination Patterns
+
+| Pattern                                                    | Violation | Correct Approach                                  |
+|------------------------------------------------------------|-----------|---------------------------------------------------|
+| Importing `CESClient` inside `room_pipeline.py` tools      | ❌ P0     | Use `CESClient` only in the `handle_end_vision_session` callback (bridge point) |
+| Referencing `LiveKitTransport` in GECX callback code       | ❌ P0     | GECX callbacks have no awareness of LiveKit        |
+| Adding `<session_context>` webhook token logic to Pipecat prompts | ❌ P0     | Webhook tokens are GECX-only; Pipecat uses LiveKit room identity |
+| Using `request_visual_context` tool name in Pipecat prompts | ❌ P0     | Pipecat knows only `end_vision_session`            |
+| Adding CES API calls directly in route handlers             | ❌ P1     | Delegate to `CESClient` in the service layer       |
