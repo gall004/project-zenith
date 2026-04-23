@@ -183,7 +183,7 @@ function ArchitectureSection() {
     BE_MEDIA <-->|Realtime Streaming| GL
 `} />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-surface p-6 rounded-2xl border border-outline-variant hover:border-primary/50 transition-colors">
               <h4 className="font-bold text-on-surface mb-3 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">router</span>
@@ -209,6 +209,15 @@ function ArchitectureSection() {
               </h4>
               <p className="text-sm text-secondary leading-relaxed">
                 Abstracts the LLM connection. You can swap Gemini for OpenAI or Anthropic by changing a single pipeline node, preventing vendor lock-in.
+              </p>
+            </div>
+            <div className="bg-surface p-6 rounded-2xl border border-outline-variant hover:border-primary/50 transition-colors">
+              <h4 className="font-bold text-on-surface mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">graphic_eq</span>
+                AI Noise Filtering
+              </h4>
+              <p className="text-sm text-secondary leading-relaxed">
+                Client-side WebAssembly models optionally isolate the primary speaker from background voices before audio ever hits the network.
               </p>
             </div>
           </div>

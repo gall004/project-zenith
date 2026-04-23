@@ -241,6 +241,7 @@ docker build \
   -t "${AR_PREFIX}/${FRONTEND_SERVICE}:latest" \
   --build-arg "NEXT_PUBLIC_API_BASE_URL=${BACKEND_URL}" \
   --build-arg "NEXT_PUBLIC_LIVEKIT_URL=${LIVEKIT_URL}" \
+  --build-arg "NEXT_PUBLIC_ENABLE_KRISP_NOISE_FILTER=${NEXT_PUBLIC_ENABLE_KRISP_NOISE_FILTER}" \
   -f "${PROJECT_ROOT}/frontend/Dockerfile" \
   "${PROJECT_ROOT}/frontend"
 

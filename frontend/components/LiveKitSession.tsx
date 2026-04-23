@@ -13,6 +13,7 @@ import { LiveKitRoom, useRoomContext, RoomAudioRenderer, StartAudio, useRemotePa
 import { fetchLiveKitToken } from "@/lib/api/livekit";
 import { handoffSession, updateCameraState } from "@/lib/api/sessions";
 import { Track, ConnectionState, LocalVideoTrack } from "livekit-client";
+import { useKrispNoiseFilter } from "@livekit/components-react/krisp";
 import { Button } from "@/components/ui/button";
 import type { EnableMultimodalInputEvent } from "@/types/websocket";
 import "@livekit/components-styles";
@@ -151,6 +152,16 @@ function MultimodalInterceptHandler({
 }): React.JSX.Element | null {
   const room = useRoomContext();
   const connectionState = useConnectionState();
+  const krisp = useKrispNoiseFilter();
+  
+  // Attach Krisp noise filter if enabled via env
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_ENABLE_KRISP_NOISE_FILTER === "true") {
+      krisp.setNoiseFilterEnabled(true).catch(err => {
+        console.error("Failed to enable Krisp noise filter via hook:", err);
+      });
+    }
+  }, [krisp.setNoiseFilterEnabled]);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
