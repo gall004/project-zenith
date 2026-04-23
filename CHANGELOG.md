@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.9.0] - 2026-04-23
+### Added
+- Feature `feature/krisp-noise-filter`: Integrated Krisp AI noise cancellation via the official `useKrispNoiseFilter` hook from `@livekit/components-react/krisp`. Client-side WebAssembly models isolate the primary speaker's voice, eliminating background conversations before audio hits the network.
+- Feature `feature/krisp-noise-filter`: Added `NEXT_PUBLIC_ENABLE_KRISP_NOISE_FILTER` environment variable killswitch. Set to `true` to enable, remove or set to `false` to disable — no code changes required.
+- Feature `feature/krisp-noise-filter`: Added "AI Noise Filtering" architecture card to the landing page's Enterprise Multimodal Architecture section, expanding the grid to four columns.
+
+### Fixed
+- Bug `fix/camera-flip-routing`: Repaired camera flip routing and default pipeline modes. The `pipeline_type` field was silently dropped from both the WebSocket `enable_multimodal_input` payload and the session hydration mapping, causing the sentiment demo to always default to the rear camera. Updated `connection_manager.py`, `agent.py`, `ws.py`, `VoiceSessionClient.tsx`, `sessions.ts`, and `LiveKitSession.tsx` to propagate the full multimodal payload end-to-end.
+- Bug `fix/camera-flip-routing`: Fixed the flip camera button by replacing manual `setCameraEnabled(false/true)` toggles with `LocalVideoTrack.restartTrack({ facingMode })` for stable hardware hot-swapping without breaking the LiveKit publication state.
 ## [v1.8.0] - 2026-04-22
 ### Added
 - Feature `feature/mobile-camera-flip`: Added mobile camera flip capabilities to the LiveKit video feed. The initial camera orientation now dynamically routes to front-facing (`user`) for the sentiment demo and rear-facing (`environment`) for the default visual context demo, driven by the `pipeline_type` injected into the websocket payload.
