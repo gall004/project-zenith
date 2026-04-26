@@ -7,9 +7,10 @@
     "doc": "docs"
   },
   "scripts": {
-    "dev:redis": "docker rm -f zenith-redis 2>/dev/null; CID=$(docker ps -q --filter publish=6379); [ -n \"$CID\" ] && docker stop $CID; sleep 1; docker run --rm --name zenith-redis -p 6379:6379 redis:7-alpine",
-    "dev": "dotenv -- concurrently -k -c \"red,cyan,magenta,yellow\" -n \"redis,next,fapi,ngrok\" \"npm run dev:redis\" \"npm run dev --prefix frontend\" \"uv run --directory backend uvicorn app.main:app --reload --port 8000\" \"ngrok http 8000 --domain=\\$NGROK_DOMAIN --log=stdout\"",
-    "install:all": "npm install --prefix frontend && uv sync --directory backend"
+    "dev": "npm run dev --prefix frontend",
+    "install:all": "npm install --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run start --prefix frontend"
   },
   "repository": {
     "type": "git",

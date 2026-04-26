@@ -70,6 +70,7 @@ echo "  ✓ Application Default Credentials found"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
 AGENT_DIR="${PROJECT_ROOT}/gecx_agent"
+<<<<<<<< HEAD:scripts/deploy-dev.sh
 ENV_FILE="${PROJECT_ROOT}/.env"
 
 if [[ -f "${ENV_FILE}" ]]; then
@@ -78,6 +79,8 @@ if [[ -f "${ENV_FILE}" ]]; then
     source "${ENV_FILE}"
     set +a
 fi
+========
+>>>>>>>> origin/feature/cloud-run-production:scripts/deploy-gecx.sh
 
 if [[ -f "${AGENT_DIR}/pyproject.toml" ]]; then
     echo "  Installing agent dependencies via uv..."
@@ -97,6 +100,10 @@ fi
 
 GCP_REGION="${GCP_REGION:-us-central1}"
 
+if [[ -z "${FASTAPI_BACKEND_URL:-}" ]]; then
+    echo -e "${RED}Error: FASTAPI_BACKEND_URL is not set in .env.${NC}"
+    exit 1
+fi
 
 APP_NAME="${GECX_APP_NAME:-zenith-gecx-orchestrator-dev}"
 
@@ -104,12 +111,14 @@ echo ""
 echo -e "${CYAN}Deployment Plan:${NC}"
 echo "  Project ID:     ${GCP_PROJECT_ID}"
 echo "  Region:         ${GCP_REGION}"
+echo "  Backend URL:    ${FASTAPI_BACKEND_URL}"
 echo "  Auth:           ${ACTIVE_ACCOUNT}"
 echo ""
 echo -e "${CYAN}Resources to create/update:${NC}"
 echo "  • Enable CES API (ces.googleapis.com)"
 echo "  • CES App: ${APP_NAME}"
 echo "  • CES Agent: ${APP_NAME}-root-agent"
+echo "  • CES Toolset: request_visual_context"
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -117,6 +126,7 @@ echo ""
 # ---------------------------------------------------------------------------
 export GCP_PROJECT_ID
 export GCP_REGION
+export FASTAPI_BACKEND_URL
 
 # ---------------------------------------------------------------------------
 # Step 2: Enable CES API
@@ -136,8 +146,13 @@ echo ""
 GECX_TMPFILE=$(mktemp)
 
 set +e
-cd "${PROJECT_ROOT}" && uv run --directory gecx_agent python bootstrap.py \
+cd "${PROJECT_ROOT}" && uv run --directory gecx_agent python ../scripts/bootstrap_gecx.py \
+<<<<<<<< HEAD:scripts/deploy-dev.sh
+    --webhook-url "${FASTAPI_BACKEND_URL}" \
     --app-name "${GECX_APP_NAME:-zenith-gecx-orchestrator-dev}" 2>&1 | tee "${GECX_TMPFILE}"
+========
+    --webhook-url "${FASTAPI_BACKEND_URL}" 2>&1 | tee "${GECX_TMPFILE}"
+>>>>>>>> origin/feature/cloud-run-production:scripts/deploy-gecx.sh
 GECX_EXIT=${PIPESTATUS[0]}
 set -e
 
@@ -166,4 +181,5 @@ echo "  CES App:        ${APP_NAME}"
 echo "  CES App ID:     ${CES_APP_ID:-<see .env>}"
 echo "  GECX Agent:     ${APP_NAME}-root-agent"
 echo "  GECX Agent ID:  ${GECX_AGENT_ID:-<see .env>}"
+echo "  Backend URL:    ${FASTAPI_BACKEND_URL}"
 echo ""

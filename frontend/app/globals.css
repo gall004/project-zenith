@@ -1,7 +1,9 @@
+@import url("https://www.gstatic.com/ces-console/fast/chat-messenger/prod/v1.15/themes/chat-messenger-default.css");
+@import url("https://www.gstatic.com/ces-console/fast/chat-messenger/prod/v1.15/themes/chat-messenger-layout.css");
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-
 @custom-variant dark (&:is(.dark *));
 
 @theme {
@@ -165,4 +167,43 @@
     height: 100dvh !important;
     max-height: 100dvh !important;
   }
+}
+
+/* ── GECX Widget Theming ────────────────────────────────────── */
+chat-messenger {
+  /* Positioning overrides */
+  z-index: 99999 !important;
+  position: fixed !important;
+  bottom: 50px !important;
+  right: 100px !important;
+
+  /* Global Typography */
+  --chat-messenger-font-family: var(--font-body);
+
+  /* Containers / Surfaces */
+  --chat-messenger-color--surface: var(--color-surface);
+  --chat-messenger-color--surface-container: var(--color-surface-container-lowest);
+  --chat-messenger-color--surface-container-high: var(--color-surface-container-high);
+
+  /* Brand / Accent */
+  --chat-messenger-color--primary: var(--color-primary);
+  --chat-messenger-color--primary-container: var(--color-primary-container);
+  --chat-messenger-color--secondary: var(--color-secondary);
+
+  /* Text & Icons */
+  --chat-messenger-color--on-surface: var(--color-on-surface);
+  --chat-messenger-color--on-surface-variant: var(--color-on-surface-variant);
+  --chat-messenger-color--on-primary: var(--color-on-primary);
+  --chat-messenger-color--on-primary-container: var(--color-on-primary-container);
+  --chat-messenger-color--on-secondary: var(--color-on-secondary);
+
+  /* States & Utility */
+  --chat-messenger-color--outline: var(--color-outline);
+  --chat-messenger-color--outline-active: var(--color-outline-variant);
+  --chat-messenger-color--error: var(--color-error);
+
+  /* Shape & Corner Radii */
+  --chat-messenger-shape--corner-value-medium: var(--radius-md);
+  --chat-messenger-shape--corner-value-large: var(--radius-lg);
+  --chat-messenger-shape--corner-value-extra-large: var(--radius-xl);
 }

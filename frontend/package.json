@@ -12,12 +12,9 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
-    "@livekit/components-react": "2.9.20",
-    "@livekit/components-styles": "^1.2.0",
-    "@livekit/krisp-noise-filter": "^0.3.4",
+    "@google/genai": "^1.50.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "livekit-client": "2.18.3",
     "lucide-react": "^1.8.0",
     "mermaid": "^11.14.0",
     "next": "16.2.4",

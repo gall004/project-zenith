@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { BookOpen, Camera, CheckCircle, ChevronsRight, CircleDot, Eye, FlaskConical, GraduationCap, Handshake, MessageCircle, MessageSquare, Smile, VideoOff, Wrench } from "lucide-react";
+
 
 export default function WalkthroughPage() {
   const handleOpenZenith = () => {
@@ -16,7 +18,7 @@ export default function WalkthroughPage() {
         <div className="relative z-10 space-y-12 animate-in slide-in-from-bottom-8 duration-700 fade-in">
           <div className="text-center mb-12">
             <div className="inline-flex items-center space-x-2 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-sm font-medium mb-6">
-              <span className="material-symbols-outlined text-sm">school</span>
+              <GraduationCap className="w-4 h-4" />
               <span>Interactive Tutorial</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-headline font-extrabold text-on-surface mb-4 tracking-tight leading-tight">
@@ -29,24 +31,24 @@ export default function WalkthroughPage() {
 
           <div className="bg-surface-container-low border border-outline-variant p-6 rounded-3xl mx-auto mb-12 shadow-sm">
             <h3 className="font-headline font-bold text-lg mb-4 text-on-surface flex items-center">
-              <span className="material-symbols-outlined mr-2 text-primary">menu_book</span>
+              <BookOpen className="mr-2 text-primary" />
               Table of Contents
             </h3>
             <ul className="space-y-3">
               <li>
                 <a href="#preparation" className="text-primary hover:underline hover:text-primary/80 flex items-center gap-2 font-medium">
-                  <span className="material-symbols-outlined text-sm">build</span> Preparation
+                  <Wrench className="w-4 h-4" /> Preparation
                 </a>
               </li>
               <li>
                 <a href="#visual-context" className="text-primary hover:underline hover:text-primary/80 flex items-center gap-2 font-medium">
-                  <span className="material-symbols-outlined text-sm">visibility</span> Visual Context Demo
+                  <Eye className="w-4 h-4" /> Visual Context Demo
                 </a>
                 <p className="text-sm text-secondary ml-6 mt-1">A deep-dive into the Universal Technical Concierge, multimodal escalation, and contextual text handoffs.</p>
               </li>
               <li>
                 <a href="#sentiment" className="text-primary hover:underline hover:text-primary/80 flex items-center gap-2 font-medium">
-                  <span className="material-symbols-outlined text-sm">mood</span> Sentiment Analysis Demo
+                  <Smile className="w-4 h-4" /> Sentiment Analysis Demo
                 </a>
                 <p className="text-sm text-secondary ml-6 mt-1">Test the agent's ability to read your facial expression, empathize, and match your emotional energy in real-time.</p>
               </li>
@@ -57,7 +59,7 @@ export default function WalkthroughPage() {
             <div className="p-8 border-b border-outline-variant/50 bg-surface-container">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-primary/20 text-primary rounded-full flex items-center justify-center">
-                  <span className="material-symbols-outlined text-2xl">science</span>
+                  <FlaskConical className="w-6 h-6" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold font-headline">Preparation</h2>
@@ -85,7 +87,7 @@ export default function WalkthroughPage() {
 
           <div id="visual-context" className="scroll-mt-28 space-y-12">
             <h2 className="text-3xl font-headline font-bold text-on-surface border-b border-outline-variant pb-4 mt-8 flex items-center gap-3">
-              <span className="material-symbols-outlined text-sky-700 text-3xl">camera_view</span>
+              <Camera className="text-sky-700 w-8 h-8" />
               Visual Context Demo
             </h2>
 
@@ -93,7 +95,7 @@ export default function WalkthroughPage() {
               <div className="p-8 border-b border-outline-variant/50 bg-sky-500/5">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-sky-500/20 text-sky-700 rounded-full flex items-center justify-center">
-                    <span className="material-symbols-outlined text-2xl">chat</span>
+                    <MessageCircle className="w-6 h-6" />
                   </div>
                   <div>
                     <h2 className="text-xl font-bold font-headline">Phase 1: Text Orchestration</h2>
@@ -104,7 +106,7 @@ export default function WalkthroughPage() {
               <div className="p-8 space-y-6">
                 <div className="flex space-x-4 group">
                   <div className="flex-shrink-0 mt-1">
-                    <span className="material-symbols-outlined text-sky-700 group-hover:scale-110 transition-transform">keyboard_double_arrow_right</span>
+                    <ChevronsRight className="text-sky-700 group-hover:scale-110 transition-transform" />
                   </div>
                   <div>
                     <p className="text-on-surface font-medium mb-2">In the chat window, click the <strong>Visual Context Demo</strong> suggested badge, or type:</p>
@@ -112,7 +114,7 @@ export default function WalkthroughPage() {
                       "I have an object here but I'm not sure what it is. Can you help me identify it?"
                     </blockquote>
                     <div className="mt-3 bg-green-500/10 border border-green-500/20 text-green-700 p-3 rounded-lg text-sm flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                      <CheckCircle className="w-[18px] h-[18px]" />
                       <p><strong>Expected:</strong> The GECX agent should offer to assist and immediately request permission to activate your camera for a visual inspection.</p>
                     </div>
                   </div>
@@ -124,7 +126,7 @@ export default function WalkthroughPage() {
               <div className="p-8 border-b border-outline-variant/50 bg-rose-500/5">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-rose-500/20 text-rose-600 rounded-full flex items-center justify-center">
-                    <span className="material-symbols-outlined text-2xl">visibility</span>
+                    <Eye className="w-6 h-6" />
                   </div>
                   <div>
                     <h2 className="text-xl font-bold font-headline">Phase 2: Visual Escalation & Handling</h2>
@@ -150,7 +152,7 @@ export default function WalkthroughPage() {
                       "Can you still see what I'm doing?"
                     </blockquote>
                     <div className="mt-3 bg-green-500/10 border border-green-500/20 text-green-700 p-3 rounded-lg text-sm flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                      <CheckCircle className="w-[18px] h-[18px]" />
                       <p><strong>Expected:</strong> The agent should politely inform you that the screen is dark and ask you to adjust your lighting, without speaking any markdown formatting.</p>
                     </div>
                   </div>
@@ -165,7 +167,7 @@ export default function WalkthroughPage() {
                       "Can you tell me what I'm holding and what it is used for?"
                     </blockquote>
                     <div className="mt-3 bg-green-500/10 border border-green-500/20 text-green-700 p-3 rounded-lg text-sm flex items-start gap-2">
-                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                      <CheckCircle className="w-[18px] h-[18px]" />
                       <p><strong>Expected:</strong> Complete multimodal synthesis. The agent should excitedly identify the object and explain its purpose.</p>
                     </div>
                   </div>
@@ -180,7 +182,7 @@ export default function WalkthroughPage() {
               <div className="p-8 border-b border-outline-variant/50 bg-indigo-500/5">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-indigo-500/20 text-indigo-700 rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/10">
-                    <span className="material-symbols-outlined text-2xl">handshake</span>
+                    <Handshake className="w-6 h-6" />
                   </div>
                   <div>
                     <h2 className="text-xl font-bold font-headline">Phase 3: Contextual Handoff</h2>
@@ -191,7 +193,7 @@ export default function WalkthroughPage() {
               <div className="p-8 space-y-6">
                 <div className="flex space-x-4 group">
                   <div className="flex-shrink-0 mt-1">
-                    <span className="material-symbols-outlined text-indigo-700 group-hover:translate-x-1 transition-transform">double_arrow</span>
+                    <ChevronsRight className="text-indigo-700 group-hover:translate-x-1 transition-transform" />
                   </div>
                   <div className="w-full">
                     <p className="text-on-surface font-medium mb-3">When you are satisfied with the interaction, tell the agent via audio, or press the End button:</p>
@@ -200,11 +202,11 @@ export default function WalkthroughPage() {
                     </blockquote>
                     <div className="mt-4 space-y-3">
                       <div className="bg-surface-container border border-outline-variant p-4 rounded-lg text-sm flex items-center gap-3">
-                        <span className="material-symbols-outlined text-indigo-700 animate-pulse">videocam_off</span>
+                        <VideoOff className="text-indigo-700 animate-pulse" />
                         <p className="text-secondary"><strong>Watch the UI:</strong> The session will silently end — the camera stream shuts down and the video window collapses automatically. No spoken goodbye, no manual steps.</p>
                       </div>
                       <div className="bg-green-500/10 border border-green-500/20 text-green-700 p-4 rounded-lg text-sm flex items-start gap-3">
-                        <span className="material-symbols-outlined text-[20px] mt-0.5">forum</span>
+                        <MessageSquare className="w-5 h-5 mt-0.5" />
                         <div>
                           <p className="mb-1"><strong>The Magic Handoff:</strong></p>
                           <p>Look at your text chat. The GECX text agent will seamlessly resume the conversation with a follow-up message that acknowledges what happened in the video session (e.g., <em>"Is there anything else I can help you with?"</em>). Two completely separate agent brains — one voice, one text — and the context carries over automatically.</p>
@@ -219,7 +221,7 @@ export default function WalkthroughPage() {
 
           <div id="sentiment" className="scroll-mt-28 space-y-12">
             <h2 className="text-3xl font-headline font-bold text-on-surface border-b border-outline-variant pb-4 mt-12 flex items-center gap-3">
-              <span className="material-symbols-outlined text-amber-600 text-3xl">sentiment_satisfied</span>
+              <Smile className="text-amber-600 w-8 h-8" />
               Sentiment Analysis Demo
             </h2>
 
@@ -227,7 +229,7 @@ export default function WalkthroughPage() {
               <div className="p-8 border-b border-outline-variant/50 bg-amber-500/5">
                 <div className="flex items-center space-x-4">
                    <div className="w-12 h-12 bg-amber-500/20 text-amber-700 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/10">
-                     <span className="material-symbols-outlined text-2xl">chat</span>
+                     <MessageCircle className="w-6 h-6" />
                    </div>
                    <div>
                      <h2 className="text-xl font-bold font-headline">Phase 1: Empathetic Triage</h2>
@@ -238,7 +240,7 @@ export default function WalkthroughPage() {
               <div className="p-8 space-y-6">
                 <div className="flex space-x-4 group">
                    <div className="flex-shrink-0 mt-1">
-                     <span className="material-symbols-outlined text-amber-700 group-hover:scale-110 transition-transform">keyboard_double_arrow_right</span>
+                     <ChevronsRight className="text-amber-700 group-hover:scale-110 transition-transform" />
                    </div>
                    <div>
                      <p className="text-on-surface font-medium mb-2">In the chat window, click the <strong>Sentiment Analysis</strong> suggested badge, or type:</p>
@@ -246,7 +248,7 @@ export default function WalkthroughPage() {
                        "I've been feeling a bit off today and I'm not sure why. Could you take a look at me and tell me how I'm coming across?"
                      </blockquote>
                      <div className="mt-3 bg-green-500/10 border border-green-500/20 text-green-700 p-3 rounded-lg text-sm flex items-start gap-2">
-                       <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                       <CheckCircle className="w-[18px] h-[18px]" />
                        <p><strong>Expected:</strong> The agent should empathize with your feelings and ask for permission to enable your camera so it can see how you're doing.</p>
                      </div>
                    </div>
@@ -258,7 +260,7 @@ export default function WalkthroughPage() {
               <div className="p-8 border-b border-outline-variant/50 bg-rose-500/5">
                 <div className="flex items-center space-x-4">
                    <div className="w-12 h-12 bg-rose-500/20 text-rose-600 rounded-full flex items-center justify-center">
-                     <span className="material-symbols-outlined text-2xl">mood</span>
+                     <Smile className="w-6 h-6" />
                    </div>
                    <div>
                      <h2 className="text-xl font-bold font-headline">Phase 2: Emotional Check-In</h2>
@@ -285,11 +287,11 @@ export default function WalkthroughPage() {
                      </blockquote>
                      <div className="mt-4 space-y-3">
                        <div className="bg-green-500/10 border border-green-500/20 text-green-700 p-3 rounded-lg text-sm flex items-start gap-2">
-                         <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                         <CheckCircle className="w-[18px] h-[18px]" />
                          <p><strong>Expected:</strong> The agent should read your facial expression and respond with genuine empathy — commenting on whether you look happy, tired, stressed, or relaxed, and following up with a natural question.</p>
                        </div>
                        <div className="bg-purple-500/10 border border-purple-500/20 text-purple-700 p-3 rounded-lg text-sm flex items-start gap-2">
-                         <span className="material-symbols-outlined text-[18px]">radio_button_checked</span>
+                         <CircleDot className="w-[18px] h-[18px]" />
                          <p><strong>Conversational Presence:</strong> Notice the glowing orb inside the video view — it pulses in sync with the agent's voice, providing visual feedback that the agent is actively listening.</p>
                        </div>
                      </div>
@@ -305,7 +307,7 @@ export default function WalkthroughPage() {
               <div className="p-8 border-b border-outline-variant/50 bg-indigo-500/5">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-indigo-500/20 text-indigo-700 rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/10">
-                    <span className="material-symbols-outlined text-2xl">handshake</span>
+                    <Handshake className="w-6 h-6" />
                   </div>
                   <div>
                     <h2 className="text-xl font-bold font-headline">Phase 3: Contextual Handoff</h2>
@@ -316,7 +318,7 @@ export default function WalkthroughPage() {
               <div className="p-8 space-y-6">
                 <div className="flex space-x-4 group">
                   <div className="flex-shrink-0 mt-1">
-                    <span className="material-symbols-outlined text-indigo-700 group-hover:translate-x-1 transition-transform">double_arrow</span>
+                    <ChevronsRight className="text-indigo-700 group-hover:translate-x-1 transition-transform" />
                   </div>
                   <div className="w-full">
                     <p className="text-on-surface font-medium mb-3">When you are satisfied with the interaction, tell the agent via audio, or press the End button:</p>
@@ -325,11 +327,11 @@ export default function WalkthroughPage() {
                     </blockquote>
                     <div className="mt-4 space-y-3">
                       <div className="bg-surface-container border border-outline-variant p-4 rounded-lg text-sm flex items-center gap-3">
-                        <span className="material-symbols-outlined text-indigo-700 animate-pulse">videocam_off</span>
+                        <VideoOff className="text-indigo-700 animate-pulse" />
                         <p className="text-secondary"><strong>Watch the UI:</strong> The session will silently end — the camera stream shuts down and the video window collapses automatically. No spoken goodbye, no manual steps.</p>
                       </div>
                       <div className="bg-green-500/10 border border-green-500/20 text-green-700 p-4 rounded-lg text-sm flex items-start gap-3">
-                        <span className="material-symbols-outlined text-[20px] mt-0.5">forum</span>
+                        <MessageSquare className="w-5 h-5 mt-0.5" />
                         <div>
                           <p className="mb-1"><strong>The Magic Handoff:</strong></p>
                           <p>Look at your text chat. The GECX text agent will seamlessly resume the conversation with a follow-up that acknowledges your emotional check-in (e.g., <em>"Is there anything else I can help you with?"</em>). Two separate agent brains — one voice, one text — and the emotional context carries over automatically.</p>

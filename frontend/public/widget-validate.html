@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenith Widget Test</title>
+  <script defer src="https://www.gstatic.com/ces-console/fast/chat-messenger/prod/v1.15/chat-messenger.js"></script>
+  
+
+<link rel="stylesheet" href="https://www.gstatic.com/ces-console/fast/chat-messenger/prod/v1.15/themes/chat-messenger-default.css">
+<link rel="stylesheet" href="https://www.gstatic.com/ces-console/fast/chat-messenger/prod/v1.15/themes/chat-messenger-layout.css">
+
+<style>
+    chat-messenger {
+      z-index: 999;
+      position: fixed;
+      right: 100px;
+      bottom: 50px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Project Zenith — Widget Test</h1>
+  <p>If the widget is working, you should see a chat bubble in the bottom-right corner.</p>
+  <script>
+    window.addEventListener("chat-messenger-loaded", () => {
+      chatSdk.registerContext(
+        chatSdk.prebuilts.ces.createContext({
+          deploymentName: "projects/825463420635/locations/us/apps/3ef188f6-f7e8-4035-8a07-6a7dec9beab5/deployments/d2898b35-89e9-43e5-a667-844c94017c0c",
+          tokenBroker: {
+            enableTokenBroker: true,
+            
+          },
+        }),
+      );
+    });
+    // window.addEventListener("chat-messenger-loaded", () => {
+    //   const cm = document.querySelector("chat-messenger");
+    //   cm.accessToken = yourToken;
+    // });
+</script>
+<!-- Update the url-allowlist attribute with a comma-separated list of origins allowed to render images -->
+<chat-messenger
+  url-allowlist="*"
+>
+  <chat-messenger
+  language-code="en"
+    max-query-length="-1"
+  >
+    <chat-messenger-chat-bubble
+      chat-title="Ask Zenith">
+    </chat-messenger-chat-bubble>
+    
+  </chat-messenger>
+</body>
+  
+</html>

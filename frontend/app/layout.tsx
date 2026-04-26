@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope, Space_Grotesk, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { AppShell } from "@/components/AppShell";
 import "./globals.css";
 
@@ -47,6 +48,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet" />
       </head>
       <body className="min-h-full flex flex-col bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container relative">
+        <Script src="https://www.gstatic.com/ces-console/fast/chat-messenger/prod/v1.15/chat-messenger.js" strategy="lazyOnload" />
         <AppShell>
           {children}
         </AppShell>

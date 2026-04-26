@@ -5,12 +5,10 @@
  * Mirrors the backend Pydantic schemas in app/models/websocket.py.
  */
 
-/** Literal string union for event type discrimination. */
 export type WebSocketEventType =
   | "chat_message"
   | "agent_response"
   | "user_transcription"
-  | "enable_multimodal_input"
   | "session_event"
   | "error";
 
@@ -30,14 +28,6 @@ export interface ChatMessagePayload {
 export interface AgentResponsePayload {
   text: string;
   sender: "agent";
-}
-
-/** Payload for triggering the frontend camera/mic intercept. */
-export interface EnableMultimodalInputPayload {
-  reason: string;
-  camera_requested: boolean;
-  microphone_requested: boolean;
-  pipeline_type?: string;
 }
 
 /** Payload for session lifecycle events. */
@@ -75,13 +65,6 @@ export interface UserTranscriptionEvent {
   timestamp: string;
 }
 
-/** Discriminated union: enable_multimodal_input event. */
-export interface EnableMultimodalInputEvent {
-  type: "enable_multimodal_input";
-  payload: EnableMultimodalInputPayload;
-  timestamp: string;
-}
-
 /** Discriminated union: session_event event. */
 export interface SessionEvent {
   type: "session_event";
@@ -104,7 +87,6 @@ export type WebSocketEvent =
   | ChatMessageEvent
   | AgentResponseEvent
   | UserTranscriptionEvent
-  | EnableMultimodalInputEvent
   | SessionEvent
   | ErrorEvent;
 

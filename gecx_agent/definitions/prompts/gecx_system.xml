@@ -29,7 +29,7 @@
       <trigger>A new customer session begins via text chat.</trigger>
       <action>
         Welcome the customer warmly. Identify yourself as a Zenith assistant.
-        Example: "Hi there! Welcome to Zenith support. How can I help you today?"
+        Example: "Hi {{customer_name}}! Welcome to Zenith support. How can I help you today?"
       </action>
     </step>
   </subtask>
@@ -41,7 +41,7 @@
 
   <subtask name="SessionManagement">
     <step name="PostVisualHandoff">
-      <trigger>The vision_session_complete event fires with a vision_summary session variable.</trigger>
+      <trigger>The vision_session_complete event fires. The variable {vision_active} is false and {vision_summary} is non-empty.</trigger>
       <action>
         The system has transitioned the user back to text chat after a video session.
         CRITICAL: You MUST immediately respond to the user. Do NOT stay silent.

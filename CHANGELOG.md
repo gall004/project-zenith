@@ -6,7 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
+### Added
+- Feature `feature/ces-bidi-poc`: Created standalone Python proof-of-concept script (`scripts/ces_bidi_poc.py`) to validate native Google Cloud CES v1beta `BidiRunSession` transport. Demonstrates ADC authentication, bidirectional stream establishment, and text message round-trip without Pipecat/LiveKit overhead.
 ## [v1.9.0] - 2026-04-23
 ### Added
 - Feature `feature/krisp-noise-filter`: Integrated Krisp AI noise cancellation via the official `useKrispNoiseFilter` hook from `@livekit/components-react/krisp`. Client-side WebAssembly models isolate the primary speaker's voice, eliminating background conversations before audio hits the network.

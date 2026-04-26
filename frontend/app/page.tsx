@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ZenithDrawer } from "@/components/ZenithDrawer";
+
 import { Button } from "@/components/ui/button";
+import { Activity, ArrowLeftRight, ArrowRight, Cpu, Eye, Gauge, GraduationCap, MessageCircle, Network, Radar, Router, Webhook } from "lucide-react";
+
 import dynamic from 'next/dynamic';
 
 const Mermaid = dynamic(() => import('@/components/Mermaid'), { ssr: false });
@@ -24,7 +26,11 @@ export default function LandingPage() {
 
 function HeroSection() {
   const handleOpenZenith = () => {
-    window.dispatchEvent(new CustomEvent("open-zenith"));
+    // The Google Web Widget exposes hidden UI methods on the chat bubble component
+    const bubble = document.querySelector('chat-messenger-chat-bubble') as any;
+    if (bubble && typeof bubble.openChat === 'function') {
+      bubble.openChat();
+    }
   };
   
   return (
@@ -52,7 +58,7 @@ function HeroSection() {
             data-slot="button"
             className="w-full sm:w-auto bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-lg font-bold text-lg hover:shadow-[0_8px_32px_rgba(0,84,214,0.3)] transition-all duration-300 transform hover:-translate-y-1 flex items-center justify-center space-x-3 group h-14 px-8"
           >
-            <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble</span>
+            <MessageCircle className="w-5 h-5" />
             <span>Ask Zenith</span>
           </Button>
           <a href="https://ai.google.dev/gemini-api/docs" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto bg-surface-container hover:bg-surface-container-high text-on-surface px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 border border-outline-variant hover:border-outline flex items-center justify-center space-x-2 text-center h-14">
@@ -77,13 +83,13 @@ function FeaturesSection() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { icon: "speed", title: "Ultra Low-Latency", desc: "Built on Google's high-speed WebRTC infrastructure for sub-100ms audio delivery, enabling naturally conversational turn-taking." },
-            { icon: "visibility", title: "Multimodal Vision", desc: "Seamlessly escalate from text to voice and live video analysis using Gemini Live's native multimodal capabilities." },
-            { icon: "architecture", title: "Agentic Orchestration", desc: "Routing intelligence powered by Gemini Enterprise for CX, maintaining continuous conversational context across modalities." }
+            { icon: <Gauge className="w-8 h-8" />, title: "Ultra Low-Latency", desc: "Built on Google's high-speed WebRTC infrastructure for sub-100ms audio delivery, enabling naturally conversational turn-taking." },
+            { icon: <Eye className="w-8 h-8" />, title: "Multimodal Vision", desc: "Seamlessly escalate from text to voice and live video analysis using Gemini Live's native multimodal capabilities." },
+            { icon: <Cpu className="w-8 h-8" />, title: "Agentic Orchestration", desc: "Routing intelligence powered by Gemini Enterprise for CX, maintaining continuous conversational context across modalities." }
           ].map((feature, i) => (
             <div key={i} className="bg-surface p-8 rounded-3xl border border-outline-variant hover:border-primary/50 transition-colors group">
               <div className="w-14 h-14 bg-primary-container text-on-primary-container rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-3xl">{feature.icon}</span>
+                <span className="lucide-icon-wrapper text-3xl">{feature.icon}</span>
               </div>
               <h3 className="text-xl font-bold text-on-surface mb-3">{feature.title}</h3>
               <p className="text-secondary leading-relaxed">{feature.desc}</p>
@@ -92,9 +98,9 @@ function FeaturesSection() {
         </div>
         <div className="mt-16 text-center">
           <a href="/walkthrough" className="inline-flex items-center space-x-2 bg-primary/10 hover:bg-primary/20 text-primary px-6 py-3 rounded-full font-bold transition-all border border-primary/20 hover:border-primary/40 group">
-            <span className="material-symbols-outlined text-xl">school</span>
+            <GraduationCap className="w-5 h-5" />
             <span>Take the Interactive Walkthrough</span>
-            <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </a>
         </div>
       </div>
@@ -109,7 +115,7 @@ function Footer() {
     <footer className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white w-full border-t border-slate-200 dark:border-slate-800">
       <div className="container mx-auto px-4 md:px-6 py-10 flex flex-col md:flex-row items-center justify-between">
         <div className="flex items-center space-x-2 mb-4 md:mb-0">
-          <span className="material-symbols-outlined text-2xl text-primary">radar</span>
+          <Radar className="w-6 h-6 text-primary" />
           <span className="font-headline font-black text-xl tracking-tight">
             Project <span className="text-primary">Zenith</span>
           </span>
@@ -134,7 +140,7 @@ function ArchitectureSection() {
         <div className="max-w-4xl mx-auto space-y-8 mb-16">
           <div className="text-center space-y-4">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-4">
-              <span className="material-symbols-outlined text-4xl">lan</span>
+              <Network className="w-10 h-10" />
             </div>
             <h3 className="text-2xl font-bold text-on-surface">Portable Middleware Stack <span className="text-secondary font-normal text-lg block sm:inline mt-1 sm:mt-0">(e.g., LiveKit + Pipecat)</span></h3>
             <p className="text-secondary leading-relaxed text-lg pb-4 text-left md:text-center">
@@ -186,7 +192,7 @@ function ArchitectureSection() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-surface p-6 rounded-2xl border border-outline-variant hover:border-primary/50 transition-colors">
               <h4 className="font-bold text-on-surface mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">router</span>
+                <Router className="text-primary" />
                 Enterprise Transport
               </h4>
               <p className="text-sm text-secondary leading-relaxed">
@@ -195,7 +201,7 @@ function ArchitectureSection() {
             </div>
             <div className="bg-surface p-6 rounded-2xl border border-outline-variant hover:border-primary/50 transition-colors">
               <h4 className="font-bold text-on-surface mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">webhook</span>
+                <Webhook className="text-primary" />
                 Function Calling
               </h4>
               <p className="text-sm text-secondary leading-relaxed">
@@ -204,7 +210,7 @@ function ArchitectureSection() {
             </div>
             <div className="bg-surface p-6 rounded-2xl border border-outline-variant hover:border-primary/50 transition-colors">
               <h4 className="font-bold text-on-surface mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">swap_horiz</span>
+                <ArrowLeftRight className="text-primary" />
                 Provider Portability
               </h4>
               <p className="text-sm text-secondary leading-relaxed">
@@ -213,7 +219,7 @@ function ArchitectureSection() {
             </div>
             <div className="bg-surface p-6 rounded-2xl border border-outline-variant hover:border-primary/50 transition-colors">
               <h4 className="font-bold text-on-surface mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">graphic_eq</span>
+                <Activity className="text-primary" />
                 AI Noise Filtering
               </h4>
               <p className="text-sm text-secondary leading-relaxed">
