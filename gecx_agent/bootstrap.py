@@ -24,7 +24,7 @@ from pathlib import Path
 
 from provisioning.auth import get_auth_headers
 from provisioning.app import find_existing_app, create_app, set_root_agent
-from provisioning.agent import provision_agent
+from provisioning.agent import provision_agent, resolve_tool_names
 from provisioning.variables import register_app_variables
 from provisioning.callbacks import register_vision_callbacks
 from provisioning.env import export_to_env
@@ -116,12 +116,18 @@ def provision_gecx_agent(
     )
 
     # --- Provision Vision Sub-Agent ---
+    vision_tool_names = resolve_tool_names(
+        app_name,
+        ["request_visual_context", "request_additional_frame", "close_visual_context"],
+        headers,
+    )
     vision_agent_name = provision_agent(
         app_name=app_name,
         display_name="zenith-gecx-vision-agent",
         instruction=vision_instruction,
         description="Handles standard visual context / object analysis interactions.",
         headers=headers,
+        extra_tools=vision_tool_names,
     )
 
     # --- Register vision callbacks (deterministic control plane) ---

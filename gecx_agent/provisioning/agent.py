@@ -35,6 +35,42 @@ def find_existing_agent(
     return None
 
 
+def resolve_tool_names(
+    app_name: str, display_names: list[str], headers: dict
+) -> list[str]:
+    """Resolve tool display names to full CES resource names.
+
+    CES tools use UUID-based resource names, so we look them up by
+    display name from the app's tool list.
+
+    Args:
+        app_name: Full resource name of the CES app.
+        display_names: List of tool display names to resolve.
+        headers: Authenticated request headers.
+
+    Returns:
+        List of full resource names for the matched tools.
+    """
+    url = f"{CES_API_BASE}/{app_name}/tools"
+    resp = httpx.get(url, headers=headers, timeout=30)
+    resp.raise_for_status()
+
+    tool_map = {
+        t["displayName"]: t["name"]
+        for t in resp.json().get("tools", [])
+    }
+
+    resolved = []
+    for dn in display_names:
+        if dn in tool_map:
+            resolved.append(tool_map[dn])
+            logger.info("Resolved tool '%s' → %s", dn, tool_map[dn])
+        else:
+            logger.warning("Tool '%s' not found in app — skipping", dn)
+
+    return resolved
+
+
 def provision_agent(
     app_name: str,
     display_name: str,
@@ -44,6 +80,7 @@ def provision_agent(
     toolsets: list[dict] = None,
     child_agents: list[str] = None,
     model: str = "gemini-3.1-flash-live",
+    extra_tools: list[str] = None,
 ) -> str:
     """Create or update a CES agent within an app.
 
@@ -51,13 +88,15 @@ def provision_agent(
     """
     existing = find_existing_agent(app_name, display_name, headers)
 
+    tools = [f"{app_name}/tools/end_session"]
+    if extra_tools:
+        tools.extend(extra_tools)
+
     body = {
         "displayName": display_name,
         "instruction": instruction,
         "description": description,
-        "tools": [
-            f"{app_name}/tools/end_session"
-        ],
+        "tools": tools,
         "modelSettings": {"model": model},
     }
     if toolsets:
