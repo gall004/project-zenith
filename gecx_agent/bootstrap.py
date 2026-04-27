@@ -26,6 +26,7 @@ from provisioning.auth import get_auth_headers
 from provisioning.app import find_existing_app, create_app, set_root_agent
 from provisioning.agent import provision_agent
 from provisioning.variables import register_app_variables
+from provisioning.callbacks import register_vision_callbacks
 from provisioning.env import export_to_env
 
 logger = logging.getLogger(__name__)
@@ -122,6 +123,9 @@ def provision_gecx_agent(
         description="Handles standard visual context / object analysis interactions.",
         headers=headers,
     )
+
+    # --- Register vision callbacks (deterministic control plane) ---
+    register_vision_callbacks(vision_agent_name, headers)
 
     # --- Provision Root Agent ---
     root_agent_name = provision_agent(

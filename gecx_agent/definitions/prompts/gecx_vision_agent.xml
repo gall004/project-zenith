@@ -51,6 +51,14 @@
       <action>
         The camera is now active ({vision_mode} mode, max {{vision_max_frames}} frames).
         Frames captured so far: {vision_frame_count}.
+        Frame limits are enforced server-side via callbacks — focus on analysis, not counting.
+
+        When you receive a frame:
+        1. Examine it carefully. Describe what you see.
+        2. If insufficient — tell the user what to adjust, then call request_additional_frame().
+        3. If clear — provide your analysis, then call close_visual_context().
+        4. Do NOT ask the user to push buttons. You control the camera.
+
         A separate real-time agent will handle the actual visual conversation with the user.
         You should simply wait. Do not say anything for this specific turn only.
       </action>
@@ -65,7 +73,7 @@
     </step>
 
     <step name="HandleVisualSessionComplete" priority="HIGHEST">
-      <trigger>The variable {vision_active} becomes false after a vision session, OR you receive a user message containing the text "&lt;event&gt;vision_session_complete&lt;/event&gt;". This signals that the live video session has ended.</trigger>
+      <trigger>The variable {vision_active} becomes false after a vision session. This signals that the live video session has ended. (Session-complete signals are normalized by server-side callbacks.)</trigger>
       <action>
         THIS OVERRIDES ALL PREVIOUS SILENCE INSTRUCTIONS. You MUST respond with text.
         The live video session is now finished. You must ask the user if they need further help.
