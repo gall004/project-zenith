@@ -3,9 +3,14 @@
 Reads callback Python source from gecx_agent/definitions/callbacks/
 and registers them on the appropriate agent resource via the CES API.
 
-Callbacks are attached to agents via PATCH on the agent resource,
-using the `callbacks` field in the agent body. Each callback entry
-specifies a type and the Python source code that runs in the CES sandbox.
+Callbacks are stored on agents as separate top-level fields:
+  - ``beforeToolCallbacks``  → list of ``{"pythonCode": "<source>"}``
+  - ``afterToolCallbacks``   → list of ``{"pythonCode": "<source>"}``
+  - ``beforeModelCallbacks`` → list of ``{"pythonCode": "<source>"}``
+
+Discovered via API probing:
+  - updateMask does NOT support these fields
+  - Must GET the agent body, merge callbacks, then PATCH the full body
 """
 
 import logging
@@ -18,11 +23,6 @@ from .api import CES_API_BASE
 logger = logging.getLogger(__name__)
 
 CALLBACK_DIR = Path(__file__).resolve().parents[1] / "definitions" / "callbacks"
-
-# CES callback type identifiers used in the agent resource body
-BEFORE_TOOL = "BEFORE_TOOL"
-AFTER_TOOL = "AFTER_TOOL"
-BEFORE_MODEL = "BEFORE_MODEL"
 
 
 def _read_callback_source(filename: str) -> str:
@@ -45,12 +45,53 @@ def _read_callback_source(filename: str) -> str:
     return source
 
 
+def _extract_function(source: str, func_name: str) -> str:
+    """Extract a single top-level function from a Python source file.
+
+    Finds the function by name, then captures everything until the next
+    top-level definition or end of file.
+
+    Args:
+        source: Full Python source code.
+        func_name: Name of the function to extract.
+
+    Returns:
+        The function source code as a string.
+    """
+    lines = source.split("\n")
+    start = None
+    end = None
+
+    for i, line in enumerate(lines):
+        if line.startswith(f"def {func_name}("):
+            start = i
+        elif start is not None and (
+            line.startswith("def ") or line.startswith("class ")
+        ):
+            # Hit next top-level definition
+            end = i
+            break
+
+    if start is None:
+        raise ValueError(f"Function {func_name} not found in source")
+
+    if end is None:
+        end = len(lines)
+
+    # Strip trailing blank lines
+    while end > start and not lines[end - 1].strip():
+        end -= 1
+
+    return "\n".join(lines[start:end])
+
+
 def register_vision_callbacks(agent_name: str, headers: dict) -> None:
     """Register before_tool, after_tool, and before_model callbacks
     on the vision agent.
 
-    Reads the Python source from vision_callbacks.py and attaches
-    all three callback types to the agent via PATCH.
+    Strategy: GET the current agent body, add/replace the callback
+    fields, then PATCH the full body back. This preserves instruction,
+    tools, and other fields that would be wiped by a partial PATCH.
 
     Args:
         agent_name: Full CES resource name of the vision agent.
@@ -58,42 +99,46 @@ def register_vision_callbacks(agent_name: str, headers: dict) -> None:
     """
     source = _read_callback_source("vision_callbacks.py")
 
-    # Build the callbacks array for the agent PATCH body.
-    # Each callback specifies its type and the Python source.
-    callbacks = [
-        {
-            "name": "vision_before_tool",
-            "config": {
-                "callbackType": BEFORE_TOOL,
-                "pythonCode": {"code": source},
-            },
-        },
-        {
-            "name": "vision_after_tool",
-            "config": {
-                "callbackType": AFTER_TOOL,
-                "pythonCode": {"code": source},
-            },
-        },
-        {
-            "name": "vision_before_model",
-            "config": {
-                "callbackType": BEFORE_MODEL,
-                "pythonCode": {"code": source},
-            },
-        },
-    ]
+    # Extract individual callback functions
+    before_tool_src = _extract_function(source, "before_tool_callback")
+    after_tool_src = _extract_function(source, "after_tool_callback")
+    before_model_src = _extract_function(source, "before_model_callback")
 
-    url = f"{CES_API_BASE}/{agent_name}?updateMask=callbacks"
-    body = {"callbacks": callbacks}
+    # GET current agent to preserve existing fields
+    url = f"{CES_API_BASE}/{agent_name}"
+    try:
+        resp = httpx.get(url, headers=headers, timeout=30)
+        resp.raise_for_status()
+        agent_body = resp.json()
+    except httpx.HTTPError as e:
+        logger.warning("Failed to fetch agent for callback registration: %s", e)
+        return
+
+    # Remove read-only fields
+    for key in ("name", "createTime", "updateTime", "etag"):
+        agent_body.pop(key, None)
+
+    # Set the callback fields
+    agent_body["beforeToolCallbacks"] = [{"pythonCode": before_tool_src}]
+    agent_body["afterToolCallbacks"] = [{"pythonCode": after_tool_src}]
+    agent_body["beforeModelCallbacks"] = [{"pythonCode": before_model_src}]
 
     try:
-        resp = httpx.patch(url, headers=headers, json=body, timeout=30)
+        resp = httpx.patch(url, headers=headers, json=agent_body, timeout=30)
         resp.raise_for_status()
+
+        # Verify callbacks were accepted
+        result = resp.json()
+        registered = []
+        for field in ("beforeToolCallbacks", "afterToolCallbacks",
+                      "beforeModelCallbacks"):
+            if field in result:
+                registered.append(field)
+
         logger.info(
-            "Registered %d vision callbacks on agent %s",
-            len(callbacks),
+            "Registered vision callbacks on agent %s: %s",
             agent_name,
+            ", ".join(registered) if registered else "(none confirmed)",
         )
     except httpx.HTTPError as e:
         logger.warning(
