@@ -78,6 +78,7 @@ def set_root_agent(
     url = f"{CES_API_BASE}/{app_name}"
     body: dict = {
         "rootAgent": agent_name,
+        "modelSettings": {"model": "gemini-3.1-flash-live"},
     }
     try:
         resp = httpx.get(url, headers=headers, timeout=30)

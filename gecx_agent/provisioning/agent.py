@@ -43,6 +43,7 @@ def provision_agent(
     headers: dict,
     toolsets: list[dict] = None,
     child_agents: list[str] = None,
+    model: str = "gemini-3.1-flash-live",
 ) -> str:
     """Create or update a CES agent within an app.
 
@@ -56,7 +57,8 @@ def provision_agent(
         "description": description,
         "tools": [
             f"{app_name}/tools/end_session"
-        ]
+        ],
+        "modelSettings": {"model": model},
     }
     if toolsets:
         body["toolsets"] = toolsets
