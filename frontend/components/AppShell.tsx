@@ -49,7 +49,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (window.chatSdk) {
       initWidget();
     }
-    return () => window.removeEventListener("chat-messenger-loaded", initWidget);
+
+    // Suppress the non-fatal CES sendClientSideFunctionCallResult error.
+    // This fires inside the chat-messenger widget when tool results are
+    // returned to CES but CES responds with a transient processing error.
+    // The conversation continues normally despite this error.
+    const suppressCESToolError = (e: PromiseRejectionEvent) => {
+      if (
+        e.reason?.message?.includes("We encountered an error processing your request")
+      ) {
+        e.preventDefault();
+        console.warn("[Zenith] Suppressed non-fatal CES tool result error (conversation continues).");
+      }
+    };
+    window.addEventListener("unhandledrejection", suppressCESToolError);
+
+    return () => {
+      window.removeEventListener("chat-messenger-loaded", initWidget);
+      window.removeEventListener("unhandledrejection", suppressCESToolError);
+    };
   }, []);
 
   /**
