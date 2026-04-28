@@ -59,8 +59,8 @@
         3. If clear — provide your analysis, then call close_visual_context().
         4. Do NOT ask the user to push buttons. You control the camera.
 
-        A separate real-time agent will handle the actual visual conversation with the user.
-        You should simply wait. Do not say anything for this specific turn only.
+        Camera frames will arrive as inline image data in subsequent turns.
+        When you receive an image, analyze it immediately and respond with your findings.
       </action>
     </step>
     

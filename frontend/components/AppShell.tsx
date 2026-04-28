@@ -55,9 +55,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // returned to CES but CES responds with a transient processing error.
     // The conversation continues normally despite this error.
     const suppressCESToolError = (e: PromiseRejectionEvent) => {
-      if (
-        e.reason?.message?.includes("We encountered an error processing your request")
-      ) {
+      const msg = e.reason?.message || String(e.reason || '');
+      if (msg.includes("We encountered an error processing your request")) {
         e.preventDefault();
         console.warn("[Zenith] Suppressed non-fatal CES tool result error (conversation continues).");
       }
@@ -242,9 +241,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // ── Send frame via presenter.sendImage() ──
-      // This uses the widget's native API — no raw WebSocket needed.
-      // The widget handles transport internally (gRPC-web / BidiRunSession).
+      // ── Send frame via sendImage + text context ──
+      // We pair the image with a text query so the model has context about
+      // what to do with the incoming visual data.
       const chatMessenger = document.querySelector('chat-messenger') as any;
       if (!chatMessenger?.presenter?.sendImage) {
         console.error('[Zenith] presenter.sendImage not available. Cannot send frame.');
@@ -268,7 +267,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
         const blob = new Blob([ab], { type: 'image/jpeg' });
 
-        console.log(`[Zenith] Sending frame ${framesSent}/${maxFrames} via presenter.sendImage() (${(base64Frame.length / 1024).toFixed(1)}KB)`);
+        console.log(`[Zenith] Sending frame ${framesSent}/${maxFrames} via sendImage (${(base64Frame.length / 1024).toFixed(1)}KB)`);
         await chatMessenger.presenter.sendImage(blob);
         console.log(`[Zenith] Frame ${framesSent}/${maxFrames} sent successfully.`);
 
