@@ -48,17 +48,26 @@ def _read_callback_source(filename: str) -> str:
 def _extract_function(source: str, func_name: str) -> str:
     """Extract a single top-level function from a Python source file.
 
-    Finds the function by name, then captures everything until the next
-    top-level definition or end of file.
+    Includes any module-level import statements so the function is
+    self-contained when injected into the CES sandbox.
 
     Args:
         source: Full Python source code.
         func_name: Name of the function to extract.
 
     Returns:
-        The function source code as a string.
+        The function source code (with imports prepended) as a string.
     """
     lines = source.split("\n")
+
+    # Collect import lines from the module preamble
+    import_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("import ") or stripped.startswith("from "):
+            import_lines.append(line)
+
+    # Locate the target function
     start = None
     end = None
 
@@ -82,7 +91,12 @@ def _extract_function(source: str, func_name: str) -> str:
     while end > start and not lines[end - 1].strip():
         end -= 1
 
-    return "\n".join(lines[start:end])
+    func_body = "\n".join(lines[start:end])
+
+    # Prepend imports if any exist
+    if import_lines:
+        return "\n".join(import_lines) + "\n\n\n" + func_body
+    return func_body
 
 
 def register_vision_callbacks(agent_name: str, headers: dict) -> None:
